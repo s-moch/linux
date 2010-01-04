@@ -119,6 +119,7 @@ int saa716x_msi_init(struct saa716x_dev *saa716x)
 	int i;
 
 	dprintk(SAA716x_DEBUG, 1, "Initializing MSI ..");
+	saa716x->handlers = 0;
 
 	/* get module id & version */
 	mid = SAA716x_EPRD(MSI, MSI_MODULE_ID);
@@ -166,10 +167,15 @@ int saa716x_msi_init(struct saa716x_dev *saa716x)
 	sta_l = SAA716x_EPRD(MSI, MSI_INT_STATUS_L);
 	sta_h = SAA716x_EPRD(MSI, MSI_INT_STATUS_H);
 
-	if ((ena_l == 0) && (ena_h == 0) && (sta_l == 0) && (sta_h == 0))
+	if ((ena_l == 0) && (ena_h == 0) && (sta_l == 0) && (sta_h == 0)) {
+		dprintk(SAA716x_DEBUG, 1, "Interrupts ena_l <%02x> ena_h <%02x> sta_l <%02x> sta_h <%02x>",
+			ena_l, ena_h, sta_l, sta_h);
+
 		return 0;
-	else
+	} else {
+		dprintk(SAA716x_DEBUG, 1, "I/O error");
 		return -EIO;
+	}
 
 	return 0;
 }
@@ -177,6 +183,8 @@ EXPORT_SYMBOL_GPL(saa716x_msi_init);
 
 void saa716x_msiint_disable(struct saa716x_dev *saa716x)
 {
+	dprintk(SAA716x_DEBUG, 1, "Disabling Interrupts ...");
+
 	SAA716x_EPWR(MSI, MSI_INT_ENA_L, 0x0);
 	SAA716x_EPWR(MSI, MSI_INT_ENA_H, 0x0);
 	SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_L, 0xffffffff);
