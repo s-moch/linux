@@ -29,5 +29,6 @@ struct saa716x_i2c {
 extern int saa716x_i2c_init(struct saa716x_dev *saa716x);
 extern int saa716x_i2c_exit(struct saa716x_dev *saa716x);
 extern void saa716x_i2cint_disable(struct saa716x_dev *saa716x);
+extern int saa716x_i2c_irqevent(struct saa716x_dev *saa716x, u8 bus);
 
 #endif /* __SAA716x_I2C_H */
