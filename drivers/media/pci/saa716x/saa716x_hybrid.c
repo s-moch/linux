@@ -126,7 +126,7 @@ static struct saa716x_config saa716x_vp6090_config = {
  * DVB-T Frontend: 1x TDA10046 + TDA8275
  * Analog Decoder: External SAA7136
  */
-#define SAA716x_MODEL_NXP_NENO		"NEMO reference board" 
+#define SAA716x_MODEL_NXP_NEMO		"NEMO reference board" 
 #define SAA716x_DEV_NXP_NEMO		"DVB-T + Analog"
 
 static int load_config_nemo(struct saa716x_dev *saa716x)
@@ -136,7 +136,7 @@ static int load_config_nemo(struct saa716x_dev *saa716x)
 }
 
 static struct saa716x_config saa716x_nemo_config = {
-	.model_name		= SAA716x_MODEL_NXP_NENO,
+	.model_name		= SAA716x_MODEL_NXP_NEMO,
 	.dev_type		= SAA716x_DEV_NXP_NEMO,
 	.boot_mode		= SAA716x_EXT_BOOT,
 	.load_config		= &load_config_nemo,
