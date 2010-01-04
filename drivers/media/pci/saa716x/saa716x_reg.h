@@ -181,6 +181,8 @@
 #define FGPI_NUM_RECORD_2		0x01c
 #define FGPI_THRESHOLD_1		0x020
 #define FGPI_THRESHOLD_2		0x024
+#define FGPI_D1_XY_START		0x028
+#define FGPI_D1_XY_END			0x02c
 
 #define INT_STATUS			0xfe0
 #define FGPI_BUF1_ACTIVE		(0x00000001 <<  7)
@@ -225,7 +227,8 @@
 #define FGPI_INTERFACE			0xff4
 #define FGPI_DISABLE_BUS_IF		(0x00000001 <<  0)
 
-
+#define FGPI_MOD_ID_EXT			0xff8
+#define FGPI_MODULE_ID			0xffc
 
 
 /* -------------- AI Registers ---------------- */
