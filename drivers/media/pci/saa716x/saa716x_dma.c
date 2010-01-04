@@ -34,7 +34,7 @@ static int saa716x_allocate_ptable(struct saa716x_dmabuf *dmabuf)
 		return -ENOMEM;
 	}
 
-	BUG_ON(!(((u32) dmabuf->mem_ptab_phys % SAA716x_PAGE_SIZE) == 0));
+	BUG_ON(!(((unsigned long) dmabuf->mem_ptab_phys % SAA716x_PAGE_SIZE) == 0));
 
 	return 0;
 }
@@ -126,9 +126,9 @@ static int saa716x_dmabuf_sgalloc(struct saa716x_dmabuf *dmabuf, void *buf, int 
 		}
 
 		/* align memory to page */
-		dmabuf->mem_virt = (void *) PAGE_ALIGN (((u32) dmabuf->mem_virt_noalign));
+		dmabuf->mem_virt = (void *) PAGE_ALIGN (((unsigned long) dmabuf->mem_virt_noalign));
 
-		BUG_ON(!((((u32) dmabuf->mem_virt) % SAA716x_PAGE_SIZE) == 0));
+		BUG_ON(!((((unsigned long) dmabuf->mem_virt) % SAA716x_PAGE_SIZE) == 0));
 	} else {
 		dmabuf->mem_virt = buf;
 	}
