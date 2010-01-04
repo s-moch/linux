@@ -69,8 +69,8 @@ int saa716x_getbootscript_setup(struct saa716x_dev *saa716x)
 		else
 			cgu->clk_freq[i] = 0;
 
-		dprintk(SAA716x_DEBUG, 1, "Domain %d: %s <0x%x> --> N=%d, M=%d, freq=%d",
-			i, clk_desc[i], cgu->clk_boot_div[i], N, M, cgu->clk_freq[i]);
+		dprintk(SAA716x_DEBUG, 1, "Domain %d: %s <0x%02x> Divider: 0x%x --> N=%d, M=%d, freq=%d",
+			i, clk_desc[i], cgu_clk[i], cgu->clk_boot_div[i], N, M, cgu->clk_freq[i]);
 	}
 	/* store clock settings */
 	cgu->clk_vi_0[0] = cgu->clk_freq[CLK_DOMAIN_VI0];
