@@ -13,6 +13,12 @@
 #include "saa716x_i2c.h"
 #include "saa716x_boot.h"
 
+#include "dvbdev.h"
+#include "dvb_demux.h"
+#include "dmxdev.h"
+#include "dvb_frontend.h"
+#include "dvb_net.h"
+
 #define SAA716x_ERROR		0
 #define SAA716x_NOTICE		1
 #define SAA716x_INFO		2
@@ -99,6 +105,17 @@ struct saa716x_dev {
 	u32				i2c_rate; /* init time */
 
 	/* DMA */
+
+	/* DVB */
+	struct dvb_adapter		dvb_adapter;
+	struct dvb_frontend		*fe;
+	struct dvb_demux		demux;
+	struct dmxdev			dmxdev;
+	struct dmx_frontend		fe_hw;
+	struct dmx_frontend		fe_mem;
+	struct dvb_net			dvb_net;
+
+	u8				feeds;
 };
 
 /* PCI */
