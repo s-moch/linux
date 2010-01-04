@@ -80,7 +80,7 @@ static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct
 		goto fail1;
 	}
 
-	saa716x_core_reset(saa716x);
+//	saa716x_core_reset(saa716x);
 	pci_read_config_dword(pdev, 0x06, &sts);
 
 	err = saa716x_i2c_init(saa716x);
@@ -271,10 +271,12 @@ static int saa716x_averhc82_frontend_attach(struct saa716x_adapter *adapter, int
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
 
-	adapter->fe = zl10353_attach(&saa716x_averhc82_zl10353_config, &i2c->i2c_adapter);
-	if (adapter->fe) {
-		dprintk(SAA716x_ERROR, 1, "Adapter (%d) ZL10353 demodulator succesfully attached", count);
+//	adapter->fe = zl10353_attach(&saa716x_averhc82_zl10353_config, &i2c->i2c_adapter);
+	if (adapter->fe == NULL) {
+		dprintk(SAA716x_ERROR, 1, "No Frontend found");
+		return -ENODEV;
 	} else {
+		dprintk(SAA716x_ERROR, 1, "Adapter (%d) ZL10353 demodulator succesfully attached", count);
 		if (dvb_register_frontend(&adapter->dvb_adapter, adapter->fe)) {
 			dprintk(SAA716x_ERROR, 1, "ERROR: Frontend registration failed");
 
