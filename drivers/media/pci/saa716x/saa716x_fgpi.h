@@ -86,6 +86,8 @@ struct fgpi_stream_params {
 	enum fgpi_stream_type	stream_type;
 };
 
+struct saa716x_dmabuf;
+
 extern void saa716x_fgpiint_disable(struct saa716x_dmabuf *dmabuf, int channel);
 
 #endif /* __SAA716x_FGPI_H */
