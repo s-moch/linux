@@ -148,7 +148,6 @@ int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
 	int err = 0, ret = -ENODEV, i, use_dac;
 	u32 msi_cap;
 	u8 revision;
-	const u8 msgs[] = { 1, 2, 4, 8, 16, 32 };
 
 	dprintk(SAA716x_ERROR, 1, "found a %s PCI Express card", saa716x->config->model_name);
 
@@ -228,7 +227,7 @@ int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
 		saa716x->pdev->device,
 		(((msi_cap >> 23) & 0x01) == 1 ? "64":"32"),
 		(((msi_cap >> 16) & 0x01) == 1 ? "Enabled" : "Disabled"),
-		msgs[((msi_cap >> 17) & 0x07)]);
+		(1 << ((msi_cap >> 17) & 0x07)));
 
 
 	pci_set_drvdata(pdev, saa716x);
