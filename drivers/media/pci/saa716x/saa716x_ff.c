@@ -233,7 +233,6 @@ static int sti7109_raw_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
 {
 	struct saa716x_dev * saa716x = sti7109->dev;
 	unsigned long timeout;
-	u8 * data;
 
 	timeout = 1 * HZ;
 	timeout = wait_event_interruptible_timeout(sti7109->cmd_ready_wq,
@@ -252,9 +251,6 @@ static int sti7109_raw_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
 
 	sti7109->cmd_ready = 0;
 	sti7109->result_avail = 0;
-	data = (u8 *) cmd->cmd_data;
-	dprintk(SAA716x_INFO, 1, "cmd %02X %02X %02X %02X %02X %02X",
-		data[0], data[1], data[2], data[3], data[4], data[5]);
 	saa716x_phi_write(saa716x, 0x0000, cmd->cmd_data, cmd->cmd_len);
 	SAA716x_EPWR(PHI_1, FPGA_ADDR_PHI_ISET, ISR_CMD_MASK);
 
@@ -361,7 +357,6 @@ static int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 	}
 
 	data->data_handle = sti7109->data_handle;
-	dprintk(SAA716x_INFO, 1, "data %d", data->data_handle);
 	sti7109->data_handle++;
 	return 0;
 }
@@ -867,7 +862,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 			value = __cpu_to_be32(value);
 			length = (value >> 16) + 2;
 
-			dprintk(SAA716x_INFO, 1, "CMD length: %d", length);
+			/*dprintk(SAA716x_INFO, 1, "CMD length: %d", length);*/
 
 			if (length > MAX_RESULT_LEN) {
 				dprintk(SAA716x_ERROR, 1, "CMD length %d > %d", length, MAX_RESULT_LEN);
