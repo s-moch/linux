@@ -41,16 +41,30 @@ static const u32 mmu_dma_cfg[] = {
 	MMU_DMA_CONFIG15,
 };
 
-void saa716x_fgpiint_disable(struct saa716x_dev *saa716x)
+static const u32 fgpi_ch[] = {
+	FGPI0,
+	FGPI1,
+	FGPI2,
+	FGPI3
+};
+
+static const u32 bamdma_bufmode[] = {
+	BAM_FGPI0_DMA_BUF_MODE,
+	BAM_FGPI1_DMA_BUF_MODE,
+	BAM_FGPI2_DMA_BUF_MODE,
+	BAM_FGPI3_DMA_BUF_MODE
+};
+
+void saa716x_fgpiint_disable(struct saa716x_dmabuf *dmabuf, int channel)
 {
-	SAA716x_EPWR(FGPI0, 0xfe4, 0); /* disable FGPI IRQ */
-	SAA716x_EPWR(FGPI1, 0xfe4, 0); /* disable FGPI IRQ */
-	SAA716x_EPWR(FGPI2, 0xfe4, 0); /* disable FGPI IRQ */
-	SAA716x_EPWR(FGPI3, 0xfe4, 0); /* disable FGPI IRQ */
-	SAA716x_EPWR(FGPI0, 0xfe8, 0x7f); /* clear status */
-	SAA716x_EPWR(FGPI1, 0xfe8, 0x7f); /* clear status */
-	SAA716x_EPWR(FGPI2, 0xfe8, 0x7f); /* clear status */
-	SAA716x_EPWR(FGPI3, 0xfe8, 0x7f); /* clear status */
+	struct saa716x_dev *saa716x = dmabuf->saa716x;
+
+	u32 fgpi_port;
+
+	fgpi_port = fgpi_ch[channel];
+
+	SAA716x_EPWR(fgpi_port, 0xfe4, 0); /* disable FGPI IRQ */
+	SAA716x_EPWR(fgpi_port, 0xfe8, 0x7f); /* clear status */
 }
 EXPORT_SYMBOL_GPL(saa716x_fgpiint_disable);
 
@@ -85,6 +99,114 @@ static u32 saa716x_init_ptables(struct saa716x_dmabuf *dmabuf, int channel)
 	SAA716x_EPWR(MMU, dma_ch + MMU_PTA6_MSB(channel), PTA_MSB(dmabuf[6].mem_ptab_phys)); /* High */
 	SAA716x_EPWR(MMU, dma_ch + MMU_PTA7_LSB(channel), PTA_LSB(dmabuf[7].mem_ptab_phys)); /* Low */
 	SAA716x_EPWR(MMU, dma_ch + MMU_PTA7_MSB(channel), PTA_MSB(dmabuf[7].mem_ptab_phys)); /* High */
+
+	return 0;
+}
+
+u32 saa716x_fgpi_setparams(struct saa716x_dmabuf *dmabuf,
+			   struct fgpi_stream_params *stream_params,
+			   int channel)
+{
+	struct saa716x_dev *saa716x = dmabuf->saa716x;
+
+	u32 fgpi_port, buf_mode, val, mid;
+	u32 D1_XY_END, offst_1, offst_2;
+	int i = 0;
+
+	fgpi_port = fgpi_ch[channel];
+	buf_mode = bamdma_bufmode[channel];
+
+	/* Reset FGPI block */
+	SAA716x_EPWR(fgpi_port, FGPI_SOFT_RESET, FGPI_SOFTWARE_RESET);
+
+	/* Reset DMA channel */
+	SAA716x_EPWR(BAM, BAM_DMA_BUF_MODE(channel), 0x00000040);
+	saa716x_init_ptables(dmabuf, channel);
+
+
+	/* monitor BAM reset */
+	val = SAA716x_EPRD(BAM, buf_mode);
+	while (val && (i < 100)) {
+		msleep(30);
+		val = SAA716x_EPRD(BAM, buf_mode);
+		i++;
+	}
+
+	if (val) {
+		dprintk(SAA716x_ERROR, 1, "Error: BAM FGPI Reset failed!");
+		return -EIO;
+	}
+
+	/* set buffer count */
+	SAA716x_EPWR(BAM, buf_mode, FGPI_BUFFERS - 1);
+
+	/* initialize all available address offsets */
+	SAA716x_EPWR(BAM, BAM_FGPI_ADDR_OFFST_0(channel), 0x0);
+	SAA716x_EPWR(BAM, BAM_FGPI_ADDR_OFFST_1(channel), 0x0);
+	SAA716x_EPWR(BAM, BAM_FGPI_ADDR_OFFST_2(channel), 0x0);
+	SAA716x_EPWR(BAM, BAM_FGPI_ADDR_OFFST_3(channel), 0x0);
+	SAA716x_EPWR(BAM, BAM_FGPI_ADDR_OFFST_4(channel), 0x0);
+	SAA716x_EPWR(BAM, BAM_FGPI_ADDR_OFFST_5(channel), 0x0);
+	SAA716x_EPWR(BAM, BAM_FGPI_ADDR_OFFST_6(channel), 0x0);
+	SAA716x_EPWR(BAM, BAM_FGPI_ADDR_OFFST_7(channel), 0x0);
+
+	/* get module ID */
+	mid = SAA716x_EPRD(fgpi_port, FGPI_MODULE_ID);
+	if (mid != 0x14b0100)
+		dprintk(SAA716x_ERROR, 1, "FGPI Id<%04x> is not supported", mid);
+
+	/* Initialize FGPI block */
+	SAA716x_EPWR(fgpi_port, FGPI_REC_SIZE, stream_params->samples * (stream_params->bits / 8));
+	SAA716x_EPWR(fgpi_port, FGPI_STRIDE, stream_params->pitch);
+
+	switch (stream_params->stream_type) {
+	case FGPI_TRANSPORT_STREAM:
+		SAA716x_EPWR(fgpi_port, FGPI_CONTROL, 0x00000080);
+		SAA716x_EPWR(fgpi_port, FGPI_SIZE, stream_params->lines);
+		break;
+
+	case FGPI_PROGRAM_STREAM:
+		SAA716x_EPWR(fgpi_port, FGPI_CONTROL, 0x00000088);
+		SAA716x_EPWR(fgpi_port, FGPI_SIZE, stream_params->lines);
+		break;
+
+	case FGPI_VIDEO_STREAM:
+		SAA716x_EPWR(fgpi_port, FGPI_CONTROL, 0x00000088);
+		SAA716x_EPWR(fgpi_port, FGPI_D1_XY_START, 0x00000002);
+
+		if ((stream_params->stream_flags & FGPI_INTERLACED) &&
+		    (stream_params->stream_flags & FGPI_ODD_FIELD) &&
+		    (stream_params->stream_flags & FGPI_EVEN_FIELD)) {
+
+			SAA716x_EPWR(fgpi_port, FGPI_SIZE, stream_params->lines / 2);
+			SAA716x_EPWR(fgpi_port, FGPI_STRIDE, 768 * 4); /* interlaced stride of 2 lines */
+
+			D1_XY_END  = (stream_params->samples << 16);
+			D1_XY_END |= (stream_params->lines / 2) + 2;
+
+			if (stream_params->stream_flags & FGPI_PAL)
+				offst_1 = 768 * 2;
+			else
+				offst_2 = 768 * 2;
+
+		} else {
+			SAA716x_EPWR(fgpi_port, FGPI_SIZE, stream_params->lines);
+			SAA716x_EPWR(fgpi_port, FGPI_STRIDE, 768 * 2); /* stride of 1 line */
+
+			D1_XY_END  = stream_params->samples << 16;
+			D1_XY_END |= stream_params->lines + 2;
+		}
+
+		SAA716x_EPWR(fgpi_port, FGPI_D1_XY_END, D1_XY_END);
+		break;
+
+	default:
+		SAA716x_EPWR(fgpi_port, FGPI_CONTROL, 0x00000080);
+		break;
+	}
+
+	SAA716x_EPWR(fgpi_port, FGPI_BASE_1, ((channel + 6) << 21) + offst_1);
+	SAA716x_EPWR(fgpi_port, FGPI_BASE_1, ((channel + 6) << 21) + offst_2);
 
 	return 0;
 }
