@@ -43,6 +43,8 @@
 #define SAA7161			0x7161
 #define SAA7162			0x7162
 
+#define NXP_REFERENCE_BOARD	0x1131
+
 #define MAKE_ENTRY(__subven, __subdev, __chip, __configptr) {		\
 		.vendor		= NXP_SEMICONDUCTOR,			\
 		.device		= (__chip),				\
