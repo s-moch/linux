@@ -5,6 +5,7 @@
 #include "dvb_demux.h"
 #include "dvb_frontend.h"
 
+#include "saa716x_mod.h"
 #include "saa716x_spi.h"
 #include "saa716x_adap.h"
 #include "saa716x_i2c.h"
