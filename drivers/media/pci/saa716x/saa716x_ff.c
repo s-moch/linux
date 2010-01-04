@@ -721,7 +721,7 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 	if (timeout == -ERESTARTSYS || sti7109->boot_finished == 0) {
 		if (timeout == -ERESTARTSYS) {
 			/* a signal arrived */
-			goto fail5;
+			goto fail6;
 		}
 		dprintk(SAA716x_ERROR, 1, "timed out waiting for boot finish");
 		goto fail6;
