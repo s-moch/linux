@@ -335,6 +335,13 @@ static struct saa716x_config saa716x_averhc82_config = {
 	.decoder_addr		= 0x42,
 	.frontend_attach	= saa716x_averhc82_frontend_attach,
 	.irq_handler		= saa716x_hybrid_pci_irq,
+
+	.adap_config		= {
+		{ /* Adapter 0 */
+			.power_ctl	= GPIO_06 | GPIO_15,
+			.reset_ctl	= GPIO_05,
+		}
+	}
 };
 
 #define SAA716x_MODEL_AVERMEDIA_H788	"Avermedia H788"
