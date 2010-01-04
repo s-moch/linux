@@ -9,6 +9,8 @@
 //#define DUMP_BYTES	5
 #define DUMP_OFFST	0x000
 
+struct saa716x_dev;
+
 struct saa716x_romhdr {
 	u16	header_size;
 	u8	compression;
