@@ -18,94 +18,10 @@
 
 #define DRIVER_NAME				"SAA716x Core"
 
-
-static const char *i2c_labels[] = {
-	"INTERRUPT_MTD"
-	"FAILURE_INTER_MAF",
-	"ACK_INTER_MTNA",
-	"SLAVE_TRANSMIT_INTER_STSD",
-	"SLAVE_RECEIVE_INTER_SRSD",
-	"MODE_CHANGE_INTER_MSMC",
-	"I2C_ERROR_IBE",
-	"MASTER_INTERRUPT_MTDR",
-	"SLAVE_INTERRUPT_STDR",
-	"INTERRUPTE_RFF",
-	"INTERRUPT_RFDA",
-	"INTERRUPT_MTFNF",
-	"INTERRUPT_STFNF",
-};
-
 static irqreturn_t saa716x_msi_handler(int irq, void *dev_id)
 {
 	return IRQ_HANDLED;
 }
-
-#if 0
-static irqreturn_t saa716x_i2c_handler(int irq, void *dev_id)
-{
-	return IRQ_HANDLED;
-}
-
-static struct saa716x_msix_entry saa716x_msix_handler[] = {
-	{ .desc = "SAA716x_I2C_HANDLER", .handler = saa716x_i2c_handler }
-};
-#endif
-
-#if 0
-static irqreturn_t saa716x_pci_irq(int irq, void *dev_id)
-{
-	struct saa716x_dev *saa716x	= (struct saa716x_dev *) dev_id;
-	struct saa716x_i2c *i2c_a	= &saa716x->i2c[0];
-	struct saa716x_i2c *i2c_b	= &saa716x->i2c[1];
-
-	if (unlikely(saa716x == NULL)) {
-		printk("%s: saa716x=NULL", __func__);
-		return IRQ_NONE;
-	}
-
-	dprintk(SAA716x_DEBUG, 1, "VI STAT 0=0x%02x 1=0x%02x, CTL 1=0x%02x 2=0x%02x",
-		SAA716x_EPRD(VI0, INT_STATUS),
-		SAA716x_EPRD(VI1, INT_STATUS),
-		SAA716x_EPRD(VI0, INT_ENABLE),
-		SAA716x_EPRD(VI1, INT_ENABLE));
-
-	dprintk(SAA716x_DEBUG, 1, "FGPI STAT 0=0x%02x 1=0x%02x, CTL 1=0x%02x 2=0x%02x",
-		SAA716x_EPRD(FGPI0, INT_STATUS),
-		SAA716x_EPRD(FGPI1, INT_STATUS),
-		SAA716x_EPRD(FGPI0, INT_ENABLE),
-		SAA716x_EPRD(FGPI0, INT_ENABLE));
-
-	dprintk(SAA716x_DEBUG, 1, "FGPI STAT 2=0x%02x 3=0x%02x, CTL 2=0x%02x 3=0x%02x",
-		SAA716x_EPRD(FGPI2, INT_STATUS),
-		SAA716x_EPRD(FGPI3, INT_STATUS),
-		SAA716x_EPRD(FGPI2, INT_ENABLE),
-		SAA716x_EPRD(FGPI3, INT_ENABLE));
-
-	dprintk(SAA716x_DEBUG, 1, "AI STAT 0=0x%02x 1=0x%02x, CTL 0=0x%02x 1=0x%02x",
-		SAA716x_EPRD(AI0, AI_STATUS),
-		SAA716x_EPRD(AI1, AI_STATUS),
-		SAA716x_EPRD(AI0, AI_CTL),
-		SAA716x_EPRD(AI1, AI_CTL));
-
-	dprintk(SAA716x_DEBUG, 1, "MSI STAT L=0x%02x H=0x%02x, CTL L=0x%02x H=0x%02x",
-		SAA716x_EPRD(MSI, MSI_INT_STATUS_L),
-		SAA716x_EPRD(MSI, MSI_INT_STATUS_H),
-		SAA716x_EPRD(MSI, MSI_INT_ENA_L),
-		SAA716x_EPRD(MSI, MSI_INT_ENA_H));
-
-	dprintk(SAA716x_DEBUG, 1, "I2C STAT 0=0x%02x 1=0x%02x, CTL 0=0x%02x 1=0x%02x",
-		SAA716x_EPRD(I2C_A, INT_STATUS),
-		SAA716x_EPRD(I2C_B, INT_STATUS),
-		SAA716x_EPRD(I2C_A, INT_CLR_STATUS),
-		SAA716x_EPRD(I2C_B, INT_CLR_STATUS));
-
-	dprintk(SAA716x_DEBUG, 1, "DCS STAT=0x%02x, CTL=0x%02x",
-		SAA716x_EPRD(DCS, DCSC_INT_STATUS),
-		SAA716x_EPRD(DCS, DCSC_INT_ENABLE));
-
-	return IRQ_HANDLED;
-}
-#endif
 
 static int saa716x_enable_msi(struct saa716x_dev *saa716x)
 {
