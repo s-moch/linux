@@ -72,7 +72,7 @@ int saa716x_msi_init(struct saa716x_dev *saa716x)
 	 * MSI ID: 4:0 = 0x00
 	 */
 	for (i = 0; i < MSI_CONFIG_REGS; i++)
-		SAA716x_WR(MSI, MSI_CONFIG_REG[i], 0x01000000);
+		SAA716x_WR(MSI, MSI_CONFIG_REG[i], MSI_INT_POL_EDGE_RISE);
 
 	/* get Status */
 	ena_l = SAA716x_RD(MSI, MSI_INT_ENA_L);
