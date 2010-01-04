@@ -205,6 +205,10 @@
 #define CGU_PCR_11			0x13c
 #define CGU_PCR_12			0x140
 #define CGU_PCR_13			0x144
+#define CGU_PCR_WAKE_EN			(0x0001 <<  2)
+#define CGU_PCR_AUTO			(0x0001 <<  1)
+#define CGU_PCR_RUN			(0x0001 <<  0)
+
 
 #define CGU_PSR_0_0			0x148
 #define CGU_PSR_0_1			0x14c
