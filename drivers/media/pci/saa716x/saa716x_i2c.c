@@ -408,8 +408,16 @@ int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 	struct saa716x_i2c *i2c = saa716x->i2c;
 	int i, err = 0;
 
-	u32 I2C_DEV[2] = {I2C_B, I2C_A};
+	u32 I2C_DEV[2];
 	u32 reg;
+
+	if (saa716x->revision > 2) {
+		I2C_DEV[0] = I2C_A;
+		I2C_DEV[1] = I2C_B;
+	} else {
+		I2C_DEV[0] = I2C_B;
+		I2C_DEV[1] = I2C_A;
+	}
 
 	dprintk(SAA716x_DEBUG, 1, "Initializing SAA%02x I2C Core", saa716x->pdev->device);
 	for (i = 0; i < SAA716x_I2C_ADAPTERS; i++) {
