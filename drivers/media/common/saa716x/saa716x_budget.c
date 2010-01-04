@@ -35,7 +35,7 @@ MODULE_PARM_DESC(int_type, "force Interrupt Handler type: 0=INT-A, 1=MSI, 2=MSI-
 static int read_eeprom_byte(struct saa716x_dev *saa716x, u8 *data, u8 len)
 {
 	struct saa716x_i2c *i2c = saa716x->i2c;
-	struct i2c_adapter *adapter = &i2c[0].i2c_adapter;
+	struct i2c_adapter *adapter = &i2c[1].i2c_adapter;
 
 	int err;
 
@@ -131,10 +131,9 @@ static int __devinit saa716x_budget_pci_probe(struct pci_dev *pdev, const struct
 		goto fail4;
 	}
 
-#if 0
 	/* Experiments */
 	read_eeprom(saa716x);
-#endif
+
 	return 0;
 
 fail4:
