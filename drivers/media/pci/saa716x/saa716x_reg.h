@@ -48,6 +48,18 @@
 #define HSP_RGB				(0x00000001 <<  2)
 #define HSP_MODE			(0x00000003 <<  0)
 
+#define RCRB_CTRL			0x004
+#define RCRB_CFG_ADDR			0x008
+#define RCRB_CFG_EXT_ADDR		0x00c
+#define RCRB_IO_ADDR			0x010
+#define RCRB_MEM_LADDR			0x014
+#define RCRB_MEM_UADDR			0x018
+#define RCRB_DATA			0x01c
+#define RCRB_MASK			0x020
+#define RCRB_MSG_HDR			0x040
+#define RCRB_MSG_PL0			0x044
+#define RCRB_MSG_PL1			0x048
+
 #define ID_MASK0			0x020
 #define VI_ID_MASK_0			(0x000000ff <<  8)
 #define VI_DATA_ID_0			(0x000000ff <<  0)
@@ -74,6 +86,14 @@
 #define VI_FZERO			(0x00000001 <<  2)
 #define VI_REVS				(0x00000001 <<  1)
 #define VI_REHS				(0x00000001 <<  0)
+
+#define TC76543210			0x800
+#define TCFEDCBA98			0x804
+#define PHYCFG				0x900
+#define CONFIG				0xfd4
+#define INT_ENABLE_CLR			0xfd8
+#define INT_ENABLE_SET			0xfdc
+
 
 #define INT_STATUS			0xfe0
 #define VI_STAT_FID_AUX			(0x00000001 << 31)
