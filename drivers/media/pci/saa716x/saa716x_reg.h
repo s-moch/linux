@@ -603,21 +603,141 @@
 
 /* I2C */
 #define RX_FIFO				0x000
+#define RX_BYTE				(0x000000ff <<  0)
+
 #define TX_FIFO				0x000
+#define STOP_BIT			(0x00000001 <<  9)
+#define START_BIT			(0x00000001 <<  8)
+#define TX_BYTE				(0x000000ff <<  0)
+
 #define I2C_STATUS			0x008
+#define TRANSMIT			(0x00000001 << 11)
+#define RECEIVE				(0x00000001 << 10)
+#define TRANSMIT_S_PROG			(0x00000001 <<  9)
+#define TRANSMIT_S_CLEAR		(0x00000001 <<  8)
+#define TRANSMIT_PROG			(0x00000001 <<  7)
+#define TRANSMIT_CLEAR			(0x00000001 <<  6)
+#define RECEIVE_PROG			(0x00000001 <<  5)
+#define RECEIVE_CLEAR			(0x00000001 <<  4)
+#define SDA_LINE			(0x00000001 <<  3)
+#define SCL_LINE			(0x00000001 <<  2)
+#define START_STOP_FLAG			(0x00000001 <<  1)
+#define MODE_STATUS			(0x00000001 <<  0)
+
 #define I2C_CONTROL			0x00c
+#define SCL_CONTROL			(0x00000001 <<  7)
+#define SDA_CONTROL			(0x00000001 <<  6)
+#define RECEIVE_PROTECT			(0x00000001 <<  5)
+#define RECEIVE_PRO_READ		(0x00000001 <<  4)
+#define TRANS_SELF_CLEAR		(0x00000001 <<  3)
+#define TRANS_S_SELF_CLEAR		(0x00000001 <<  2)
+#define SLAVE_ADDR_10BIT		(0x00000001 <<  1)
+#define RESET				(0x00000001 <<  0)
+
 #define CLOCK_DIVISOR_HIGH		0x010
+#define CLOCK_HIGH			(0x0000ffff <<  0)
+
 #define CLOCK_DIVISOR_LOW		0x014
+#define CLOCK_LOW			(0x0000ffff <<  0)
+
 #define RX_LEVEL			0x01c
+#define RECEIVE_RANGE			(0x0000007f <<  0)
+
 #define TX_LEVEL			0x020
+#define TRANSMIT_RANGE			(0x0000007f <<  0)
+
 #define SDA_HOLD			0x028
+#define HOLD_TIME			(0x0000007f <<  0)
 
 #define MODULE_CONF			0xfd4
 #define INT_CLR_ENABLE			0xfd8
+#define CLR_ENABLE_STFNF		(0x00000001 << 12)
+#define CLR_ENABLE_MTFNF		(0x00000001 << 11)
+#define CLR_ENABLE_RFDA			(0x00000001 << 10)
+#define CLR_ENABLE_RFF			(0x00000001 <<  9)
+#define CLR_ENABLE_STDR			(0x00000001 <<  8)
+#define CLR_ENABLE_MTDR			(0x00000001 <<  7)
+#define CLR_ENABLE_IBE			(0x00000001 <<  6)
+#define CLR_ENABLE_MSMC			(0x00000001 <<  5)
+#define CLR_ENABLE_SRSD			(0x00000001 <<  4)
+#define CLR_ENABLE_STSD			(0x00000001 <<  3)
+#define CLR_ENABLE_MTNA			(0x00000001 <<  2)
+#define CLR_ENABLE_MAF			(0x00000001 <<  1)
+#define CLR_ENABLE_MTD			(0x00000001 <<  0)
+
 #define INT_SET_ENABLE			0xfdc
+#define SET_ENABLE_STFNF		(0x00000001 << 12)
+#define SET_ENABLE_MTFNF		(0x00000001 << 11)
+#define SET_ENABLE_RFDA			(0x00000001 << 10)
+#define SET_ENABLE_RFF			(0x00000001 <<  9)
+#define SET_ENABLE_STDR			(0x00000001 <<  8)
+#define SET_ENABLE_MTDR			(0x00000001 <<  7)
+#define SET_ENABLE_IBE			(0x00000001 <<  6)
+#define SET_ENABLE_MSMC			(0x00000001 <<  5)
+#define SET_ENABLE_SRSD			(0x00000001 <<  4)
+#define SET_ENABLE_STSD			(0x00000001 <<  3)
+#define SET_ENABLE_MTNA			(0x00000001 <<  2)
+#define SET_ENABLE_MAF			(0x00000001 <<  1)
+#define SET_ENABLE_MTD			(0x00000001 <<  0)
+
 #define INT_STATUS			0xfe0
+#define INTERRUPT_STFNF			(0x00000001 << 12)
+#define INTERRUPT_MTFNF			(0x00000001 << 11)
+#define INTERRUPT_RFDA			(0x00000001 << 10)
+#define INTERRUPTE_RFF			(0x00000001 <<  9)
+#define SLAVE_INTERRUPT_STDR		(0x00000001 <<  8)
+#define MASTER_INTERRUPT_MTDR		(0x00000001 <<  7)
+#define I2C_ERROR_IBE			(0x00000001 <<  6)
+#define MODE_CHANGE_INTER_MSMC		(0x00000001 <<  5)
+#define SLAVE_RECEIVE_INTER_SRSD	(0x00000001 <<  4)
+#define SLAVE_TRANSMIT_INTER_STSD	(0x00000001 <<  3)
+#define ACK_INTER_MTNA			(0x00000001 <<  2)
+#define FAILURE_INTER_MAF		(0x00000001 <<  1)
+#define INTERRUPT_MTD			(0x00000001 <<  0)
+
 #define INT_ENABLE			0xfe4
+#define ENABLE_STFNF			(0x00000001 << 12)
+#define ENABLE_MTFNF			(0x00000001 << 11)
+#define ENABLE_RFDA			(0x00000001 << 10)
+#define ENABLE_RFF			(0x00000001 <<  9)
+#define ENABLE_STDR			(0x00000001 <<  8)
+#define ENABLE_MTDR			(0x00000001 <<  7)
+#define ENABLE_IBE			(0x00000001 <<  6)
+#define ENABLE_MSMC			(0x00000001 <<  5)
+#define ENABLE_SRSD			(0x00000001 <<  4)
+#define ENABLE_STSD			(0x00000001 <<  3)
+#define ENABLE_MTNA			(0x00000001 <<  2)
+#define ENABLE_MAF			(0x00000001 <<  1)
+#define ENABLE_MTD			(0x00000001 <<  0)
+
 #define INT_CLR_STATUS			0xfe8
+#define CLR_STATUS_STFNF		(0x00000001 << 12)
+#define CLR_STATUS_MTFNF		(0x00000001 << 11)
+#define CLR_STATUS_RFDA			(0x00000001 << 10)
+#define CLR_STATUS_RFF			(0x00000001 <<  9)
+#define CLR_STATUS_STDR			(0x00000001 <<  8)
+#define CLR_STATUS_MTDR			(0x00000001 <<  7)
+#define CLR_STATUS_IBE			(0x00000001 <<  6)
+#define CLR_STATUS_MSMC			(0x00000001 <<  5)
+#define CLR_STATUS_SRSD			(0x00000001 <<  4)
+#define CLR_STATUS_STSD			(0x00000001 <<  3)
+#define CLR_STATUS_MTNA			(0x00000001 <<  2)
+#define CLR_STATUS_MAF			(0x00000001 <<  1)
+#define CLR_STATIS_MTD			(0x00000001 <<  0)
+
 #define INT_SET_STATUS			0xfec
+#define SET_STATUS_STFNF		(0x00000001 << 12)
+#define SET_STATUS_MTFNF		(0x00000001 << 11)
+#define SET_STATUS_RFDA			(0x00000001 << 10)
+#define SET_STATUS_RFF			(0x00000001 <<  9)
+#define SET_STATUS_STDR			(0x00000001 <<  8)
+#define SET_STATUS_MTDR			(0x00000001 <<  7)
+#define SET_STATUS_IBE			(0x00000001 <<  6)
+#define SET_STATUS_MSMC			(0x00000001 <<  5)
+#define SET_STATUS_SRSD			(0x00000001 <<  4)
+#define SET_STATUS_STSD			(0x00000001 <<  3)
+#define SET_STATUS_MTNA			(0x00000001 <<  2)
+#define SET_STATUS_MAF			(0x00000001 <<  1)
+#define SET_STATIS_MTD			(0x00000001 <<  0)
 
 #endif /* __SAA716x_REG_H */
