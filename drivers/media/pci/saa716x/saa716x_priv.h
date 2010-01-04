@@ -151,6 +151,7 @@ struct saa716x_dev {
 	spinlock_t			gpio_lock;
 	/* DMA */
 
+	void				*priv;
 };
 
 /* PCI */
