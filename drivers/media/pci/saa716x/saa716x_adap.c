@@ -74,9 +74,12 @@ static int saa716x_frontend_power(struct saa716x_dev *saa716x, u8 DEV, u8 contro
 	struct saa716x_config *config		= saa716x->config;
 	struct saa716x_adap_config *adap_cfg	= &config->adap_config[DEV];
 
-	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Power ON", DEV);
-	saa716x_gpio_ctl(saa716x, adap_cfg->power_ctl);
-	saa716x_gpio_bits(saa716x, adap_cfg->power_ctl);
+	if (adap_cfg->power_ctl != 0)
+	{
+		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Power ON", DEV);
+		saa716x_gpio_ctl(saa716x, adap_cfg->power_ctl);
+		saa716x_gpio_bits(saa716x, adap_cfg->power_ctl);
+	}
 
 	return 0;
 }
@@ -87,9 +90,12 @@ static int saa716x_frontend_reset(struct saa716x_dev *saa716x, u8 DEV)
 	struct saa716x_config *config		= saa716x->config;
 	struct saa716x_adap_config *adap_cfg	= &config->adap_config[DEV];
 
-	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) RESET", DEV);
-	saa716x_gpio_ctl(saa716x, adap_cfg->reset_ctl);
-	saa716x_gpio_bits(saa716x, adap_cfg->reset_ctl);
+	if (adap_cfg->reset_ctl != 0)
+	{
+		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) RESET", DEV);
+		saa716x_gpio_ctl(saa716x, adap_cfg->reset_ctl);
+		saa716x_gpio_bits(saa716x, adap_cfg->reset_ctl);
+	}
 
 	return 0;
 }
