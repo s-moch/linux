@@ -12,6 +12,7 @@
 #include <linux/i2c.h>
 #include "saa716x_i2c.h"
 #include "saa716x_boot.h"
+#include "saa716x_cgu.h"
 
 #include "dvbdev.h"
 #include "dvb_demux.h"
@@ -144,6 +145,7 @@ struct saa716x_dev {
 	u32				i2c_rate; /* init time */
 
 	struct saa716x_adapter		saa716x_adap[2];
+	struct saa716x_cgu		cgu;
 
 	spinlock_t			gpio_lock;
 	/* DMA */
@@ -174,9 +176,6 @@ extern void saa716x_audio_exit(struct saa716x_dev *saa716x);
 /* Boot */
 extern int saa716x_core_boot(struct saa716x_dev *saa716x);
 extern int saa716x_jetpack_init(struct saa716x_dev *saa716x);
-
-/* CGU */
-extern int saa716x_cgu_init(struct saa716x_dev *saa716x);
 
 /* FGPI */
 extern void saa716x_fgpiint_disable(struct saa716x_dev *saa716x);
