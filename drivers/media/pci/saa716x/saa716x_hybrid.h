@@ -1,7 +1,10 @@
 #ifndef __SAA716x_HYBRID_H
 #define __SAA716x_HYBRID_H
- 
+
 #define TWINHAN_TECHNOLOGIES	0x1822
+#define AVERMEDIA		0x1461
+
 #define TWINHAN_VP_6090		0x0027
+#define AVERMEDIA_HC82		0x2355
 
 #endif /* __SAA716x_HYBRID_H */
