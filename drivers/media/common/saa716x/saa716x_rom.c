@@ -11,7 +11,7 @@ int i;
 static int eeprom_read_bytes(struct saa716x_dev *saa716x, u16 reg, u16 len, u8 *val)
 {
 	struct saa716x_i2c *i2c		= saa716x->i2c;
-	struct i2c_adapter *adapter	= &i2c[SAA716x_I2C_BUS_A].i2c_adapter;
+	struct i2c_adapter *adapter	= &i2c[SAA716x_I2C_BUS_B].i2c_adapter;
 
 	u8 b0[] = { MSB(reg), LSB(reg) };
 	int ret;
@@ -33,7 +33,7 @@ static int eeprom_read_bytes(struct saa716x_dev *saa716x, u16 reg, u16 len, u8 *
 static int saa716x_read_rombytes(struct saa716x_dev *saa716x, u16 reg, u16 len, u8 *val)
 {
 	struct saa716x_i2c *i2c		= saa716x->i2c;
-	struct i2c_adapter *adapter	= &i2c[SAA716x_I2C_BUS_A].i2c_adapter;
+	struct i2c_adapter *adapter	= &i2c[SAA716x_I2C_BUS_B].i2c_adapter;
 	struct i2c_msg msg[2];
 
 	u8 b0[2];
