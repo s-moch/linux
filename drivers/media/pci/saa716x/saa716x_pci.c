@@ -93,60 +93,51 @@ static irqreturn_t saa716x_pci_irq(int irq, void *dev_id)
 	struct saa716x_dev *saa716x	= (struct saa716x_dev *) dev_id;
 	struct saa716x_i2c *i2c_a	= &saa716x->i2c[0];
 	struct saa716x_i2c *i2c_b	= &saa716x->i2c[1];
-	u32 i2c_stat_0, i2c_stat_1, msi_stat_l, msi_stat_h;
-	u32 fgpi_stat_0, fgpi_stat_1, fgpi_stat_2, fgpi_stat_3;
-	u32 vi_stat_0, vi_stat_1;
-	u32 dcs_stat;
 
 	if (unlikely(saa716x == NULL)) {
 		printk("%s: saa716x=NULL", __func__);
 		return IRQ_NONE;
 	}
 
-	/* I2C_A/B */
-	i2c_stat_0 = SAA716x_RD(I2C_A, INT_STATUS);
-	i2c_stat_1 = SAA716x_RD(I2C_B, INT_STATUS);
-	SAA716x_WR(I2C_A, INT_CLR_STATUS, i2c_stat_0);
-	SAA716x_WR(I2C_B, INT_CLR_STATUS, i2c_stat_1);
+	dprintk(SAA716x_DEBUG, 1, "VI STAT 0=0x%02x 1=0x%02x, CTL 1=0x%02x 2=0x%02x",
+		SAA716x_RD(VI0, INT_STATUS),
+		SAA716x_RD(VI1, INT_STATUS),
+		SAA716x_RD(VI0, INT_ENABLE),
+		SAA716x_RD(VI1, INT_ENABLE));
 
-	/* MSI */
-	msi_stat_l = SAA716x_RD(MSI, MSI_INT_STATUS_L);
-	msi_stat_h = SAA716x_RD(MSI, MSI_INT_STATUS_H);
-	SAA716x_WR(MSI, MSI_INT_STATUS_CLR_L, msi_stat_l);
-	SAA716x_WR(MSI, MSI_INT_STATUS_CLR_H, msi_stat_h);
+	dprintk(SAA716x_DEBUG, 1, "FGPI STAT 0=0x%02x 1=0x%02x, CTL 1=0x%02x 2=0x%02x",
+		SAA716x_RD(FGPI0, INT_STATUS),
+		SAA716x_RD(FGPI1, INT_STATUS),
+		SAA716x_RD(FGPI0, INT_ENABLE),
+		SAA716x_RD(FGPI0, INT_ENABLE));
 
-	/* FGPI */
-	fgpi_stat_0 = SAA716x_RD(FGPI0, 0xfe0);
-	fgpi_stat_1 = SAA716x_RD(FGPI1, 0xfe0);
-	fgpi_stat_2 = SAA716x_RD(FGPI2, 0xfe0);
-	fgpi_stat_3 = SAA716x_RD(FGPI3, 0xfe0);
-	SAA716x_WR(FGPI0, 0xfe8, fgpi_stat_0);
-	SAA716x_WR(FGPI1, 0xfe8, fgpi_stat_1);
-	SAA716x_WR(FGPI2, 0xfe8, fgpi_stat_2);
-	SAA716x_WR(FGPI3, 0xfe8, fgpi_stat_3);
+	dprintk(SAA716x_DEBUG, 1, "FGPI STAT 2=0x%02x 3=0x%02x, CTL 2=0x%02x 3=0x%02x",
+		SAA716x_RD(FGPI2, INT_STATUS),
+		SAA716x_RD(FGPI3, INT_STATUS),
+		SAA716x_RD(FGPI2, INT_ENABLE),
+		SAA716x_RD(FGPI3, INT_ENABLE));
 
-	/* VI0/1 */
-	vi_stat_0 = SAA716x_RD(VI0, 0xfe0);
-	vi_stat_1 = SAA716x_RD(VI1, 0xfe0);
-	SAA716x_WR(VI0, 0xfe8, vi_stat_0);
-	SAA716x_WR(VI1, 0xfe8, vi_stat_1);
+	dprintk(SAA716x_DEBUG, 1, "AI STAT 0=0x%02x 1=0x%02x, CTL 0=0x%02x 1=0x%02x",
+		SAA716x_RD(AI0, AI_STATUS),
+		SAA716x_RD(AI1, AI_STATUS),
+		SAA716x_RD(AI0, AI_CTL),
+		SAA716x_RD(AI1, AI_CTL));
 
-	/* DCS */
-	dcs_stat = SAA716x_RD(DCS, 0xfe0);
-	SAA716x_WR(DCS, 0xfe8, dcs_stat);
+	dprintk(SAA716x_DEBUG, 1, "MSI STAT L=0x%02x H=0x%02x, CTL L=0x%02x H=0x%02x",
+		SAA716x_RD(MSI, MSI_INT_STATUS_L),
+		SAA716x_RD(MSI, MSI_INT_STATUS_H),
+		SAA716x_RD(MSI, MSI_INT_ENA_L),
+		SAA716x_RD(MSI, MSI_INT_ENA_H));
 
-	dprintk(SAA716x_DEBUG, 1, "SAA716x IRQ VI 0=0x%02x, 1=0x%02x", vi_stat_0, vi_stat_1);
+	dprintk(SAA716x_DEBUG, 1, "I2C STAT 0=0x%02x 1=0x%02x, CTL 0=0x%02x 1=0x%02x",
+		SAA716x_RD(I2C_A, INT_STATUS),
+		SAA716x_RD(I2C_B, INT_STATUS),
+		SAA716x_RD(I2C_A, INT_CLR_STATUS),
+		SAA716x_RD(I2C_B, INT_CLR_STATUS));
 
-	if (i2c_stat_0) {
-		dprintk(SAA716x_DEBUG, 1, "SAA716x IRQ, I2C_A=0x%02x", i2c_stat_0);
-		wake_up(&i2c_a->i2c_wq);
-	}
-
-	if (i2c_stat_1) {
-		dprintk(SAA716x_DEBUG, 1, "SAA716x IRQ, I2C_B=0x%02x", i2c_stat_1);
-		wake_up(&i2c_b->i2c_wq);
-	}
-
+	dprintk(SAA716x_DEBUG, 1, "DCS STAT=0x%02x, CTL=0x%02x",
+		SAA716x_RD(DCS, DCSC_INT_STATUS),
+		SAA716x_RD(DCS, DCSC_INT_ENABLE));
 
 	return IRQ_HANDLED;
 }
