@@ -81,10 +81,8 @@ static u32 saa716x_init_ptables(struct saa716x_dmabuf *dmabuf, int channel)
 
 	u32 dma_ch, config, i;
 
-	BUG_ON(dmabuf->mem_ptab_phys == NULL);
-
 	for (i = 0; i < FGPI_BUFFERS; i++)
-		BUG_ON(dmabuf[i].mem_ptab_phys);
+		BUG_ON((dmabuf[i].mem_ptab_phys == 0));
 
 	dma_ch = mmu_pta_base[channel]; /* DMA x */
 	config = mmu_dma_cfg[channel]; /* DMACONFIGx */
