@@ -1,8 +1,17 @@
 #include <linux/delay.h>
+
+#include <asm/irq.h>
+#include <linux/signal.h>
+#include <linux/sched.h>
+#include <linux/interrupt.h>
+
+#include <linux/i2c.h>
+
 #include "saa716x_reg.h"
-#include "saa716x_priv.h"
 #include "saa716x_i2c.h"
 #include "saa716x_msi.h"
+#include "saa716x_spi.h"
+#include "saa716x_priv.h"
 
 #define SAA716x_I2C_TXFAIL	(I2C_ERROR_IBE		| \
 				 I2C_ACK_INTER_MTNA	| \
