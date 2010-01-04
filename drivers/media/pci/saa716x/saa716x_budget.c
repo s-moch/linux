@@ -43,13 +43,6 @@ static int __devinit saa716x_budget_pci_probe(struct pci_dev *pdev, const struct
 		dprintk(SAA716x_ERROR, 1, "SAA716x PCI Initialization failed");
 		goto fail1;
 	}
-
-	err = saa716x_jetpack_init(saa716x);
-	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x Jetpack core initialization failed");
-		goto fail1;
-	}
-#if 0
 	err = saa716x_core_boot(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x Core Boot failed");
@@ -57,12 +50,17 @@ static int __devinit saa716x_budget_pci_probe(struct pci_dev *pdev, const struct
 	}
 	dprintk(SAA716x_DEBUG, 1, "SAA716x Core Boot Success");
 
+	err = saa716x_jetpack_init(saa716x);
+	if (err) {
+		dprintk(SAA716x_ERROR, 1, "SAA716x Jetpack core initialization failed");
+		goto fail1;
+	}
 	err = saa716x_i2c_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x I2C Initialization failed");
 		goto fail2;
 	}
-#endif
+
 	return 0;
 
 fail2:
@@ -98,7 +96,7 @@ static int load_config_vp1028(struct saa716x_dev *saa716x)
 static struct saa716x_config saa716x_vp1028_config = {
 	.model_name		= SAA716x_MODEL_TWINHAN_VP1028,
 	.dev_type		= SAA716x_DEV_TWINHAN_VP1028,
-	.boot_mode		= SAA716x_EXT_BOOT,
+	.boot_mode		= SAA716x_CGU_BOOT,
 	.load_config		= &load_config_vp1028,
 };
 
