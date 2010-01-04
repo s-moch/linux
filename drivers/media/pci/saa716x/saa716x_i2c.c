@@ -64,12 +64,12 @@ static int saa716x_xfer_wait(struct saa716x_i2c *i2c, u32 I2C_DEV)
 
 	stat = SAA716x_EPRD(I2C_DEV, I2C_STATUS);
 	while (! (stat & I2C_TRANSMIT_CLEAR)) {
-		dprintk(SAA716x_ERROR, 1, "Bus (%d) Waiting for TX FIFO to be empty (status=%02x <%s>)",
+		dprintk(SAA716x_ERROR, 0, "\n        Bus (%d) Waiting for TX FIFO to be empty (status=%02x <%s>)",
 			I2C_DEV, stat, state[stat]);
 
 		msleep(5);
 		timeout++;
-		if (timeout > 500) {
+		if (timeout > 200) {
 			dprintk(SAA716x_ERROR, 1, "TX FIFO empty timeout");
 			saa716x_term_xfer(i2c, I2C_DEV);
 			err = -EIO;
@@ -232,10 +232,10 @@ static int saa716x_i2c_read(struct saa716x_i2c *i2c, const struct i2c_msg *msg, 
 	u8 rxd;
 	int i, err = 0;
 
-	dprintk(SAA716x_DEBUG, 0, "        %s: Address=[0x%02x] <R>[ ", __func__, msg->addr);
+	dprintk(SAA716x_DEBUG, 0, "        %s: Address=[0x%02x] <R>[ ", __func__, msg->addr << 1);
 
 	/* Write */
-	err = saa716x_i2c_send(i2c, I2C_DEV, I2C_START_BIT | msg->addr | 0x01);
+	err = saa716x_i2c_send(i2c, I2C_DEV, I2C_START_BIT | msg->addr << 1 | 0x01);
 	if (err < 0) {
 		dprintk(SAA716x_ERROR, 1, "Transfer failed");
 		err = -EIO;
@@ -292,8 +292,8 @@ static int saa716x_i2c_write(struct saa716x_i2c *i2c, const struct i2c_msg *msg,
 	/* Clear INT status before first byte */
 	SAA716x_EPWR(I2C_DEV, INT_CLR_STATUS, 0x1fff);
 
-	dprintk(SAA716x_DEBUG, 0, "        %s: Address=[0x%02x] <W>[ ", __func__, msg->addr);
-	err = saa716x_i2c_send(i2c, I2C_DEV, I2C_START_BIT | msg->addr);
+	dprintk(SAA716x_DEBUG, 0, "        %s: Address=[0x%02x] <W>[ ", __func__, msg->addr << 1);
+	err = saa716x_i2c_send(i2c, I2C_DEV, I2C_START_BIT | msg->addr << 1);
 	if (err < 0) {
 		dprintk(SAA716x_ERROR, 1, "Transfer failed");
 		err = -EIO;
