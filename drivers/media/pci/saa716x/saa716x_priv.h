@@ -11,6 +11,7 @@
 #include <linux/ioport.h>
 #include <linux/i2c.h>
 #include "saa716x_i2c.h"
+#include "saa716x_boot.h"
 
 #define SAA716x_ERROR		0
 #define SAA716x_NOTICE		1
@@ -56,12 +57,6 @@
 struct saa716x_dev;
 
 typedef int (*saa716x_load_config_t)(struct saa716x_dev *saa716x);
-
-enum saa716x_boot_mode {
-	SAA716x_EXT_BOOT = 1,
-	SAA716x_INT_BOOT,
-	SAA716x_CGU_BOOT,
-};
 
 struct saa716x_config {
 	char				*model_name;
