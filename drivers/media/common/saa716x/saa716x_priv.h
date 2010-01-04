@@ -157,6 +157,7 @@ struct saa716x_dev {
 	/* DMA */
 
 	u32				id_offst;
+	u32				id_len;
 	void				*priv;
 };
 
