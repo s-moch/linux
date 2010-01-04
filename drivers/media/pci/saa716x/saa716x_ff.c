@@ -20,10 +20,16 @@
 #include <linux/interrupt.h>
 
 #include <linux/i2c.h>
+
+#include "saa716x_mod.h"
+
+#include "saa716x_phi_reg.h"
+#include "saa716x_spi_reg.h"
+#include "saa716x_msi_reg.h"
+
 #include "saa716x_vip.h"
 #include "saa716x_aip.h"
 #include "saa716x_msi.h"
-#include "saa716x_reg.h"
 #include "saa716x_ff.h"
 #include "saa716x_adap.h"
 #include "saa716x_gpio.h"
