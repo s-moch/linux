@@ -88,6 +88,7 @@ struct saa716x_config {
 	u8				decoder_addr;
 
 	int (*frontend_attach)(struct saa716x_adapter *adapter, int count);
+	irqreturn_t (*irq_handler)(int irq, void *dev_id);
 };
 
 struct saa716x_adapter {
