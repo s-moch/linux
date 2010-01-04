@@ -322,7 +322,7 @@ static int saa716x_i2c_send(struct saa716x_i2c *i2c, u32 I2C_DEV, u32 data)
 	i2c->stat_tx_done = reg;
 
 	/* Check for data write */
-	for (i = 0; i < 100; i++) {
+	for (i = 0; i < 10; i++) {
 		/* TODO! check for hotplug devices */
 
 		if (!(reg & I2C_TRANSMIT_CLEAR)) {
@@ -334,7 +334,7 @@ static int saa716x_i2c_send(struct saa716x_i2c *i2c, u32 I2C_DEV, u32 data)
 	}
 
 	if (!(reg & I2C_TRANSMIT_CLEAR)) {
-		dprintk(SAA716x_ERROR, 1, "TXFIFO not empty after Timeout!");
+		dprintk(SAA716x_ERROR, 1, "TXFIFO not empty after Timeout, tried %d loops, %d mS!", i, i * 10);
 		err = saa716x_i2c_hwinit(i2c, I2C_DEV);
 		if (err < 0) {
 			dprintk(SAA716x_ERROR, 1, "Error Reinit");
