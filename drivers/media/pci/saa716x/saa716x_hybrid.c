@@ -179,6 +179,9 @@ static struct saa716x_config saa716x_averhc82_config = {
 	.boot_mode		= SAA716x_EXT_BOOT,
 	.load_config		= &load_config_averhc82,
 	.adapters		= 1,
+	.demodulator_addr	= 0x1f,
+	.tuner_addr		= 0xc0,
+	.decoder_addr		= 0x42,
 };
 
 static struct pci_device_id saa716x_hybrid_pci_table[] = {
