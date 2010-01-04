@@ -49,9 +49,24 @@ static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct
 		dprintk(SAA716x_ERROR, 1, "SAA716x Jetpack core Initialization failed");
 		goto fail1;
 	}
+#if 0
+	err = saa716x_core_boot(saa716x);
+	if (err) {
+		dprintk(SAA716x_ERROR, 1, "SAA716x Core Boot failed");
+		goto fail2;
+	}
+	dprintk(SAA716x_DEBUG, 1, "SAA716x Core Boot Success");
 
+	err = saa716x_i2c_init(saa716x);
+	if (err) {
+		dprintk(SAA716x_ERROR, 1, "SAA716x I2C Initialization failed");
+		goto fail2;
+	}
+#endif
 	return 0;
 
+fail2:
+	saa716x_pci_exit(saa716x);
 fail1:
 	kfree(saa716x);
 
