@@ -212,6 +212,34 @@ static irqreturn_t saa716x_budget_pci_irq(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+static int load_config_vp3071(struct saa716x_dev *saa716x)
+{
+	int ret = 0;
+
+	return ret;
+}
+
+#define SAA716x_MODEL_TWINHAN_VP3071	"Twinhan/Azurewave VP-3071"
+#define SAA716x_DEV_TWINHAN_VP3071	"2x DVB-T"
+
+static int saa716x_vp3071_frontend_attach(struct saa716x_adapter *adapter, int count)
+{
+	struct saa716x_dev *saa716x = adapter->saa716x;
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
+
+	return -ENODEV;
+}
+
+static struct saa716x_config saa716x_vp3071_config = {
+	.model_name		= SAA716x_MODEL_TWINHAN_VP3071,
+	.dev_type		= SAA716x_DEV_TWINHAN_VP3071,
+	.boot_mode		= SAA716x_EXT_BOOT,
+	.load_config		= &load_config_vp3071,
+	.adapters		= 2,
+	.frontend_attach	= saa716x_vp3071_frontend_attach,
+	.irq_handler		= saa716x_budget_pci_irq,
+};
 
 static int load_config_vp1028(struct saa716x_dev *saa716x)
 {
@@ -306,6 +334,7 @@ static struct saa716x_config saa716x_knc1_duals2_config = {
 static struct pci_device_id saa716x_budget_pci_table[] = {
 
 	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_1028, SAA7160, &saa716x_vp1028_config), /* VP-1028 */
+	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_3071, SAA7160, &saa716x_vp3071_config), /* VP-3071 */
 	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_6002, SAA7160, &saa716x_vp6002_config), /* VP-6002 */
 	MAKE_ENTRY(KNC_One,		 KNC_Dual_S2,	  SAA7160, &saa716x_knc1_duals2_config),
 	{
