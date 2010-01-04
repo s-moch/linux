@@ -3,6 +3,11 @@
 
 #define SAA716x_I2C_ADAPTERS	2
 
+#define SAA716x_I2C_ADAPTER(__dev) ((	\
+	(__dev == 1) ?			\
+		"SAA716x I2C Core 1" :	\
+		"SAA716x I2C Core 0"))
+
 struct saa716x_dev;
 
 enum saa716x_i2c_rate {
@@ -14,7 +19,7 @@ struct saa716x_i2c {
 	struct i2c_adapter		i2c_adapter;
 	struct mutex			i2c_lock;
 	struct saa716x_dev		*saa716x;
-	u32				i2c_dev;
+	u8				i2c_dev;
 
 	enum saa716x_i2c_rate		i2c_rate; /* run time */
 	wait_queue_head_t		i2c_wq;
