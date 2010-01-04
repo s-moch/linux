@@ -4,45 +4,73 @@
 
 static int saa716x_ext_boot(struct saa716x_dev *saa716x)
 {
-	/* Write to GREG Subsystem ID */
-	SAA716x_WR(GREG, GREG_SUBSYS_CONFIG, saa716x->pdev->subsystem_vendor);
+	/* Write GREG boot_ready to 0
+	 * DW_0 = 0x0001_2018
+	 * DW_1 = 0x0000_0000
+	 */
+	SAA716x_WR(GREG, GREG_RSTU_CTRL, 0x00000000);
 
-	/* GREG_JETSTR_CONFIG_1 */
-	SAA716x_WR(GREG, GREG_MSI_BAR_PMCSR, GREG_MSI_MM_CAP32 | GREG_BAR_WIDTH_20 | GREG_MSI_MM_CAP32);
+	/* Clear VI0 interrupt
+	 * DW_2 = 0x0000_0fe8
+	 * DW_3 = 0x0000_03ff
+	 */
+	SAA716x_WR(VI0, INT_CLR_STATUS, 0x000003ff);
 
-	/* GREG_JETSTR_CONFIG_2 */
-	SAA716x_WR(GREG, GREG_PMCSR_DATA_1, 0);
+	/* Clear VI1 interrupt
+	 * DW_4 = 0x0000_1fe8
+	 * DW_5 = 0x0000_03ff
+	 */
+	SAA716x_WR(VI1, INT_CLR_STATUS, 0x000003ff);
 
-	/* GREG_JETSTR_CONFIG_3 */
-	SAA716x_WR(GREG, GREG_PMCSR_DATA_2, 0);
+	/* CLear FGPI0 interrupt
+	 * DW_6 = 0x0000_2fe8
+	 * DW_7 = 0x0000_007f
+	 */
+	SAA716x_WR(FGPI0, INT_CLR_STATUS, 0x0000007f);
 
-	/* Release GREG Resets */
-	SAA716x_WR(GREG, GREG_RSTU_CTRL, GREG_IP_RST_RELEASE | GREG_ADAPTER_RST_RELEASE | GREG_PCIE_CORE_RST_RELEASE);
+	/* Clear FGPI1 interrupt
+	 * DW_8 = 0x0000_3fe8
+	 * DW_9 = 0x0000_007f
+	 */
+	SAA716x_WR(FGPI1, INT_CLR_STATUS, 0x0000007f);
 
-	/* Disable Logical A/V channels */
-	SAA716x_WR(GREG, GPIO_OEN, 0xfcffffff);
+	/* Clear FGPI2 interrupt
+	 * DW_10 = 0x0000_4fe8
+	 * DW_11 = 0x0000_007f
+	 */
+	SAA716x_WR(FGPI2, INT_CLR_STATUS, 0x0000007f);
 
-	/* Disable all clocks except PHY, Adapter, DCSN and Boot */
-	SAA716x_WR(CGU, CGU_PCR_0_3, 0x00000006);
-	SAA716x_WR(CGU, CGU_PCR_0_4, 0x00000006);
-	SAA716x_WR(CGU, CGU_PCR_0_7, 0x00000006);
-	SAA716x_WR(CGU, CGU_PCR_2_1, 0x00000006);
-	SAA716x_WR(CGU, CGU_PCR_3_2, 0x00000006);
-	SAA716x_WR(CGU, CGU_PCR_4_1, 0x00000006);
-	SAA716x_WR(CGU, CGU_PCR_5,   0x00000006);
-	SAA716x_WR(CGU, CGU_PCR_6,   0x00000006);
-	SAA716x_WR(CGU, CGU_PCR_7,   0x00000006);
-	SAA716x_WR(CGU, CGU_PCR_8,   0x00000006);
-	SAA716x_WR(CGU, CGU_PCR_9,   0x00000006);
-	SAA716x_WR(CGU, CGU_PCR_10,  0x00000006);
-	SAA716x_WR(CGU, CGU_PCR_11,  0x00000006);
-	SAA716x_WR(CGU, CGU_PCR_12,  0x00000006);
+	/* Clear FGPI3 interrupt
+	 * DW_12 = 0x0000_5fe8
+	 * DW_13 = 0x0000_007f
+	 */
+	SAA716x_WR(FGPI3, INT_CLR_STATUS, 0x0000007f);
 
-	/* Set GREG Boot Ready */
-	SAA716x_WR(GREG, GREG_RSTU_CTRL, GREG_BOOT_READY);
+	/* Clear AI0 interrupt
+	 * DW_14 = 0x0000_6020
+	 * DW_15 = 0x0000_000f
+	 */
+	SAA716x_WR(AI0, AI_INT_ACK, 0x0000000f);
 
-	/* Disable GREG Clock */
-	SAA716x_WR(CGU, CGU_PCR_0_6, 0x00000006);
+	/* Clear AI1 interrupt
+	 * DW_16 = 0x0000_7020
+	 * DW_17 = 0x0000_200f
+	 */
+	SAA716x_WR(AI1, AI_INT_ACK, 0x0000000f);
+
+	/* Set GREG boot_ready bit to 1
+	 * DW_18 = 0x0001_2018
+	 * DW_19 = 0x0000_2000
+	 */
+	SAA716x_WR(GREG, GREG_RSTU_CTRL, 0x00002000);
+
+	/* End of Boot script command
+	 * DW_20 = 0x0000_0006
+	 * Where to write this value ??
+	 * This seems very odd an address to trigger the
+	 * Boot Control State Machine !
+	 */
+	SAA716x_WR(VI0, 0x00000006, 0xffffffff);
 
 	return 0;
 }
@@ -165,16 +193,15 @@ int saa716x_core_boot(struct saa716x_dev *saa716x)
 	switch (config->boot_mode) {
 	case SAA716x_EXT_BOOT:
 		dprintk(SAA716x_DEBUG, 1, "Using External Boot from config");
+		saa716x_cgu_init(saa716x);
 		saa716x_ext_boot(saa716x);
 		break;
 	case SAA716x_INT_BOOT:
 		dprintk(SAA716x_DEBUG, 1, "Using Internal Boot from config");
 		saa716x_int_boot(saa716x);
 		break;
-	case SAA716x_CGU_BOOT:
 	default:
-		dprintk(SAA716x_ERROR, 1, "Using CGU Setup");
-		saa716x_cgu_init(saa716x);
+		dprintk(SAA716x_ERROR, 1, "Unknown configuration %d", config->boot_mode);
 		break;
 	}
 
