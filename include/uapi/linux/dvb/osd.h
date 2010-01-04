@@ -178,4 +178,20 @@ typedef struct osd_cap_s {
 #define OSD_SEND_CMD            _IOW('o', 160, osd_cmd_t)
 #define OSD_GET_CAPABILITY      _IOR('o', 161, osd_cap_t)
 
+typedef struct osd_raw_cmd_s {
+	void __user *cmd_data;
+	int cmd_len;
+	void __user *result_data;
+	int result_len;
+} osd_raw_cmd_t;
+
+typedef struct osd_raw_data_s {
+	void __user *data_buffer;
+	int data_length;
+	int data_handle;
+} osd_raw_data_t;
+
+#define OSD_RAW_CMD            _IOWR('o', 162, osd_raw_cmd_t)
+#define OSD_RAW_DATA           _IOWR('o', 163, osd_raw_data_t)
+
 #endif
