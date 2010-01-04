@@ -13,6 +13,8 @@
 #include "saa716x_i2c.h"
 #include "saa716x_boot.h"
 #include "saa716x_cgu.h"
+#include "saa716x_dma.h"
+#include "saa716x_fgpi.h"
 
 #include "dvbdev.h"
 #include "dvb_demux.h"
@@ -155,6 +157,8 @@ struct saa716x_dev {
 
 	spinlock_t			gpio_lock;
 	/* DMA */
+
+	struct saa716x_fgpi_stream_port	fgpi[4];
 
 	u32				id_offst;
 	u32				id_len;
