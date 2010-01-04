@@ -28,6 +28,7 @@
 #define PHI_1_BASE		0x0000
 #define PHI_1_APERTURE		0xfffc
 
+struct saa716x_dev;
 
 extern int saa716x_init_phi(struct saa716x_dev *saa716x, u32 port, u8 slave);
 extern int saa716x_phi_init(struct saa716x_dev *saa716x);

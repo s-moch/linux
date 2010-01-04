@@ -1,4 +1,7 @@
+#include <linux/kernel.h>
+
 #include "saa716x_reg.h"
+#include "saa716x_spi.h"
 #include "saa716x_priv.h"
 
 void saa716x_vipint_disable(struct saa716x_dev *saa716x)
