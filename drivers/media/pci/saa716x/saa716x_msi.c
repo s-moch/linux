@@ -6,7 +6,7 @@
 
 int saa716x_msi_init(struct saa716x_dev *saa716x)
 {
-	u32 ena_l, ena_h, sta_l, sta_h;
+	u32 ena_l, ena_h, sta_l, sta_h, mid;
 	int i;
 	u32 MSI_CONFIG_REG[49] = {
 		MSI_CONFIG0,
@@ -59,6 +59,13 @@ int saa716x_msi_init(struct saa716x_dev *saa716x)
 		MSI_CONFIG47,
 		MSI_CONFIG48
 	};
+
+	dprintk(SAA716x_DEBUG, 1, "Initializing MSI ..");
+
+	/* get module id & version */
+	mid = SAA716x_EPRD(MSI, MSI_MODULE_ID);
+	if (mid != 0x30100)
+		dprintk(SAA716x_ERROR, 1, "MSI Id<%04x> is not supported", mid);
 
 	/* let HW take care of MSI race */
 	SAA716x_EPWR(MSI, MSI_DELAY_TIMER, 0x0);
