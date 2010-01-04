@@ -25,12 +25,12 @@ static int saa716x_allocate_ptable(struct saa716x_dmabuf *dmabuf)
 		return -ENOMEM;
 	}
 
-	*dmabuf->mem_ptab_phys = dma_map_single(&pdev->dev,
+	dmabuf->mem_ptab_phys = dma_map_single(&pdev->dev,
 						dmabuf->mem_ptab_virt,
 						SAA716x_PAGE_SIZE,
 						DMA_TO_DEVICE);
 
-	if (dmabuf->mem_ptab_phys == NULL) {
+	if (dmabuf->mem_ptab_phys == 0) {
 		dprintk(SAA716x_ERROR, 1, "ERROR: map memory failed !");
 		return -ENOMEM;
 	}
@@ -49,13 +49,13 @@ static void saa716x_free_ptable(struct saa716x_dmabuf *dmabuf)
 	dprintk(SAA716x_DEBUG, 1, "SG Page table free");
 
 	/* free physical PCI memory */
-	if (dmabuf->mem_ptab_phys != NULL) {
+	if (dmabuf->mem_ptab_phys != 0) {
 		dma_unmap_single(&pdev->dev,
-				 *dmabuf->mem_ptab_phys,
+				 dmabuf->mem_ptab_phys,
 				 SAA716x_PAGE_SIZE,
 				 DMA_TO_DEVICE);
 
-		dmabuf->mem_ptab_phys = NULL;
+		dmabuf->mem_ptab_phys = 0;
 	}
 
 	/* free kernel memory */
@@ -169,13 +169,13 @@ static void saa716x_dmabuf_sgpagefill(struct saa716x_dmabuf *dmabuf, struct scat
 	dprintk(SAA716x_DEBUG, 1, "SG page fill");
 
 	/* make page writable for the PC */
-	dma_sync_single_for_cpu(&pdev->dev, *dmabuf->mem_ptab_phys, SAA716x_PAGE_SIZE, DMA_TO_DEVICE);
+	dma_sync_single_for_cpu(&pdev->dev, dmabuf->mem_ptab_phys, SAA716x_PAGE_SIZE, DMA_TO_DEVICE);
 	page = dmabuf->mem_ptab_virt;
 
 	/* create page table */
 	for (i = 0; i < pages; i++) {
 		sg_cur = &sg_list[i];
-		BUG_ON(!((sg_cur->length + sg_cur->offset) % SAA716x_PAGE_SIZE));
+		BUG_ON(!(((sg_cur->length + sg_cur->offset) % SAA716x_PAGE_SIZE) == 0));
 
 		if (i == 0)
 			dmabuf->offset = (sg_cur->length + sg_cur->offset) % SAA716x_PAGE_SIZE;
@@ -189,7 +189,7 @@ static void saa716x_dmabuf_sgpagefill(struct saa716x_dmabuf *dmabuf, struct scat
 				continue;
 			}
 
-			addr = ((u8 )sg_dma_address(sg_cur)) + (j * SAA716x_PAGE_SIZE) - sg_cur->offset;
+			addr = ((u64)sg_dma_address(sg_cur)) + (j * SAA716x_PAGE_SIZE) - sg_cur->offset;
 
 			BUG_ON(addr == 0);
 			page[k * 2] = (u32 )addr; /* Low */
@@ -206,7 +206,7 @@ static void saa716x_dmabuf_sgpagefill(struct saa716x_dmabuf *dmabuf, struct scat
 
 	/* make "page table" page writable for the PC */
 	dma_sync_single_for_device(&pdev->dev,
-				   *dmabuf->mem_ptab_phys,
+				   dmabuf->mem_ptab_phys,
 				   SAA716x_PAGE_SIZE,
 				   DMA_TO_DEVICE);
 
@@ -256,7 +256,7 @@ int saa716x_dmabuf_alloc(struct saa716x_dev *saa716x, struct saa716x_dmabuf *dma
 
 	dmabuf->mem_virt_noalign	= NULL;
 	dmabuf->mem_virt		= NULL;
-	dmabuf->mem_ptab_phys		= NULL;
+	dmabuf->mem_ptab_phys		= 0;
 	dmabuf->mem_ptab_virt		= NULL;
 
 	dmabuf->list_len		= 0;
@@ -291,4 +291,16 @@ err2:
 	saa716x_free_ptable(dmabuf);
 err1:
 	return ret;
+}
+
+void saa716x_dmabuf_free(struct saa716x_dev *saa716x, struct saa716x_dmabuf *dmabuf)
+{
+	struct pci_dev *pdev		= saa716x->pdev;
+
+	BUG_ON(saa716x == NULL);
+	BUG_ON(dmabuf == NULL);
+
+	dma_unmap_sg(&pdev->dev, dmabuf->sg_list, dmabuf->list_len, DMA_FROM_DEVICE);
+	saa716x_dmabuf_sgfree(dmabuf);
+	saa716x_free_ptable(dmabuf);
 }
