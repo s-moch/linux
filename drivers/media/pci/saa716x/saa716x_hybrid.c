@@ -367,6 +367,14 @@ static struct saa716x_config saa716x_averh788_config = {
 	.decoder_addr		= 0x42,
 	.frontend_attach	= saa716x_averh88_frontend_attach,
 	.irq_handler		= saa716x_hybrid_pci_irq,
+
+	.adap_config		= {
+		{ /* Adapter 0 */
+			.power_ctl	= GPIO_14,
+			.reset_ctl	= GPIO_15,
+		}
+	}
+
 };
 
 static struct pci_device_id saa716x_hybrid_pci_table[] = {
