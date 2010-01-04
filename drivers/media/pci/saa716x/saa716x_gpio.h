@@ -7,9 +7,12 @@
 #define AV_INTR_B	GPIO_01
 #define AV_INTR_A	GPIO_00
 
+struct saa716x_dev;
+
 extern u32 saa716x_gpio_rd(struct saa716x_dev *saa716x);
 extern void saa716x_gpio_wr(struct saa716x_dev *saa716x, u32 data);
-extern void saa716x_gpio_ctl(struct saa716x_dev *saa716x, u32 out);
+extern void saa716x_gpio_ctl(struct saa716x_dev *saa716x, u32 mask, u32 bits);
+
 extern void saa716x_gpio_bits(struct saa716x_dev *saa716x, u32 bits);
 
 extern void saa716x_gpio_set_output(struct saa716x_dev *saa716x, int gpio);
