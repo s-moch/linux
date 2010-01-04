@@ -2,6 +2,7 @@
 #include "saa716x_reg.h"
 #include "saa716x_priv.h"
 #include "saa716x_i2c.h"
+#include "saa716x_msi.h"
 
 #define SAA716x_I2C_TXFAIL	(I2C_ERROR_IBE		| \
 				 I2C_ACK_INTER_MTNA	| \
@@ -30,6 +31,32 @@ static char* state[] = {
 	"SEQErr",
 	"STErr"
 };
+
+static irqreturn_t saa716x_i2c_irq(int irq, void *dev_id)
+{
+	struct saa716x_dev *saa716x	= (struct saa716x_dev *) dev_id;
+	struct saa716x_i2c *i2c_a	= &saa716x->i2c[0];
+	struct saa716x_i2c *i2c_b	= &saa716x->i2c[1];
+
+	if (unlikely(saa716x == NULL)) {
+		printk("%s: saa716x=NULL", __func__);
+		return IRQ_NONE;
+	}
+	dprintk(SAA716x_DEBUG, 1, "MSI STAT L=<%02x> H=<%02x>, CTL L=<%02x> H=<%02x>",
+		SAA716x_EPRD(MSI, MSI_INT_STATUS_L),
+		SAA716x_EPRD(MSI, MSI_INT_STATUS_H),
+		SAA716x_EPRD(MSI, MSI_INT_ENA_L),
+		SAA716x_EPRD(MSI, MSI_INT_ENA_H));
+
+	dprintk(SAA716x_DEBUG, 1, "I2C STAT 0=<%02x> 1=<%02x>, CTL 0=<%02x> 1=<%02x>",
+		SAA716x_EPRD(I2C_A, INT_STATUS),
+		SAA716x_EPRD(I2C_B, INT_STATUS),
+		SAA716x_EPRD(I2C_A, INT_CLR_STATUS),
+		SAA716x_EPRD(I2C_B, INT_CLR_STATUS));
+
+	return IRQ_HANDLED;
+}
+
 
 static void saa716x_term_xfer(struct saa716x_i2c *i2c, u32 I2C_DEV)
 {
@@ -378,11 +405,30 @@ static const struct i2c_algorithm saa716x_algo = {
 
 #define I2C_HW_B_SAA716x		0x12
 
+struct saa716x_i2cvec {
+	u32			vector;
+	enum saa716x_edge	edge;
+	irqreturn_t (*handler)(int irq, void *dev_id);
+};
+
+static const struct saa716x_i2cvec i2c_vec[] = {
+	{
+		.vector		= I2CINT_0,
+		.edge		= SAA716x_EDGE_RISING,
+		.handler	= saa716x_i2c_irq
+	}, {
+		.vector 	= I2CINT_1,
+		.edge		= SAA716x_EDGE_RISING,
+		.handler	= saa716x_i2c_irq
+	}
+};
+
 int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 {
 	struct pci_dev *pdev		= saa716x->pdev;
 	struct saa716x_i2c *i2c		= saa716x->i2c;
 	struct i2c_adapter *adapter	= NULL;
+
 	int i, err = 0;
 
 	u32 I2C_DEV[2];
@@ -537,6 +583,12 @@ int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 				goto exit;
 			}
 
+			saa716x_add_irqvector(saa716x,
+					      i2c_vec[i].vector,
+					      i2c_vec[i].edge,
+					      i2c_vec[i].handler,
+					      SAA716x_I2C_ADAPTER(i));
+
 			i2c->saa716x = saa716x;
 		}
 		i2c++;
@@ -561,6 +613,9 @@ int __devexit saa716x_i2c_exit(struct saa716x_dev *saa716x)
 	for (i = 0; i < SAA716x_I2C_ADAPTERS; i++) {
 
 		adapter = &i2c->i2c_adapter;
+
+		saa716x_remove_irqvector(saa716x, i2c_vec[i].vector);
+
 		dprintk(SAA716x_DEBUG, 1, "Removing adapter (%d) %s", i, adapter->name);
 
 		err = i2c_del_adapter(adapter);
