@@ -69,8 +69,10 @@
 #define SAA716x_MSI_MAX_VECTORS			16
 
 struct saa716x_dev;
+struct saa716x_adapter;
 
 typedef int (*saa716x_load_config_t)(struct saa716x_dev *saa716x);
+typedef int (*saa716x_frontend_attach)(struct saa716x_adapter *adapter);
 
 struct saa716x_config {
 	char				*model_name;
@@ -85,6 +87,9 @@ struct saa716x_config {
 	u8				demodulator_addr;
 	u8				tuner_addr;
 	u8				decoder_addr;
+
+	saa716x_frontend_attach		frontend_attach_a[8];
+	saa716x_frontend_attach		frontend_attach_b[8];
 };
 
 struct saa716x_adapter {
