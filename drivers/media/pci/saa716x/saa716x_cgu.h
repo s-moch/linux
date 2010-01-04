@@ -55,5 +55,7 @@ struct saa716x_cgu {
 };
 
 extern int saa716x_cgu_init(struct saa716x_dev *saa716x);
+extern int saa716x_set_clk_internal(struct saa716x_dev *saa716x, u32 port);
+extern int saa716x_set_clk_external(struct saa716x_dev *saa716x, u32 port);
 
 #endif /* __SAA716x_CGU_H */
