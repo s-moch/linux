@@ -135,8 +135,8 @@ static struct saa716x_config saa716x_nemo_config = {
 
 static struct pci_device_id saa716x_hybrid_pci_table[] = {
 
-	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_6090, SAA7160, &saa716x_vp6090_config),
-	MAKE_ENTRY(PCI_ANY_ID, PCI_ANY_ID, SAA7160, &saa716x_nemo_config),
+	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_6090, SAA7162, &saa716x_vp6090_config),
+	MAKE_ENTRY(NXP_SEMICONDUCTOR, PCI_ANY_ID, SAA7160, &saa716x_nemo_config),
 };
 MODULE_DEVICE_TABLE(pci, saa716x_hybrid_pci_table);
 
