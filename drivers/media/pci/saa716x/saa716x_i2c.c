@@ -3,14 +3,14 @@
 #include "saa716x_priv.h"
 
 #define SAA716x_I2C_TXFAIL	(I2C_ERROR_IBE		| \
-				 ACK_INTER_MTNA		| \
-				 FAILURE_INTER_MAF)
+				 I2C_ACK_INTER_MTNA	| \
+				 I2C_FAILURE_INTER_MAF)
 
-#define SAA716x_I2C_TXBUSY	(TRANSMIT		| \
-				 TRANSMIT_S_PROG)
+#define SAA716x_I2C_TXBUSY	(I2C_TRANSMIT		| \
+				 I2C_TRANSMIT_S_PROG)
 
-#define SAA716x_I2C_RXBUSY	(RECEIVE		| \
-				 RECEIVE_CLEAR)
+#define SAA716x_I2C_RXBUSY	(I2C_RECEIVE		| \
+				 I2C_RECEIVE_CLEAR)
 
 static void saa716x_term_xfer(struct saa716x_i2c *i2c, u32 I2C_DEV)
 {
@@ -36,7 +36,7 @@ static int saa716x_xfer_wait(struct saa716x_i2c *i2c, u32 I2C_DEV)
 	int err = 0, timeout = 0;
 
 	if (wait_event_timeout(i2c->i2c_wq,
-			       i2c->int_stat & INTERRUPT_MTD,
+			       i2c->int_stat & I2C_INTERRUPT_MTD,
 			       msecs_to_jiffies(100) == -ERESTARTSYS)) {
 
 		dprintk(SAA716x_ERROR, 1, "Master transaction failed");
@@ -44,7 +44,7 @@ static int saa716x_xfer_wait(struct saa716x_i2c *i2c, u32 I2C_DEV)
 	}
 
 	stat = SAA716x_RD(I2C_DEV, I2C_STATUS);
-	while (! (stat & TRANSMIT_CLEAR)) {
+	while (! (stat & I2C_TRANSMIT_CLEAR)) {
 		dprintk(SAA716x_ERROR, 1, "Waiting for TX FIFO to be empty");
 		msleep(5);
 		timeout++;
@@ -87,15 +87,15 @@ static int saa716x_i2c_reinit(struct saa716x_i2c *i2c, u32 I2C_DEV)
 	switch (i2c->i2c_rate) {
 	case SAA716x_I2C_RATE_400:
 		dprintk(SAA716x_DEBUG, 1, "Reinit Adapter @ 400k");
-		SAA716x_WR(I2C_DEV, CLOCK_DIVISOR_HIGH, 0x1a); /* 0.5 * 27MHz/400kHz */
-		SAA716x_WR(I2C_DEV, CLOCK_DIVISOR_LOW,  0x21); /* 0.5 * 27MHz/400kHz */
-		SAA716x_WR(I2C_DEV, SDA_HOLD, 0x19);
+		SAA716x_WR(I2C_DEV, I2C_CLOCK_DIVISOR_HIGH, 0x1a); /* 0.5 * 27MHz/400kHz */
+		SAA716x_WR(I2C_DEV, I2C_CLOCK_DIVISOR_LOW,  0x21); /* 0.5 * 27MHz/400kHz */
+		SAA716x_WR(I2C_DEV, I2C_SDA_HOLD, 0x19);
 		break;
 	case SAA716x_I2C_RATE_100:
 		dprintk(SAA716x_DEBUG, 1, "Reinit Adapter @ 100k");
-		SAA716x_WR(I2C_DEV, CLOCK_DIVISOR_HIGH, 0x68); /* 0.5 * 27MHz/400kHz */
-		SAA716x_WR(I2C_DEV, CLOCK_DIVISOR_LOW,  0x87); /* 0.5 * 27MHz/400kHz */
-		SAA716x_WR(I2C_DEV, SDA_HOLD, 0x60);
+		SAA716x_WR(I2C_DEV, I2C_CLOCK_DIVISOR_HIGH, 0x68); /* 0.5 * 27MHz/400kHz */
+		SAA716x_WR(I2C_DEV, I2C_CLOCK_DIVISOR_LOW,  0x87); /* 0.5 * 27MHz/400kHz */
+		SAA716x_WR(I2C_DEV, I2C_SDA_HOLD, 0x60);
 		break;
 	default:
 		dprintk(SAA716x_ERROR, 1, "Unknown Rate (Rate=0x%02x)", i2c->i2c_rate);
@@ -215,7 +215,7 @@ static int saa716x_i2c_read(struct saa716x_i2c *i2c, const struct i2c_msg *msg)
 	dprintk(SAA716x_DEBUG, 0, "        %s: Address=[0x%02x] <R>[ ", __func__, msg->addr);
 
 	/* Write */
-	err = saa716x_i2c_send(i2c, I2C_DEV, START_BIT | msg->addr | 0x01);
+	err = saa716x_i2c_send(i2c, I2C_DEV, I2C_START_BIT | msg->addr | 0x01);
 	if (err < 0) {
 		dprintk(SAA716x_ERROR, 1, "Transfer failed");
 		err = -EIO;
@@ -224,7 +224,7 @@ static int saa716x_i2c_read(struct saa716x_i2c *i2c, const struct i2c_msg *msg)
 
 	for (i = 0; i < msg->len; i++) {
 		if (i == (msg->len - 1)) {
-			err = saa716x_i2c_send(i2c, I2C_DEV, (u8)STOP_BIT);
+			err = saa716x_i2c_send(i2c, I2C_DEV, (u8)I2C_STOP_BIT);
 			if (err < 0) {
 				dprintk(SAA716x_ERROR, 1, "Transfer failed");
 				err = -EIO;
@@ -274,7 +274,7 @@ static int saa716x_i2c_write(struct saa716x_i2c *i2c, const struct i2c_msg *msg)
 	SAA716x_WR(I2C_DEV, INT_CLR_STATUS, 0x1fff);
 
 	dprintk(SAA716x_DEBUG, 0, "        %s: Address=[0x%02x] <W>[ ", __func__, msg->addr);
-	err = saa716x_i2c_send(i2c, I2C_DEV, START_BIT | msg->addr);
+	err = saa716x_i2c_send(i2c, I2C_DEV, I2C_START_BIT | msg->addr);
 	if (err < 0) {
 		dprintk(SAA716x_ERROR, 1, "Transfer failed");
 		err = -EIO;
@@ -284,7 +284,7 @@ static int saa716x_i2c_write(struct saa716x_i2c *i2c, const struct i2c_msg *msg)
 	for (i = 0; i < msg->len; i++) {
 		dprintk(SAA716x_DEBUG, 0, "%02x ", msg->buf[i]);
 		if (i == (msg->len - 1)) {
-			err = saa716x_i2c_send(i2c, I2C_DEV, STOP_BIT | msg->buf[i]);
+			err = saa716x_i2c_send(i2c, I2C_DEV, I2C_STOP_BIT | msg->buf[i]);
 			if (err < 0) {
 				dprintk(SAA716x_ERROR, 1, "Transfer failed");
 				err = -EIO;
@@ -462,15 +462,15 @@ int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 		switch (i2c->i2c_rate) {
 		case SAA716x_I2C_RATE_400:
 			dprintk(SAA716x_DEBUG, 1, "Initializing Adapter (%d) %s @ 400k", i, saa716x_i2c[i].name);
-			SAA716x_WR(I2C_DEV[i], CLOCK_DIVISOR_HIGH, 0x1a); /* 0.5 * 27MHz/400kHz */
-			SAA716x_WR(I2C_DEV[i], CLOCK_DIVISOR_LOW,  0x21); /* 0.5 * 27MHz/400kHz */
-			SAA716x_WR(I2C_DEV[i], SDA_HOLD, 0x19);
+			SAA716x_WR(I2C_DEV[i], I2C_CLOCK_DIVISOR_HIGH, 0x1a); /* 0.5 * 27MHz/400kHz */
+			SAA716x_WR(I2C_DEV[i], I2C_CLOCK_DIVISOR_LOW,  0x21); /* 0.5 * 27MHz/400kHz */
+			SAA716x_WR(I2C_DEV[i], I2C_SDA_HOLD, 0x19);
 			break;
 		case SAA716x_I2C_RATE_100:
 			dprintk(SAA716x_DEBUG, 1, "Initializing Adapter (%d) %s @ 100k", i, saa716x_i2c[i].name);
-			SAA716x_WR(I2C_DEV[i], CLOCK_DIVISOR_HIGH, 0x68); /* 0.5 * 27MHz/400kHz */
-			SAA716x_WR(I2C_DEV[i], CLOCK_DIVISOR_LOW,  0x87); /* 0.5 * 27MHz/400kHz */
-			SAA716x_WR(I2C_DEV[i], SDA_HOLD, 0x60);
+			SAA716x_WR(I2C_DEV[i], I2C_CLOCK_DIVISOR_HIGH, 0x68); /* 0.5 * 27MHz/400kHz */
+			SAA716x_WR(I2C_DEV[i], I2C_CLOCK_DIVISOR_LOW,  0x87); /* 0.5 * 27MHz/400kHz */
+			SAA716x_WR(I2C_DEV[i], I2C_SDA_HOLD, 0x60);
 			break;
 		default:
 			dprintk(SAA716x_ERROR, 1, "Adapter (%d) %s Unknown Rate (Rate=0x%02x)", i, saa716x_i2c[i].name, i2c->i2c_rate);
@@ -489,11 +489,11 @@ int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 		 * Master Transaction Data Request
 		 * (0xc7)
 		 */
-		SAA716x_WR(I2C_DEV[i], INT_SET_ENABLE, MASTER_INTERRUPT_MTDR	| \
-						       I2C_ERROR_IBE		| \
-						       ENABLE_MTNA		| \
-						       ENABLE_MAF		| \
-						       ENABLE_MTD);
+		SAA716x_WR(I2C_DEV[i], INT_SET_ENABLE, I2C_MASTER_INTERRUPT_MTDR	| \
+						       I2C_ERROR_IBE			| \
+						       I2C_ENABLE_MTNA			| \
+						       I2C_ENABLE_MAF			| \
+						       I2C_ENABLE_MTD);
 
 		/* Check interrupt enable status */
 		reg = SAA716x_RD(I2C_DEV[i], INT_ENABLE);
