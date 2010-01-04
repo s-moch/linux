@@ -1,0 +1,7 @@
+#ifndef __SAA716x_BUDGET_H
+#define __SAA716x_BUDGET_H
+ 
+#define TWINHAN_TECHNOLOGIES	0x1822
+#define TWINHAN_VP_1028		0x0044
+
+#endif /* __SAA716x_BUDGET_H */
