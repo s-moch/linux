@@ -853,6 +853,8 @@
 #define CGU_FS1_11			0x064
 #define CGU_FS1_12			0x068
 #define CGU_FS1_13			0x06c
+#define CGU_FS1_PLL			(0x00000000 <<  0)
+
 
 #define CGU_FS2_0			0x070
 #define CGU_FS2_1			0x074
@@ -984,9 +986,11 @@
 #define CGU_FDC_11			0x244
 #define CGU_FDC_12			0x248
 #define CGU_FDC_13			0x24c
-
-
-
+#define CGU_FDC_STRETCH			(0x00000001 <<  0)
+#define CGU_FDC_RESET			(0x00000001 <<  1)
+#define CGU_FDC_RUN1			(0x00000001 <<  2)
+#define CGU_FDC_MADD			(0x000000ff <<  3)
+#define CGU_FDC_MSUB			(0x000000ff << 11)
 
 /* -------------- DCS Registers -------------- */
 
