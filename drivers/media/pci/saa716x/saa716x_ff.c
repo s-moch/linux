@@ -23,6 +23,9 @@
 
 #include "saa716x_mod.h"
 
+#include "saa716x_dma_reg.h"
+#include "saa716x_fgpi_reg.h"
+#include "saa716x_greg_reg.h"
 #include "saa716x_phi_reg.h"
 #include "saa716x_spi_reg.h"
 #include "saa716x_msi_reg.h"
@@ -712,6 +715,11 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM dump failed");
 	}
 #endif
+
+	/* enable FGPI2 and FGPI3 for TS inputs */
+	SAA716x_EPWR(GREG, GREG_VI_CTRL, 0x0689F04);
+	SAA716x_EPWR(GREG, GREG_FGPI_CTRL, 0x280);
+
 	err = saa716x_dvb_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x DVB initialization failed");
@@ -799,8 +807,9 @@ static void __devexit saa716x_ff_pci_remove(struct pci_dev *pdev)
 static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 {
 	struct saa716x_dev *saa716x	= (struct saa716x_dev *) dev_id;
-	uint32_t msiStatusH;
-	uint32_t phiISR;
+	u32 msiStatusL;
+	u32 msiStatusH;
+	u32 phiISR;
 
 	if (unlikely(saa716x == NULL)) {
 		printk("%s: saa716x=NULL", __func__);
@@ -847,10 +856,40 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 		SAA716x_EPRD(DCS, DCSC_INT_STATUS),
 		SAA716x_EPRD(DCS, DCSC_INT_ENABLE));
 #endif
-	SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_L, SAA716x_EPRD(MSI, MSI_INT_STATUS_L));
-
+	msiStatusL = SAA716x_EPRD(MSI, MSI_INT_STATUS_L);
+	SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_L, msiStatusL);
 	msiStatusH = SAA716x_EPRD(MSI, MSI_INT_STATUS_H);
 	SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_H, msiStatusH);
+
+#if 1
+	if (msiStatusL) {
+		if (msiStatusL & MSI_INT_TAGACK_FGPI_2) {
+			u32 fgpiStatus;
+			u32 activeBuffer;
+
+			fgpiStatus = SAA716x_EPRD(FGPI2, INT_STATUS);
+			activeBuffer = (SAA716x_EPRD(BAM, BAM_FGPI2_DMA_BUF_MODE) >> 3) & 0x7;
+			dprintk(SAA716x_DEBUG, 1, "fgpiStatus = %04X, buffer = %d",
+				fgpiStatus, activeBuffer);
+			if (activeBuffer > 0)
+				activeBuffer -= 1;
+			else
+				activeBuffer = 7;
+			if (saa716x->fgpi[2].dma_buf[activeBuffer].mem_virt) {
+				u8 * data = (u8 *)saa716x->fgpi[2].dma_buf[activeBuffer].mem_virt;
+				dprintk(SAA716x_DEBUG, 1, "%02X%02X%02X%02X",
+					data[0], data[1], data[2], data[3]);
+				dvb_dmx_swfilter_packets(&saa716x->saa716x_adap[0].demux, data, 348);
+			}
+			if (fgpiStatus) {
+				SAA716x_EPWR(FGPI2, INT_CLR_STATUS, fgpiStatus);
+			}
+		}
+	}
+#endif
+	if (msiStatusH) {
+		//dprintk(SAA716x_INFO, 1, "msiStatusH: %08X", msiStatusH);
+	}
 
 	if (msiStatusH & MSI_INT_EXTINT_0) {
 
