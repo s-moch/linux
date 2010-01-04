@@ -24,6 +24,9 @@ unsigned int verbose;
 module_param(verbose, int, 0644);
 MODULE_PARM_DESC(verbose, "verbose startup messages, default is 1 (yes)");
 
+unsigned int int_type;
+module_param(int_type, int, 0644);
+MODULE_PARM_DESC(int_type, "force Interrupt Handler type: 0=INT-A, 1=MSI, 2=MSI-X. default INT-A mode");
 
 #define DRIVER_NAME	"SAA716x Budget"
 
@@ -79,6 +82,7 @@ static int __devinit saa716x_budget_pci_probe(struct pci_dev *pdev, const struct
 	}
 
 	saa716x->verbose	= verbose;
+	saa716x->int_type	= int_type;
 	saa716x->pdev		= pdev;
 	saa716x->config		= (struct saa716x_config *) pci_id->driver_data;
 
