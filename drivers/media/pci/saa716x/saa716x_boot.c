@@ -47,72 +47,115 @@ static int saa716x_ext_boot(struct saa716x_dev *saa716x)
 	return 0;
 }
 
+/* Internal Bootscript configuration */
 static void saa716x_int_boot(struct saa716x_dev *saa716x)
 {
-	/* Write GREG boot_ready to 0
-	 * DW_0 = 0x0001_2018
-	 * DW_1 = 0x0000_0000
+	/* #1 Configure PCI COnfig space
+	 * GREG_JETSTR_CONFIG_0
 	 */
-	SAA716x_WR(GREG, GREG_RSTU_CTRL, 0x00000000);
+	SAA716x_WR(GREG, GREG_SUBSYS_CONFIG, saa716x->pdev->subsystem_vendor);
 
-	/* Clear VI0 interrupt
-	 * DW_2 = 0x0000_0fe8
-	 * DW_3 = 0x0000_03ff
+	/* GREG_JETSTR_CONFIG_1
+	 * pmcsr_scale:7 = 0x00
+	 * pmcsr_scale:6 = 0x00
+	 * pmcsr_scale:5 = 0x00
+	 * pmcsr_scale:4 = 0x00
+	 * pmcsr_scale:3 = 0x00
+	 * pmcsr_scale:2 = 0x00
+	 * pmcsr_scale:1 = 0x00
+	 * pmcsr_scale:0 = 0x00
+	 * BAR mask = 20 bit
+	 * BAR prefetch = no
+	 * MSI capable = 32 messages
 	 */
-	SAA716x_WR(VI0, INT_CLR_STATUS, 0x000003ff);
+	SAA716x_WR(GREG, GREG_MSI_BAR_PMCSR, 0x00001005);
 
-	/* Clear VI1 interrupt
-	 * DW_4 = 0x0000_1fe8
-	 * DW_5 = 0x0000_03ff
+	/* GREG_JETSTR_CONFIG_2
+	 * pmcsr_data:3 = 0x0
+	 * pmcsr_data:2 = 0x0
+	 * pmcsr_data:1 = 0x0
+	 * pmcsr_data:0 = 0x0
 	 */
-	SAA716x_WR(VI1, INT_CLR_STATUS, 0x000003ff);
+	SAA716x_WR(GREG, GREG_PMCSR_DATA_1, 0x00000000);
 
-	/* CLear FGPI0 interrupt
-	 * DW_6 = 0x0000_2fe8
-	 * DW_7 = 0x0000_007f
+	/* GREG_JETSTR_CONFIG_3
+	 * pmcsr_data:7 = 0x0
+	 * pmcsr_data:6 = 0x0
+	 * pmcsr_data:5 = 0x0
+	 * pmcsr_data:4 = 0x0
 	 */
-	SAA716x_WR(FGPI0, INT_CLR_STATUS, 0x0000007f);
+	SAA716x_WR(GREG, GREG_PMCSR_DATA_2, 0x00000000);
 
-	/* Clear FGPI1 interrupt
-	 * DW_8 = 0x0000_3fe8
-	 * DW_9 = 0x0000_007f
+	/* #2 Release GREG resets
+	 * ip_rst_an
+	 * dpa1_rst_an
+	 * jetsream_reset_an
 	 */
-	SAA716x_WR(FGPI1, INT_CLR_STATUS, 0x0000007f);
+	SAA716x_WR(GREG, GREG_RSTU_CTRL, 0x00000e00);
 
-	/* Clear FGPI2 interrupt
-	 * DW_10 = 0x0000_4fe8
-	 * DW_11 = 0x0000_007f
+	/* #3 GPIO Setup
+	 * GPIO 25:24 = Output
+	 * GPIO Output "0" after Reset
 	 */
-	SAA716x_WR(FGPI2, INT_CLR_STATUS, 0x0000007f);
+	SAA716x_WR(GPIO, GPIO_OEN, 0xfcffffff);
 
-	/* Clear FGPI3 interrupt
-	 * DW_12 = 0x0000_5fe8
-	 * DW_13 = 0x0000_007f
-	 */
-	SAA716x_WR(FGPI3, INT_CLR_STATUS, 0x0000007f);
+	/* #4 Custom stuff goes in here */
 
-	/* Clear AI0 interrupt
-	 * DW_14 = 0x0000_6020
-	 * DW_15 = 0x0000_000f
+	/* #5 Disable CGU Clocks
+	 * except for PHY, Jetstream, DPA1, DCS, Boot, GREG
+	 * CGU_PCR_0_3: pss_mmu_clk:0 = 0x0
 	 */
-	SAA716x_WR(AI0, AI_INT_ACK, 0x0000000f);
+	SAA716x_WR(CGU, CGU_PCR_0_3, 0x00000006);
 
-	/* Clear AI1 interrupt
-	 * DW_16 = 0x0000_7020
-	 * DW_17 = 0x0000_200f
-	 */
-	SAA716x_WR(AI1, AI_INT_ACK, 0x0000000f);
+	/* CGU_PCR_0_4: pss_dtl2mtl_mmu_clk:0 = 0x0 */
+	SAA716x_WR(CGU, CGU_PCR_0_4, 0x00000006);
 
-	/* Set GREG boot_ready bit to 1
-	 * DW_18 = 0x0001_2018
-	 * DW_19 = 0x0000_2000
-	 */
+	/* CGU_PCR_0_5: pss_msi_ck:0 = 0x0 */
+	SAA716x_WR(CGU, CGU_PCR_0_5, 0x00000006);
+
+	/* CGU_PCR_0_7: pss_gpio_clk:0 = 0x0 */
+	SAA716x_WR(CGU, CGU_PCR_0_7, 0x00000006);
+
+	/* CGU_PCR_2_1: spi_clk:0 = 0x0 */
+	SAA716x_WR(CGU, CGU_PCR_2_1, 0x00000006);
+
+	/* CGU_PCR_3_2: i2c_clk:0 = 0x0 */
+	SAA716x_WR(CGU, CGU_PCR_3_2, 0x00000006);
+
+	/* CGU_PCR_4_1: phi_clk:0 = 0x0 */
+	SAA716x_WR(CGU, CGU_PCR_4_1, 0x00000006);
+
+	/* CGU_PCR_5: vip0_clk:0 = 0x0 */
+	SAA716x_WR(CGU, CGU_PCR_5, 0x00000006);
+
+	/* CGU_PCR_6: vip1_clk:0 = 0x0 */
+	SAA716x_WR(CGU, CGU_PCR_6, 0x00000006);
+
+	/* CGU_PCR_7: fgpi0_clk:0 = 0x0 */
+	SAA716x_WR(CGU, CGU_PCR_7, 0x00000006);
+
+	/* CGU_PCR_8: fgpi1_clk:0 = 0x0 */
+	SAA716x_WR(CGU, CGU_PCR_8, 0x00000006);
+
+	/* CGU_PCR_9: fgpi2_clk:0 = 0x0 */
+	SAA716x_WR(CGU, CGU_PCR_9, 0x00000006);
+
+	/* CGU_PCR_10: fgpi3_clk:0 = 0x0 */
+	SAA716x_WR(CGU, CGU_PCR_10, 0x00000006);
+
+	/* CGU_PCR_11: ai0_clk:0 = 0x0 */
+	SAA716x_WR(CGU, CGU_PCR_11, 0x00000006);
+
+	/* CGU_PCR_12: ai1_clk:0 = 0x0 */
+	SAA716x_WR(CGU, CGU_PCR_12, 0x00000006);
+
+	/* #6 Set GREG boot_ready = 0x1 */
 	SAA716x_WR(GREG, GREG_RSTU_CTRL, 0x00002000);
 
-	/* End of Boot script command
-	 * DW_20 = 0x0000_0006
-	 * Where to write this value ??
-	 */
+	/* #7 Disable GREG CGU Clock */
+	SAA716x_WR(CGU, CGU_PCR_0_6, 0x00000006);
+
+	/* End of Bootscript command ?? */
 }
 
 int saa716x_core_boot(struct saa716x_dev *saa716x)
