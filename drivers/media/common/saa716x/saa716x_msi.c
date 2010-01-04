@@ -5,7 +5,9 @@
 #include <linux/sched.h>
 #include <linux/interrupt.h>
 
-#include "saa716x_reg.h"
+#include "saa716x_mod.h"
+
+#include "saa716x_msi_reg.h"
 #include "saa716x_msi.h"
 #include "saa716x_spi.h"
 
