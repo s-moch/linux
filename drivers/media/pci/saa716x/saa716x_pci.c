@@ -30,7 +30,7 @@ static int saa716x_enable_msi(struct saa716x_dev *saa716x)
 
 	err = pci_enable_msi(pdev);
 	if (err) {
-		dprintk(SAA716x_ERROR, 1, "MSI enable failed");
+		dprintk(SAA716x_ERROR, 1, "MSI enable failed <%d>", err);
 		return err;
 	}
 
@@ -47,9 +47,9 @@ static int saa716x_enable_msix(struct saa716x_dev *saa716x)
 
 	ret = pci_enable_msix(pdev, saa716x->msix_entries, SAA716x_MSI_MAX_VECTORS);
 	if (ret < 0)
-		dprintk(SAA716x_ERROR, 1, "MSI-X request failed");
+		dprintk(SAA716x_ERROR, 1, "MSI-X request failed <%d>", ret);
 	if (ret > 0)
-		dprintk(SAA716x_ERROR, 1, "Request exceeds available IRQ's");
+		dprintk(SAA716x_ERROR, 1, "Request exceeds available IRQ's <%d>", ret);
 
 	return ret;
 }
@@ -97,7 +97,7 @@ static int saa716x_request_irq(struct saa716x_dev *saa716x)
 
 			dprintk(SAA716x_ERROR, 1, "%s @ 0x%p", saa716x->saa716x_msix_handler[i].desc, saa716x->saa716x_msix_handler[i].handler);
 			if (ret) {
-				dprintk(SAA716x_ERROR, 1, "%s MSI-X-%d registration failed", saa716x->saa716x_msix_handler[i].desc, i);
+				dprintk(SAA716x_ERROR, 1, "%s MSI-X-%d registration failed <%d>", saa716x->saa716x_msix_handler[i].desc, i, ret);
 				return -1;
 			}
 		}
@@ -110,7 +110,7 @@ static int saa716x_request_irq(struct saa716x_dev *saa716x)
 				  DRIVER_NAME,
 				  saa716x);
 		if (ret < 0) {
-			dprintk(SAA716x_ERROR, 1, "SAA716x IRQ registration failed");
+			dprintk(SAA716x_ERROR, 1, "SAA716x IRQ registration failed <%d>", ret);
 			ret = -ENODEV;
 		}
 	}
