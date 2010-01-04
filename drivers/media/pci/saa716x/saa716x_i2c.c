@@ -31,9 +31,20 @@ static int saa716x_i2c_read(struct saa716x_dev *saa716x, const struct i2c_msg *m
 	return 0;
 }
 
-static int saa716x_i2c_write(struct saa716x_dev *saa716x, const struct i2c_msg*msg)
+//static int saa716x_i2c_write(struct saa716x_dev *saa716x, const struct i2c_msg *msg)
+static int saa716x_i2c_write(struct i2c_adapter *adapter, const struct i2c_msg *msg)
 {
+	struct saa716x_i2c *i2c;
+	struct saa716x_dev *saa716x;
 
+	u32 stat, I2C_DEV;
+
+	i2c	= i2c_get_adapdata(adapter);
+	saa716x = i2c->saa716x;
+
+	I2C_DEV	= i2c->i2c_dev; 
+	stat	= SAA716x_RD(I2C_DEV, I2C_STATUS);
+	
 	return 0;
 }
 
@@ -100,6 +111,7 @@ int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 	struct pci_dev *pdev	= saa716x->pdev;
 	struct saa716x_i2c *i2c = saa716x->i2c;
 	int i, err = 0;
+
 	u32 I2C_DEV[2] = {I2C_B, I2C_A};
 	u32 reg;
 
@@ -107,18 +119,22 @@ int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 	for (i = 0; i < SAA716x_I2C_ADAPTERS; i++) {
 		dprintk(SAA716x_DEBUG, 1, "Initializing adapter (%d) %s", i, saa716x_i2c[i].name);
 		mutex_init(&i2c->i2c_lock);
+
 		memcpy(&i2c->i2c_adapter, &saa716x_i2c[i], sizeof (struct i2c_adapter));
 		i2c_set_adapdata(&i2c->i2c_adapter, saa716x_i2c);
 		i2c->i2c_adapter.dev.parent = &pdev->dev;
+
 		err = i2c_add_adapter(&i2c->i2c_adapter);
 		if (err < 0) {
 			dprintk(SAA716x_ERROR, 1, "Adapter (%d) %s init failed", i, saa716x_i2c[i].name);
 			goto exit;
 		}
+
 		i2c->i2c_dev	= I2C_DEV[i];
 		i2c->i2c_rate	= saa716x->i2c_rate;
  
 		msleep(100);
+
 		reg = SAA716x_RD(I2C_DEV[i], I2C_STATUS);
 		if (!(reg & 0xd)) {
 			dprintk(SAA716x_ERROR, 1, "Adapter (%d) %s RESET failed, Exiting !", i, saa716x_i2c[i].name);
@@ -163,6 +179,7 @@ int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 			dprintk(SAA716x_ERROR, 1, "Adapter (%d) %s Unknown Rate (Rate=0x%02x)", i, saa716x_i2c[i].name, i2c->i2c_rate);
 			break;
 		}
+
 		/* Disable all interrupts and clear status */
 		SAA716x_WR(I2C_DEV[i], INT_CLR_ENABLE, 0x1fff);
 		SAA716x_WR(I2C_DEV[i], INT_CLR_STATUS, 0x1fff);
