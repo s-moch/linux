@@ -14,7 +14,7 @@
 #define SAA716x_I2C_RXBUSY	(I2C_RECEIVE		| \
 				 I2C_RECEIVE_CLEAR)
 
-static char* state[] = {
+static const char* state[] = {
 	"Idle",
 	"DoneStop",
 	"Busy",
@@ -32,11 +32,69 @@ static char* state[] = {
 	"STErr"
 };
 
+int saa716x_i2c_irqevent(struct saa716x_dev *saa716x, u8 bus)
+{
+	u32 stat, mask;
+	u32 *I2C_DEV;
+
+	BUG_ON(saa716x == NULL);
+	I2C_DEV = saa716x->I2C_DEV;
+
+	stat = SAA716x_EPRD(I2C_DEV[bus], INT_STATUS);
+	mask = SAA716x_EPRD(I2C_DEV[bus], INT_ENABLE);
+	dprintk(SAA716x_DEBUG, 0, "Bus(%d) I2C event: Status=<%s> --> Stat=<%02x> Mask=<%02x>",
+		bus, state[stat], stat, mask);
+
+	if (!(stat & mask))
+		return -1;
+
+	SAA716x_EPWR(I2C_DEV[bus], INT_CLR_STATUS, stat);
+
+	if (stat & I2C_INTERRUPT_STFNF)
+		dprintk(SAA716x_DEBUG, 0, "<INTERRUPT_STFNF> ");
+
+	if (stat & I2C_INTERRUPT_MTFNF)
+		dprintk(SAA716x_DEBUG, 0, "<INTERRUPT_MTFNF> ");
+
+	if (stat & I2C_INTERRUPT_RFDA)
+		dprintk(SAA716x_DEBUG, 0, "<INTERRUPT_RFDA> ");
+
+	if (stat & I2C_INTERRUPTE_RFF)
+		dprintk(SAA716x_DEBUG, 0, "<INTERRUPT_RFF> ");
+
+	if (stat & I2C_SLAVE_INTERRUPT_STDR)
+		dprintk(SAA716x_DEBUG, 0, "<INTERRUPT_STDR> ");
+
+	if (stat & I2C_MASTER_INTERRUPT_MTDR)
+		dprintk(SAA716x_DEBUG, 0, "<INTERRUPT_MTDR> ");
+
+	if (stat & I2C_ERROR_IBE)
+		dprintk(SAA716x_DEBUG, 0, "<ERROR_IBE> ");
+
+	if (stat & I2C_MODE_CHANGE_INTER_MSMC)
+		dprintk(SAA716x_DEBUG, 0, "<INTERRUPT_MSMC> ");
+
+	if (stat & I2C_SLAVE_RECEIVE_INTER_SRSD)
+		dprintk(SAA716x_DEBUG, 0, "<INTERRUPT_SRSD> ");
+
+	if (stat & I2C_SLAVE_TRANSMIT_INTER_STSD)
+		dprintk(SAA716x_DEBUG, 0, "<INTERRUPT_STSD> ");
+
+	if (stat & I2C_ACK_INTER_MTNA)
+		dprintk(SAA716x_DEBUG, 0, "<INTERRUPT_MTNA> ");
+
+	if (stat & I2C_FAILURE_INTER_MAF)
+		dprintk(SAA716x_DEBUG, 0, "<INTERRUPT_MAF> ");
+
+	if (stat & I2C_INTERRUPT_MTD)
+		dprintk(SAA716x_DEBUG, 0, "<INTERRUPT_MTD> ");
+
+	return 0;
+}
+
 static irqreturn_t saa716x_i2c_irq(int irq, void *dev_id)
 {
 	struct saa716x_dev *saa716x	= (struct saa716x_dev *) dev_id;
-	struct saa716x_i2c *i2c_a	= &saa716x->i2c[0];
-	struct saa716x_i2c *i2c_b	= &saa716x->i2c[1];
 
 	if (unlikely(saa716x == NULL)) {
 		printk("%s: saa716x=NULL", __func__);
@@ -430,9 +488,10 @@ int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 	struct i2c_adapter *adapter	= NULL;
 
 	int i, err = 0;
-
-	u32 I2C_DEV[2];
 	u32 reg;
+	u32 *I2C_DEV;
+
+	I2C_DEV = saa716x->I2C_DEV;
 
 	if (saa716x->revision > 2) {
 		I2C_DEV[0] = I2C_A;

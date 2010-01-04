@@ -143,6 +143,7 @@ struct saa716x_dev {
 	/* I2C */
 	struct saa716x_i2c		i2c[2];
 	u32				i2c_rate; /* init time */
+	u32				I2C_DEV[2];
 
 	struct saa716x_adapter		saa716x_adap[2];
 	struct saa716x_cgu		cgu;
