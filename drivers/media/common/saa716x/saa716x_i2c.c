@@ -1,6 +1,7 @@
 #include <linux/delay.h>
 #include "saa716x_reg.h"
 #include "saa716x_priv.h"
+#include "saa716x_i2c.h"
 
 #define SAA716x_I2C_TXFAIL	(I2C_ERROR_IBE		| \
 				 I2C_ACK_INTER_MTNA	| \
@@ -400,7 +401,6 @@ static struct i2c_adapter saa716x_i2c[] = {
 	},
 };
 
-#define SAA716x_I2C_ADAPTERS	2
 
 int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 {
