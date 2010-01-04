@@ -782,6 +782,8 @@
 
 /* -------------- SPI Registers -------------- */
 
+#define SPI				0x0000d000
+
 #define SPI_CONTROL_REG			0x000
 #define SPI_SERIAL_INTER_ENABLE		(0x00000001 <<  7)
 #define SPI_LSB_FIRST_ENABLE		(0x00000001 <<  6)
@@ -875,6 +877,34 @@
 
 #define PHI_0_3_RW_0			0x2800
 #define PHI_0_3_RW_511			0x2ffc
+
+#define PHI_CSN_DEASSERT		(0x00000001 <<  2)
+#define PHI_AUTO_INCREMENT		(0x00000001 <<  1)
+
+#define PHI_DELAY_RD_WR			(0x0000001f << 27)
+#define PHI_EXTEND_RDY3			(0x00000003 << 25)
+#define PHI_EXTEND_RDY2			(0x00000003 << 23)
+#define PHI_EXTEND_RDY1			(0x00000003 << 21)
+#define PHI_EXTEND_RDY0			(0x00000003 << 19)
+#define PHI_RDY3_OD			(0x00000001 << 18)
+#define PHI_RDY2_OD			(0x00000001 << 17)
+#define PHI_RDY1_OD			(0x00000001 << 16)
+#define PHI_RDY0_OD			(0x00000001 << 15)
+#define PHI_ALE_POL			(0x00000001 << 14)
+#define PHI_WRN_POL			(0x00000001 << 13)
+#define PHI_RDN_POL			(0x00000001 << 12)
+#define PHI_RDY3_POL			(0x00000001 << 11)
+#define PHI_RDY2_POL			(0x00000001 << 10)
+#define PHI_RDY1_POL			(0x00000001 <<  9)
+#define PHI_RDY0_POL			(0x00000001 <<  8)
+#define PHI_CSN7_POL			(0x00000001 <<  7)
+#define PHI_CSN6_POL			(0x00000001 <<  6)
+#define PHI_CSN5_POL			(0x00000001 <<  5)
+#define PHI_CSN4_POL			(0x00000001 <<  4)
+#define PHI_CSN3_POL			(0x00000001 <<  3)
+#define PHI_CSN2_POL			(0x00000001 <<  2)
+#define PHI_CSN1_POL			(0x00000001 <<  1)
+#define PHI_CSN0_POL			(0x00000001 <<  0)
 
 /* -------------- PHI_1 Registers -------------- */
 
