@@ -23,6 +23,8 @@
 #include "saa716x_gpio.h"
 #include "saa716x_rom.h"
 
+#include "mb86a16.h"
+
 unsigned int verbose;
 module_param(verbose, int, 0644);
 MODULE_PARM_DESC(verbose, "verbose startup messages, default is 1 (yes)");
@@ -91,12 +93,12 @@ static int __devinit saa716x_budget_pci_probe(struct pci_dev *pdev, const struct
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM dump failed");
 	}
-
+#if 0
 	err = saa716x_eeprom_data(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM read failed");
 	}
-
+#endif
 	err = saa716x_dvb_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x DVB initialization failed");
@@ -246,13 +248,60 @@ static int load_config_vp1028(struct saa716x_dev *saa716x)
 #define SAA716x_MODEL_TWINHAN_VP1028	"Twinhan/Azurewave VP-1028"
 #define SAA716x_DEV_TWINHAN_VP1028	"DVB-S"
 
+static int vp1028_dvbs_set_voltage(struct dvb_frontend *fe, fe_sec_voltage_t voltage)
+{
+	struct saa716x_dev *saa716x = fe->dvb->priv;
+
+	switch (voltage) {
+	case SEC_VOLTAGE_13:
+		dprintk(SAA716x_ERROR, 1, "Polarization=[13V]");
+		break;
+	case SEC_VOLTAGE_18:
+		dprintk(SAA716x_ERROR, 1, "Polarization=[18V]");
+		break;
+	case SEC_VOLTAGE_OFF:
+		dprintk(SAA716x_ERROR, 1, "Frontend (dummy) POWERDOWN");
+		break;
+	default:
+		dprintk(SAA716x_ERROR, 1, "Invalid = (%d)", (u32 ) voltage);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+struct mb86a16_config vp1028_mb86a16_config = {
+	.demod_address	= 0x08,
+	.set_voltage	= vp1028_dvbs_set_voltage,
+};
+
 static int saa716x_vp1028_frontend_attach(struct saa716x_adapter *adapter, int count)
 {
 	struct saa716x_dev *saa716x = adapter->saa716x;
+	struct saa716x_i2c *i2c = &saa716x->i2c[count];
 
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
 
+	dprintk(SAA716x_ERROR, 1, "Adapter (%d) Power ON", count);
+	saa716x_gpio_write(saa716x, GPIO_10, 1);
+
+	msleep(100);
+
+	dprintk(SAA716x_ERROR, 1, "Probing for MB86A16 (DVB-S/DSS)");
+	adapter->fe = mb86a16_attach(&vp1028_mb86a16_config, &i2c->i2c_adapter);
+	if (adapter->fe) {
+		dprintk(SAA716x_ERROR, 1, "found MB86A16 DVB-S/DSS frontend @0x%02x",
+			vp1028_mb86a16_config.demod_address);
+
+	} else {
+		goto exit;
+	}
+
+	dprintk(SAA716x_ERROR, 1, "Done!");
+	return 0;
+exit:
+	dprintk(SAA716x_ERROR, 1, "Frontend attach failed");
 	return -ENODEV;
 }
 
