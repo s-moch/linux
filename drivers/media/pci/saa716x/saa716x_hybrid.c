@@ -44,12 +44,6 @@ static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct
 		goto fail1;
 	}
 
-	err = saa716x_jetpack_init(saa716x);
-	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x Jetpack core Initialization failed");
-		goto fail1;
-	}
-#if 0
 	err = saa716x_core_boot(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x Core Boot failed");
@@ -57,12 +51,18 @@ static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct
 	}
 	dprintk(SAA716x_DEBUG, 1, "SAA716x Core Boot Success");
 
+	err = saa716x_jetpack_init(saa716x);
+	if (err) {
+		dprintk(SAA716x_ERROR, 1, "SAA716x Jetpack core Initialization failed");
+		goto fail1;
+	}
+
 	err = saa716x_i2c_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x I2C Initialization failed");
 		goto fail2;
 	}
-#endif
+
 	return 0;
 
 fail2:
@@ -113,7 +113,7 @@ static struct saa716x_config saa716x_vp6090_config = {
 	.model_name		= SAA716x_MODEL_TWINHAN_VP6090,
 	.chips_desc            = SAA716x_CHIPS_TWINHAN_VP6090,
 	.dev_type		= SAA716x_DEV_TWINHAN_VP6090,
-	.boot_mode		= SAA716x_EXT_BOOT,
+	.boot_mode		= SAA716x_CGU_BOOT,
 	.load_config		= &load_config_vp6090,
 };
 
