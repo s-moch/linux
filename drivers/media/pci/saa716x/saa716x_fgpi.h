@@ -88,6 +88,17 @@ struct fgpi_stream_params {
 
 struct saa716x_dmabuf;
 
+struct saa716x_fgpi_stream_port {
+	u8			dma_channel;
+	struct saa716x_dmabuf	dma_buf[FGPI_BUFFERS];
+};
+
 extern void saa716x_fgpiint_disable(struct saa716x_dmabuf *dmabuf, int channel);
+extern int saa716x_fgpi_start(struct saa716x_dev *saa716x, int port,
+			      struct fgpi_stream_params *stream_params);
+extern int saa716x_fgpi_stop(struct saa716x_dev *saa716x, int port);
+
+extern int saa716x_fgpi_init(struct saa716x_dev *saa716x, int port);
+extern int saa716x_fgpi_exit(struct saa716x_dev *saa716x, int port);
 
 #endif /* __SAA716x_FGPI_H */
