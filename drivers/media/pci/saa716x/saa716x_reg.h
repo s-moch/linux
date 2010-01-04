@@ -850,64 +850,64 @@
 #define	PHI_0				0x0000f000
 
 #define PHI_0_MODE			0x0000
-#define PHI_0_CONFIG_0			0x0008
-#define PHI_0_CONFIG_1			0x000c
-#define PHI_0_CONFIG_2			0x0010
-#define PHI_0_CONFIG_3			0x0014
+#define PHI_0_0_CONFIG			0x0008
+#define PHI_0_1_CONFIG			0x000c
+#define PHI_0_2_CONFIG			0x0010
+#define PHI_0_3_CONFIG			0x0014
 
-#define PHI_0_POLARITY			0x0038
-#define PHI_0_TIMEOUT			0x003c
-#define PHI_0_SW_RST			0x0ff0
+#define PHI_POLARITY			0x0038
+#define PHI_TIMEOUT			0x003c
+#define PHI_SW_RST			0x0ff0
 
-#define PHI_0_RW_0_0			0x1000
-#define PHI_0_RW_0_511			0x17fc
+#define PHI_0_0_RW_0			0x1000
+#define PHI_0_0_RW_511			0x17fc
 
-#define PHI_0_RW_1_0			0x1800
-#define PHI_0_RW_1_511			0x1ffc
+#define PHI_0_1_RW_0			0x1800
+#define PHI_0_1_RW_511			0x1ffc
 
-#define PHI_0_RW_2_0			0x2000
-#define PHI_0_RW_2_511			0x27fc
+#define PHI_0_2_RW_0			0x2000
+#define PHI_0_2_RW_511			0x27fc
 
-#define PHI_0_RW_3_0			0x2800
-#define PHI_0_RW_3_511			0x2ffc
+#define PHI_0_3_RW_0			0x2800
+#define PHI_0_3_RW_511			0x2ffc
 
 /* -------------- PHI_1 Registers -------------- */
 
 #define	PHI_1				0x00020000
 
 #define PHI_1_MODE			0x00004
-#define PHI_1_CONFIG_0			0x00018
-#define PHI_1_CONFIG_1			0x0001c
-#define PHI_1_CONFIG_2			0x00020
-#define PHI_1_CONFIG_3			0x00024
-#define PHI_1_CONFIG_4			0x00028
-#define PHI_1_CONFIG_5			0x0002c
-#define PHI_1_CONFIG_6			0x00030
-#define PHI_1_CONFIG_7			0x00034
+#define PHI_1_0_CONFIG			0x00018
+#define PHI_1_1_CONFIG			0x0001c
+#define PHI_1_2_CONFIG			0x00020
+#define PHI_1_3_CONFIG			0x00024
+#define PHI_1_4_CONFIG			0x00028
+#define PHI_1_5_CONFIG			0x0002c
+#define PHI_1_6_CONFIG			0x00030
+#define PHI_1_7_CONFIG			0x00034
 
-#define PHI_1_RW_0_0			0x00000
-#define PHI_1_RW_0_16383		0x0fffc
+#define PHI_1_0_RW_0			0x00000
+#define PHI_1_0_RW_16383		0x0fffc
 
-#define PHI_1_RW_1_0			0x1000
-#define PHI_1_RW_1_16383		0x1ffc
+#define PHI_1_1_RW_0			0x1000
+#define PHI_1_1_RW_16383		0x1ffc
 
-#define PHI_1_RW_2_0			0x2000
-#define PHI_1_RW_2_16383		0x2ffc
+#define PHI_1_2_RW_0			0x2000
+#define PHI_1_2_RW_16383		0x2ffc
 
-#define PHI_1_RW_3_0			0x3000
-#define PHI_1_RW_3_16383		0x3ffc
+#define PHI_1_3_RW_0			0x3000
+#define PHI_1_3_RW_16383		0x3ffc
 
-#define PHI_1_RW_4_0			0x4000
-#define PHI_1_RW_4_16383		0x4ffc
+#define PHI_1_4_RW_0			0x4000
+#define PHI_1_4_RW_16383		0x4ffc
 
-#define PHI_1_RW_5_0			0x5000
-#define PHI_1_RW_5_16383		0x5ffc
+#define PHI_1_5_RW_0			0x5000
+#define PHI_1_5_RW_16383		0x5ffc
 
-#define PHI_1_RW_6_0			0x6000
-#define PHI_1_RW_6_16383		0x6ffc
+#define PHI_1_6_RW_0			0x6000
+#define PHI_1_6_RW_16383		0x6ffc
 
-#define PHI_1_RW_7_0			0x7000
-#define PHI_1_RW_7_16383		0x7ffc
+#define PHI_1_7_RW_0			0x7000
+#define PHI_1_7_RW_16383		0x7ffc
 
 /* -------------- CGU Registers -------------- */
 
