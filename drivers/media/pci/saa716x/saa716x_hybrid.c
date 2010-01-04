@@ -12,7 +12,9 @@
 #include <linux/init.h>
 #include <linux/device.h>
 
+
 #include "saa716x_priv.h"
+#include "saa716x_adap.h"
 #include "saa716x_hybrid.h"
 
 unsigned int verbose;
@@ -83,8 +85,16 @@ static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct
 		goto fail3;
 	}
 
+	err = saa716x_dvb_init(saa716x);
+	if (err) {
+		dprintk(SAA716x_ERROR, 1, "SAA716x DVB initialization failed");
+		goto fail4;
+	}
+
 	return 0;
 
+fail4:
+	saa716x_dvb_exit(saa716x);
 fail3:
 	saa716x_i2c_exit(saa716x);
 fail2:
@@ -100,6 +110,7 @@ static void __devexit saa716x_hybrid_pci_remove(struct pci_dev *pdev)
 {
 	struct saa716x_dev *saa716x = pci_get_drvdata(pdev);
 
+	saa716x_dvb_exit(saa716x);
 	saa716x_i2c_exit(saa716x);
 	saa716x_pci_exit(saa716x);
 	kfree(saa716x);
