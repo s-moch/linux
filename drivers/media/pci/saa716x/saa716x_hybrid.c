@@ -82,15 +82,6 @@ static void __devexit saa716x_hybrid_pci_remove(struct pci_dev *pdev)
 	kfree(saa716x);
 }
 
-static int load_config_vp6090(struct saa716x_dev *saa716x)
-{
-//	int ret = -ENODEV;
-	int ret = 0;
-
-	return ret;
-}
-
-
 
 /*
  * Twinhan/Azurewave VP-6090
@@ -98,16 +89,22 @@ static int load_config_vp6090(struct saa716x_dev *saa716x)
  * DVB-T Frontend: 2x TDA10046 + TDA8275
  */
 #define SAA716x_MODEL_TWINHAN_VP6090	"Twinhan/Azurewave VP-6090"
-#define SAA716x_CHIPS_TWINHAN_VP6090	"2xMB86A16L + 2xTDA8275A + 2xTDA10046 + SAA7162"
 #define SAA716x_DEV_TWINHAN_VP6090	"2xDVB-S + 2xDVB-T + 2xAnalog"
+
+static int load_config_vp6090(struct saa716x_dev *saa716x)
+{
+	int ret = 0;
+
+	return ret;
+}
 
 static struct saa716x_config saa716x_vp6090_config = {
 	.model_name		= SAA716x_MODEL_TWINHAN_VP6090,
-	.chips_desc		= SAA716x_CHIPS_TWINHAN_VP6090,
 	.dev_type		= SAA716x_DEV_TWINHAN_VP6090,
 	.boot_mode		= SAA716x_CGU_BOOT,
 	.load_config		= &load_config_vp6090,
 };
+
 
 /*
  * NXP Reference design (NEMO)
@@ -115,7 +112,6 @@ static struct saa716x_config saa716x_vp6090_config = {
  * Analog Decoder: External SAA7136
  */
 #define SAA716x_MODEL_NXP_NENO		"NXP Semiconductors NEMO referrence board" 
-#define SAA716x_CHIPS_NXP_NEMO		"SAA7160 + TDA8275A + TDA10046 + SAA7136"
 #define SAA716x_DEV_NXP_NEMO		"DVB-T + Analog"
 
 static int load_config_nemo(struct saa716x_dev *saa716x)
@@ -126,7 +122,6 @@ static int load_config_nemo(struct saa716x_dev *saa716x)
 
 static struct saa716x_config saa716x_nemo_config = {
 	.model_name		= SAA716x_MODEL_NXP_NENO,
-	.chips_desc		= SAA716x_CHIPS_NXP_NEMO,
 	.dev_type		= SAA716x_DEV_NXP_NEMO,
 	.boot_mode		= SAA716x_CGU_BOOT,
 	.load_config		= &load_config_nemo,
