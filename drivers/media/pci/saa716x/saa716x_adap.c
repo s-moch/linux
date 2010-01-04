@@ -8,6 +8,7 @@
 #include "saa716x_priv.h"
 #include "saa716x_adap.h"
 #include "saa716x_i2c.h"
+#include "saa716x_gpio.h"
 
 void saa716x_dma_start(struct saa716x_dev *saa716x)
 {
@@ -184,3 +185,43 @@ void __devexit saa716x_dvb_exit(struct saa716x_dev *saa716x)
 	return;
 }
 EXPORT_SYMBOL(saa716x_dvb_exit);
+
+int saa716x_frontend_power(struct saa716x_dev *saa716x, u8 control)
+{
+	struct saa716x_adapter *adapter = saa716x->saa716x_adap;
+	struct saa716x_config  *config	= saa716x->config;
+
+	int i;
+
+	for (i = 0; i < config->adapters; i++); {
+		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Power ON", i);
+
+		saa716x_gpio_ctl(saa716x, adapter->power_ctl);
+		saa716x_gpio_bits(saa716x, adapter->power_ctl);
+
+		adapter++;
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(saa716x_frontend_power);
+
+int saa716x_frontend_reset(struct saa716x_dev *saa716x)
+{
+	struct saa716x_adapter *adapter = saa716x->saa716x_adap;
+	struct saa716x_config  *config	= saa716x->config;
+
+	int i;
+
+	for (i = 0; i < config->adapters; i++) {
+		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) RESET", i);
+
+		saa716x_gpio_ctl(saa716x, adapter->reset_ctl);
+		saa716x_gpio_bits(saa716x, adapter->reset_ctl);
+
+		adapter++;
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(saa716x_frontend_reset);
