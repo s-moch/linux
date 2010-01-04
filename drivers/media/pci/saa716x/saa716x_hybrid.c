@@ -137,6 +137,7 @@ static struct saa716x_config saa716x_vp6090_config = {
 	.dev_type		= SAA716x_DEV_TWINHAN_VP6090,
 	.boot_mode		= SAA716x_EXT_BOOT,
 	.load_config		= &load_config_vp6090,
+	.adapters		= 2,
 };
 
 
@@ -159,11 +160,12 @@ static struct saa716x_config saa716x_nemo_config = {
 	.dev_type		= SAA716x_DEV_NXP_NEMO,
 	.boot_mode		= SAA716x_EXT_BOOT,
 	.load_config		= &load_config_nemo,
+	.adapters		= 1,
 };
 
 
 #define SAA716x_MODEL_AVERMEDIA_HC82	"Avermedia HC82 Express-54"
-#define SAA716x_DEV_AVERMEDIA_HC82	"DVB-T + ATSC + Analog"
+#define SAA716x_DEV_AVERMEDIA_HC82	"DVB-T + Analog"
 
 static int load_config_averhc82(struct saa716x_dev *saa716x)
 {
@@ -176,6 +178,7 @@ static struct saa716x_config saa716x_averhc82_config = {
 	.dev_type		= SAA716x_DEV_AVERMEDIA_HC82,
 	.boot_mode		= SAA716x_EXT_BOOT,
 	.load_config		= &load_config_averhc82,
+	.adapters		= 1,
 };
 
 static struct pci_device_id saa716x_hybrid_pci_table[] = {
