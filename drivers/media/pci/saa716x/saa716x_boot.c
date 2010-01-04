@@ -65,9 +65,10 @@ int saa716x_core_boot(struct saa716x_dev *saa716x)
 		dprintk(SAA716x_DEBUG, 1, "Using Internal Boot from config");
 		saa716x_int_boot(saa716x);
 		break;
+	case SAA716x_CGU_BOOT:
 	default:
-		dprintk(SAA716x_ERROR, 1, "Unsupported Mode, halting (MODE=0x%02x)", config->boot_mode);
-		return -1;
+		dprintk(SAA716x_ERROR, 1, "Using CGU Setup");
+		break;
 	}
 
 	return 0;
@@ -77,7 +78,6 @@ EXPORT_SYMBOL_GPL(saa716x_core_boot);
 int saa716x_jetpack_init(struct saa716x_dev *saa716x)
 {
 	/* Reset all blocks */
-	dprintk(SAA716x_DEBUG, 1, "Jetpack Init");
 	SAA716x_WR(MSI, MSI_SW_RST, MSI_SW_RESET);
 	SAA716x_WR(MMU, MMU_SW_RST, MMU_SW_RESET);
 	SAA716x_WR(BAM, BAM_SW_RST, BAM_SW_RESET);
@@ -98,12 +98,11 @@ int saa716x_jetpack_init(struct saa716x_dev *saa716x)
 		SAA716x_WR(GPIO, GPIO_WR,  0x01000000); /* Enable decoder */
 		break;
 	case SAA7160:
-		dprintk(SAA716x_DEBUG, 1, "Setting SAA%02x Defaults", saa716x->pdev->device);
 		saa716x->i2c_rate = SAA716x_I2C_RATE_100;
 		break;
 	default:
 		dprintk(SAA716x_ERROR, 1, "Unknown device (0x%02x)", saa716x->pdev->device);
-		return -1;
+		return -ENODEV;
 	}
 
 	/* General setup for MMU */
