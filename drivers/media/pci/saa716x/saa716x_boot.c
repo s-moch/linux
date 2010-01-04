@@ -17,7 +17,7 @@ static int saa716x_ext_boot(struct saa716x_dev *saa716x)
 	SAA716x_WR(GREG, GREG_PMCSR_DATA_2, 0);
 
 	/* Release GREG Resets */
-	SAA716x_WR(GREG, GREG_RSTU_CTRL, IP_RST_RELEASE | ADAPTER_RST_RELEASE | PCIE_CORE_RST_RELEASE);
+	SAA716x_WR(GREG, GREG_RSTU_CTRL, GREG_IP_RST_RELEASE | GREG_ADAPTER_RST_RELEASE | GREG_PCIE_CORE_RST_RELEASE);
 
 	/* Disable Logical A/V channels */
 	SAA716x_WR(GREG, GPIO_OEN, 0xfcffffff);
@@ -39,7 +39,7 @@ static int saa716x_ext_boot(struct saa716x_dev *saa716x)
 	SAA716x_WR(CGU, CGU_PCR_12,  0x00000006);
 
 	/* Set GREG Boot Ready */
-	SAA716x_WR(GREG, GREG_RSTU_CTRL, BOOT_READY);
+	SAA716x_WR(GREG, GREG_RSTU_CTRL, GREG_BOOT_READY);
 
 	/* Disable GREG Clock */
 	SAA716x_WR(CGU, CGU_PCR_0_6, 0x00000006);
