@@ -546,6 +546,9 @@
 #define MSI_CONFIG46			0x0c0
 #define MSI_CONFIG47			0x0c4
 #define MSI_CONFIG48			0x0c8
+#define MSI_CONFIG49			0x0cc
+#define MSI_CONFIG50			0x0d0
+
 #define MSI_INT_POL_EDGE_RISE		(0x00000001 << 24)
 #define MSI_INT_POL_EDGE_FALL		(0x00000002 << 24)
 #define MSI_INT_POL_EDGE_ANY		(0x00000003 << 24)
