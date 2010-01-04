@@ -16,8 +16,8 @@
 #define SAA716x_INFO		2
 #define SAA716x_DEBUG		3
 
-#define SAA716x_DEV		saa716x->num
-#define SAA716x_VERBOSE		saa716x->verbose
+#define SAA716x_DEV		(saa716x)->num
+#define SAA716x_VERBOSE		(saa716x)->verbose
 
 #define dprintk(__x, __y, __fmt, __arg...) do {								\
 	if (__y) {											\
@@ -47,6 +47,9 @@
 		.subdevice	= (__subdev),				\
 		.driver_data	= (unsigned long) (__configptr)		\
 }
+
+#define SAA716x_WR(__offst, __addr, __data)	writel((__data), (saa716x->mmio + (__offst + __addr)))
+#define SAA716x_RD(__offst, __addr)		readl((saa716x->mmio + (__offst + __addr)))
 
 struct saa716x_dev;
 
