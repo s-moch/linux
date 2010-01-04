@@ -164,7 +164,10 @@ static struct saa716x_config saa716x_vp1028_config = {
 
 static struct pci_device_id saa716x_budget_pci_table[] = {
 
-	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_1028, SAA7160, &saa716x_vp1028_config) /* VP-1028 */
+	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_1028, SAA7160, &saa716x_vp1028_config), /* VP-1028 */
+	{
+		.vendor = 0,
+	}
 };
 MODULE_DEVICE_TABLE(pci, saa716x_budget_pci_table);
 
