@@ -59,6 +59,7 @@ typedef int (*saa716x_load_config_t)(struct saa716x_dev *saa716x);
 enum saa716x_boot_mode {
 	SAA716x_EXT_BOOT = 1,
 	SAA716x_INT_BOOT,
+	SAA716x_CGU_BOOT,
 };
 
 enum saa716x_i2c_rate {
@@ -137,5 +138,8 @@ extern void saa716x_audio_exit(struct saa716x_dev *saa716x);
 /* Boot */
 extern int saa716x_core_boot(struct saa716x_dev *saa716x);
 extern int saa716x_jetpack_init(struct saa716x_dev *saa716x);
+
+/* CGU */
+extern int saa716x_cgu_init(struct saa716x_dev *saa716x);
 
 #endif /* __SAA716x_PRIV_H */
