@@ -131,7 +131,7 @@ static struct saa716x_config saa716x_vp6090_config = {
  * DVB-T Frontend: 1x TDA10046 + TDA8275
  * Analog Decoder: External SAA7136
  */
-#define SAA716x_MODEL_NXP_NEMO		"NEMO reference board" 
+#define SAA716x_MODEL_NXP_NEMO		"NEMO reference board"
 #define SAA716x_DEV_NXP_NEMO		"DVB-T + Analog"
 
 static int load_config_nemo(struct saa716x_dev *saa716x)
@@ -152,6 +152,9 @@ static struct pci_device_id saa716x_hybrid_pci_table[] = {
 
 	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_6090, SAA7162, &saa716x_vp6090_config),
 	MAKE_ENTRY(NXP_REFERENCE_BOARD, PCI_ANY_ID, SAA7160, &saa716x_nemo_config),
+	{
+		.vendor = 0,
+	}
 };
 MODULE_DEVICE_TABLE(pci, saa716x_hybrid_pci_table);
 
