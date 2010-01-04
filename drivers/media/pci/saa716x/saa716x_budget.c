@@ -177,10 +177,28 @@ static struct saa716x_config saa716x_vp1028_config = {
 	.adapters		= 1,
 };
 
+static int load_config_vp6002(struct saa716x_dev *saa716x)
+{
+	int ret = 0;
+
+	return ret;
+}
+
+#define SAA716x_MODEL_TWINHAN_VP6002	"Twinhan/Azurewave VP-6002"
+#define SAA716x_DEV_TWINHAN_VP6002	"DVB-S"
+
+static struct saa716x_config saa716x_vp6002_config = {
+	.model_name		= SAA716x_MODEL_TWINHAN_VP6002,
+	.dev_type		= SAA716x_DEV_TWINHAN_VP6002,
+	.boot_mode		= SAA716x_EXT_BOOT,
+	.load_config		= &load_config_vp6002,
+	.adapters		= 1,
+};
 
 static struct pci_device_id saa716x_budget_pci_table[] = {
 
 	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_1028, SAA7160, &saa716x_vp1028_config), /* VP-1028 */
+	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_6002, SAA7160, &saa716x_vp6002_config), /* VP-6002 */
 	{
 		.vendor = 0,
 	}
