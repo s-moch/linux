@@ -108,3 +108,12 @@ int saa716x_msi_init(struct saa716x_dev *saa716x)
 
 	return 0;
 }
+
+void saa716x_msiint_disable(struct saa716x_dev *saa716x)
+{
+	SAA716x_WR(MSI, MSI_INT_ENA_L, 0x0);
+	SAA716x_WR(MSI, MSI_INT_ENA_H, 0x0);
+	SAA716x_WR(MSI, MSI_INT_STATUS_CLR_L, 0xffffffff);
+	SAA716x_WR(MSI, MSI_INT_STATUS_CLR_L, 0x0000ffff);
+}
+EXPORT_SYMBOL_GPL(saa716x_msiint_disable);
