@@ -5,10 +5,12 @@
 #include "dvb_demux.h"
 #include "dvb_frontend.h"
 
-#include "saa716x_priv.h"
+#include "saa716x_spi.h"
 #include "saa716x_adap.h"
 #include "saa716x_i2c.h"
 #include "saa716x_gpio.h"
+#include "saa716x_priv.h"
+
 
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
@@ -74,10 +76,9 @@ static int saa716x_frontend_power(struct saa716x_dev *saa716x, u8 DEV, u8 contro
 	struct saa716x_config *config		= saa716x->config;
 	struct saa716x_adap_config *adap_cfg	= &config->adap_config[DEV];
 
-	if (adap_cfg->power_ctl != 0)
-	{
+	if (adap_cfg->power_ctl != 0) {
 		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Power ON", DEV);
-		saa716x_gpio_ctl(saa716x, adap_cfg->power_ctl);
+		saa716x_gpio_ctl(saa716x, 0, adap_cfg->power_ctl); /* TODO! check mask */
 		saa716x_gpio_bits(saa716x, adap_cfg->power_ctl);
 	}
 
@@ -90,10 +91,9 @@ static int saa716x_frontend_reset(struct saa716x_dev *saa716x, u8 DEV)
 	struct saa716x_config *config		= saa716x->config;
 	struct saa716x_adap_config *adap_cfg	= &config->adap_config[DEV];
 
-	if (adap_cfg->reset_ctl != 0)
-	{
+	if (adap_cfg->reset_ctl != 0) {
 		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) RESET", DEV);
-		saa716x_gpio_ctl(saa716x, adap_cfg->reset_ctl);
+		saa716x_gpio_ctl(saa716x, 0, adap_cfg->reset_ctl); /* TODO! check mask */
 		saa716x_gpio_bits(saa716x, adap_cfg->reset_ctl);
 	}
 
