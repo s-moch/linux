@@ -118,7 +118,7 @@ int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 		i2c->i2c_dev	= I2C_DEV[i];
 		i2c->i2c_rate	= saa716x->i2c_rate;
  
-		msleep(1000);
+		msleep(100);
 		reg = SAA716x_RD(I2C_DEV[i], I2C_STATUS);
 		if (!(reg & 0xd)) {
 			dprintk(SAA716x_ERROR, 1, "Adapter (%d) %s RESET failed, Exiting !", i, saa716x_i2c[i].name);
