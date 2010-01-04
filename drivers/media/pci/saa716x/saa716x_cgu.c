@@ -260,28 +260,28 @@ int saa716x_set_clk_external(struct saa716x_dev *saa716x, u32 port)
 		break;
 
 	case PORT_FGPI0:
-		cgu->clk_int_port[PORT_FGPI0] = 1;
+		cgu->clk_int_port[PORT_FGPI0] = 0;
 
 		SAA716x_EPWR(CGU, CGU_FS1_7, 0x4); /* FGPI 0 clk */
 		SAA716x_EPWR(CGU, CGU_ESR_7, 0x0); /* disable divider */
 		break;
 
 	case PORT_FGPI1:
-		cgu->clk_int_port[PORT_FGPI1] = 1;
+		cgu->clk_int_port[PORT_FGPI1] = 0;
 
 		SAA716x_EPWR(CGU, CGU_FS1_8, 0x5); /* FGPI 1 clk */
 		SAA716x_EPWR(CGU, CGU_ESR_8, 0x0); /* disable divider */
 		break;
 
 	case PORT_FGPI2:
-		cgu->clk_int_port[PORT_FGPI2] = 1;
+		cgu->clk_int_port[PORT_FGPI2] = 0;
 
 		SAA716x_EPWR(CGU, CGU_FS1_9, 0x6); /* FGPI 2 clk */
 		SAA716x_EPWR(CGU, CGU_ESR_9, 0x0); /* disable divider */
 		break;
 
 	case PORT_FGPI3:
-		cgu->clk_int_port[PORT_FGPI3] = 1;
+		cgu->clk_int_port[PORT_FGPI3] = 0;
 
 		SAA716x_EPWR(CGU, CGU_FS1_10, 0x7); /* FGPI 3 clk */
 		SAA716x_EPWR(CGU, CGU_ESR_10, 0x0); /* disable divider */
