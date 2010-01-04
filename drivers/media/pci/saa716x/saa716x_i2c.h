@@ -22,8 +22,10 @@ struct saa716x_i2c {
 	u8				i2c_dev;
 
 	enum saa716x_i2c_rate		i2c_rate; /* run time */
-	wait_queue_head_t		i2c_wq;
-	u32				int_stat;
+	u32				i2c_stat;
+
+	u32				stat_tx_prior;
+	u32				stat_tx_done;
 };
 
 extern int saa716x_i2c_init(struct saa716x_dev *saa716x);
