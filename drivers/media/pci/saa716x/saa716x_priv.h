@@ -83,6 +83,8 @@ struct saa716x_i2c {
 	u32				i2c_dev;
 
 	enum saa716x_i2c_rate		i2c_rate; /* run time */
+	wait_queue_head_t		i2c_wq;
+	u32				int_stat;
 };
 
 struct saa716x_dev {
@@ -113,10 +115,12 @@ extern void saa716x_pci_exit(struct saa716x_dev *saa716x);
 /* MSI */
 extern int saa716x_msi_init(struct saa716x_dev *saa716x);
 extern void saa716x_msi_exit(struct saa716x_dev *saa716x);
+extern void saa716x_msiint_disable(struct saa716x_dev *saa716x);
 
 /* I2C */
 extern int saa716x_i2c_init(struct saa716x_dev *saa716x);
 extern int saa716x_i2c_exit(struct saa716x_dev *saa716x);
+extern void saa716x_i2cint_disable(struct saa716x_dev *saa716x);
 
 /* SPI */
 extern int saa716x_spi_init(struct saa716x_dev *saa716x);
@@ -140,5 +144,11 @@ extern int saa716x_jetpack_init(struct saa716x_dev *saa716x);
 
 /* CGU */
 extern int saa716x_cgu_init(struct saa716x_dev *saa716x);
+
+/* VIP */
+extern void saa716x_vipint_disable(struct saa716x_dev *saa716x);
+
+/* FGPI */
+extern void saa716x_fgpiint_disable(struct saa716x_dev *saa716x);
 
 #endif /* __SAA716x_PRIV_H */
