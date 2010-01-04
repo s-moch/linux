@@ -1,27 +1,29 @@
 #include <linux/delay.h>
-
+#include "saa716x_reg.h"
 #include "saa716x_priv.h"
 
+static void saa716x_term_xfer(struct i2c_adapter *adapter)
+{
+	struct saa716x_i2c *i2c;
+	struct saa716x_dev *saa716x;
+	u32 I2C_DEV;
 
-#define RX_FIFO			0x000
-#define TX_FIFO			0x000
-#define I2C_STATUS		0x008
-#define I2C_CONTROL		0x00c
-#define CLOCK_DIVISOR_HIGH	0x010
-#define CLOCK_DIVISOR_LOW	0x014
-#define RX_LEVEL		0x01c
-#define TX_LEVEL		0x020
-#define SDA_HOLD		0x028
+	i2c 	= i2c_get_adapdata(adapter);
+	saa716x = i2c->saa716x;
+	I2C_DEV = i2c->i2c_dev;
 
+	SAA716x_WR(I2C_DEV, I2C_CONTROL, 0xc0); /* Start: SCL/SDA High */
+	msleep(10);
+	SAA716x_WR(I2C_DEV, I2C_CONTROL, 0x80);
+	msleep(10);
+	SAA716x_WR(I2C_DEV, I2C_CONTROL, 0x00);
+	msleep(10);
+	SAA716x_WR(I2C_DEV, I2C_CONTROL, 0x80);
+	msleep(10);
+	SAA716x_WR(I2C_DEV, I2C_CONTROL, 0xc0);
 
-#define MODULE_CONF		0xfd4
-#define INT_CLR_ENABLE		0xfd8
-#define INT_SET_ENABLE		0xfdc
-#define INT_STATUS		0xfe0
-#define INT_ENABLE		0xfe4
-#define INT_CLR_STATUS		0xfe8
-#define INT_SET_STATUS		0xfec
-
+	return;
+}
 
 static int saa716x_i2c_read(struct saa716x_dev *saa716x, const struct i2c_msg *msg)
 {
@@ -98,6 +100,8 @@ int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 	struct pci_dev *pdev	= saa716x->pdev;
 	struct saa716x_i2c *i2c = saa716x->i2c;
 	int i, err = 0;
+	u32 I2C_DEV[2] = {I2C_B, I2C_A};
+	u32 reg;
 
 	dprintk(SAA716x_DEBUG, 1, "Initializing SAA%02x I2C Core", saa716x->pdev->device);
 	for (i = 0; i < SAA716x_I2C_ADAPTERS; i++) {
@@ -111,6 +115,77 @@ int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 			dprintk(SAA716x_ERROR, 1, "Adapter (%d) %s init failed", i, saa716x_i2c[i].name);
 			goto exit;
 		}
+		i2c->i2c_dev	= I2C_DEV[i];
+		i2c->i2c_rate	= saa716x->i2c_rate;
+ 
+		msleep(1000);
+		reg = SAA716x_RD(I2C_DEV[i], I2C_STATUS);
+		if (!(reg & 0xd)) {
+			dprintk(SAA716x_ERROR, 1, "Adapter (%d) %s RESET failed, Exiting !", i, saa716x_i2c[i].name);
+			err = -1;
+			goto exit;
+		}
+
+		/* Flush queue */
+		SAA716x_WR(I2C_DEV[i], I2C_CONTROL, 0xcc);
+
+		/* Disable all interrupts and clear status */
+		SAA716x_WR(I2C_DEV[i], INT_CLR_ENABLE, 0x1fff);
+		SAA716x_WR(I2C_DEV[i], INT_CLR_STATUS, 0x1fff);
+
+		/* Reset I2C Core and generate a delay */
+		SAA716x_WR(I2C_DEV[i], I2C_CONTROL, 0xc1);
+
+		msleep(100);
+
+		reg = SAA716x_RD(I2C_DEV[i], I2C_CONTROL);
+		if (reg != 0xc0) {
+			dprintk(SAA716x_ERROR, 1, "Core RESET failed");
+			err = -1;
+			goto exit;
+		}
+		
+		/* I2C Rate Setup */
+		switch (i2c->i2c_rate) {
+		case SAA716x_I2C_RATE_400:
+			dprintk(SAA716x_DEBUG, 1, "Initializing Adapter (%d) %s @ 400k", i, saa716x_i2c[i].name);
+			SAA716x_WR(I2C_DEV[i], CLOCK_DIVISOR_HIGH, 0x1a); /* 0.5 * 27MHz/400kHz */
+			SAA716x_WR(I2C_DEV[i], CLOCK_DIVISOR_LOW,  0x21); /* 0.5 * 27MHz/400kHz */
+			SAA716x_WR(I2C_DEV[i], SDA_HOLD, 0x19);
+			break;
+		case SAA716x_I2C_RATE_100:
+			dprintk(SAA716x_DEBUG, 1, "Initializing Adapter (%d) %s @ 100k", i, saa716x_i2c[i].name);
+			SAA716x_WR(I2C_DEV[i], CLOCK_DIVISOR_HIGH, 0x68); /* 0.5 * 27MHz/400kHz */
+			SAA716x_WR(I2C_DEV[i], CLOCK_DIVISOR_LOW,  0x87); /* 0.5 * 27MHz/400kHz */
+			SAA716x_WR(I2C_DEV[i], SDA_HOLD, 0x60);
+			break;
+		default:
+			dprintk(SAA716x_ERROR, 1, "Adapter (%d) %s Unknown Rate (Rate=0x%02x)", i, saa716x_i2c[i].name, i2c->i2c_rate);
+			break;
+		}
+		/* Disable all interrupts and clear status */
+		SAA716x_WR(I2C_DEV[i], INT_CLR_ENABLE, 0x1fff);
+		SAA716x_WR(I2C_DEV[i], INT_CLR_STATUS, 0x1fff);
+
+		/* enable interrupts: transaction done, arbitration, No Ack and I2C error */
+		SAA716x_WR(I2C_DEV[i], INT_SET_ENABLE, 0x00c7);
+
+		/* Check interrupt enable status */
+		reg = SAA716x_RD(I2C_DEV[i], INT_ENABLE);
+		if (reg != 0xc7) {
+			dprintk(SAA716x_ERROR, 1, "Adapter (%d) %s Interrupt enable failed, Exiting !", i, saa716x_i2c[i].name);
+			err = -1;
+			goto exit;
+		}
+
+		/* Check status */
+		reg = SAA716x_RD(I2C_DEV[i], I2C_STATUS);
+		if (!(reg & 0xd)) {
+			dprintk(SAA716x_ERROR, 1, "Adapter (%d) %s has bad state, Exiting !", i, saa716x_i2c[i].name);
+			err = -1;
+			goto exit;
+		}
+
 		i2c->saa716x = saa716x;
 		i2c++;
 	}
