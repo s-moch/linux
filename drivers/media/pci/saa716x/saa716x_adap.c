@@ -68,8 +68,6 @@ int __devinit saa716x_frontend_init(struct saa716x_adapter *saa716x_adap, int co
 {
 	struct saa716x_dev *saa716x = saa716x_adap->saa716x;
 
-	int i;
-
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
 	switch (saa716x->pdev->subsystem_device) {
@@ -103,7 +101,7 @@ int __devinit saa716x_dvb_init(struct saa716x_dev *saa716x)
 	struct saa716x_adapter *saa716x_adap = saa716x->saa716x_adap;
 	int result, i;
 
-	for (i = 0; i < SAA716x_I2C_ADAPTERS; i++) {
+	for (i = 0; i < saa716x->config->adapters; i++) {
 
 		dprintk(SAA716x_DEBUG, 1, "dvb_register_adapter");
 		if (dvb_register_adapter(&saa716x_adap->dvb_adapter,
@@ -192,7 +190,7 @@ void __devexit saa716x_dvb_exit(struct saa716x_dev *saa716x)
 	struct saa716x_adapter *saa716x_adap = saa716x->saa716x_adap;
 	int i;
 
-	for (i = 0; i < SAA716x_I2C_ADAPTERS; i++) {
+	for (i = 0; i < saa716x->config->adapters; i++) {
 
 //		tasklet_kill(&saa716x->tasklet);
 		dvb_net_release(&saa716x_adap->dvb_net);
