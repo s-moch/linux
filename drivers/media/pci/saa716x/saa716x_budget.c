@@ -161,14 +161,33 @@ static void __devexit saa716x_budget_pci_remove(struct pci_dev *pdev)
 static irqreturn_t saa716x_budget_pci_irq(int irq, void *dev_id)
 {
 	struct saa716x_dev *saa716x	= (struct saa716x_dev *) dev_id;
-	struct saa716x_i2c *i2c_a	= &saa716x->i2c[0];
-	struct saa716x_i2c *i2c_b	= &saa716x->i2c[1];
+
+	u32 stat_h, stat_l, mask_h, mask_l;
 
 	if (unlikely(saa716x == NULL)) {
 		printk("%s: saa716x=NULL", __func__);
 		return IRQ_NONE;
 	}
 
+	stat_l = SAA716x_EPRD(MSI, MSI_INT_STATUS_L);
+	stat_h = SAA716x_EPRD(MSI, MSI_INT_STATUS_H);
+	mask_l = SAA716x_EPRD(MSI, MSI_INT_ENA_L);
+	mask_h = SAA716x_EPRD(MSI, MSI_INT_ENA_H);
+
+	dprintk(SAA716x_DEBUG, 1, "MSI STAT L=<%02x> H=<%02x>, CTL L=<%02x> H=<%02x>",
+		stat_l, stat_h, mask_l, mask_h);
+
+	if (!((stat_l & mask_l) || (stat_h & mask_h)))
+		return IRQ_NONE;
+
+	if (stat_l)
+		SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_L, stat_l);
+
+	if (stat_h)
+		SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_H, stat_h);
+
+	saa716x_msi_event(saa716x, stat_l, stat_h);
+#if 0
 	dprintk(SAA716x_DEBUG, 1, "VI STAT 0=<%02x> 1=<%02x>, CTL 1=<%02x> 2=<%02x>",
 		SAA716x_EPRD(VI0, INT_STATUS),
 		SAA716x_EPRD(VI1, INT_STATUS),
@@ -193,12 +212,6 @@ static irqreturn_t saa716x_budget_pci_irq(int irq, void *dev_id)
 		SAA716x_EPRD(AI0, AI_CTL),
 		SAA716x_EPRD(AI1, AI_CTL));
 
-	dprintk(SAA716x_DEBUG, 1, "MSI STAT L=<%02x> H=<%02x>, CTL L=<%02x> H=<%02x>",
-		SAA716x_EPRD(MSI, MSI_INT_STATUS_L),
-		SAA716x_EPRD(MSI, MSI_INT_STATUS_H),
-		SAA716x_EPRD(MSI, MSI_INT_ENA_L),
-		SAA716x_EPRD(MSI, MSI_INT_ENA_H));
-
 	dprintk(SAA716x_DEBUG, 1, "I2C STAT 0=<%02x> 1=<%02x>, CTL 0=<%02x> 1=<%02x>",
 		SAA716x_EPRD(I2C_A, INT_STATUS),
 		SAA716x_EPRD(I2C_B, INT_STATUS),
@@ -208,6 +221,7 @@ static irqreturn_t saa716x_budget_pci_irq(int irq, void *dev_id)
 	dprintk(SAA716x_DEBUG, 1, "DCS STAT=<%02x>, CTL=<%02x>",
 		SAA716x_EPRD(DCS, DCSC_INT_STATUS),
 		SAA716x_EPRD(DCS, DCSC_INT_ENABLE));
+#endif
 
 	return IRQ_HANDLED;
 }
