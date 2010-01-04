@@ -61,10 +61,10 @@ int saa716x_msi_init(struct saa716x_dev *saa716x)
 	};
 
 	/* let HW take care of MSI race */
-	SAA716x_WR(MSI, MSI_DELAY_TIMER, 0x0);
+	SAA716x_EPWR(MSI, MSI_DELAY_TIMER, 0x0);
 
 	/* INTA Polarity: Active High */
-	SAA716x_WR(MSI, MSI_INTA_POLARITY, MSI_INTA_POLARITY_HIGH);
+	SAA716x_EPWR(MSI, MSI_INTA_POLARITY, MSI_INTA_POLARITY_HIGH);
 
 	/*
 	 * IRQ Edge Rising: 25:24 = 0x01
@@ -72,34 +72,34 @@ int saa716x_msi_init(struct saa716x_dev *saa716x)
 	 * MSI ID: 4:0 = 0x00
 	 */
 	for (i = 0; i < MSI_CONFIG_REGS; i++)
-		SAA716x_WR(MSI, MSI_CONFIG_REG[i], MSI_INT_POL_EDGE_RISE);
+		SAA716x_EPWR(MSI, MSI_CONFIG_REG[i], MSI_INT_POL_EDGE_RISE);
 
 	/* get Status */
-	ena_l = SAA716x_RD(MSI, MSI_INT_ENA_L);
-	ena_h = SAA716x_RD(MSI, MSI_INT_ENA_H);
-	sta_l = SAA716x_RD(MSI, MSI_INT_STATUS_L);
-	sta_h = SAA716x_RD(MSI, MSI_INT_STATUS_H);
+	ena_l = SAA716x_EPRD(MSI, MSI_INT_ENA_L);
+	ena_h = SAA716x_EPRD(MSI, MSI_INT_ENA_H);
+	sta_l = SAA716x_EPRD(MSI, MSI_INT_STATUS_L);
+	sta_h = SAA716x_EPRD(MSI, MSI_INT_STATUS_H);
 
 	/* disable and clear enabled and asserted IRQ's */
 	if (sta_l)
-		SAA716x_WR(MSI, MSI_INT_STATUS_CLR_L, sta_l);
+		SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_L, sta_l);
 
 	if (sta_h)
-		SAA716x_WR(MSI, MSI_INT_STATUS_CLR_H, sta_h);
+		SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_H, sta_h);
 
 	if (ena_l)
-		SAA716x_WR(MSI, MSI_INT_ENA_CLR_L, ena_l);
+		SAA716x_EPWR(MSI, MSI_INT_ENA_CLR_L, ena_l);
 
 	if (ena_h)
-		SAA716x_WR(MSI, MSI_INT_ENA_CLR_H, ena_h);
+		SAA716x_EPWR(MSI, MSI_INT_ENA_CLR_H, ena_h);
 
 	msleep(5);
 
 	/* Check IRQ's really disabled */
-	ena_l = SAA716x_RD(MSI, MSI_INT_ENA_L);
-	ena_h = SAA716x_RD(MSI, MSI_INT_ENA_H);
-	sta_l = SAA716x_RD(MSI, MSI_INT_STATUS_L);
-	sta_h = SAA716x_RD(MSI, MSI_INT_STATUS_H);
+	ena_l = SAA716x_EPRD(MSI, MSI_INT_ENA_L);
+	ena_h = SAA716x_EPRD(MSI, MSI_INT_ENA_H);
+	sta_l = SAA716x_EPRD(MSI, MSI_INT_STATUS_L);
+	sta_h = SAA716x_EPRD(MSI, MSI_INT_STATUS_H);
 
 	if ((ena_l == 0) && (ena_h == 0) && (sta_l == 0) && (sta_h == 0))
 		return 0;
@@ -112,9 +112,9 @@ EXPORT_SYMBOL_GPL(saa716x_msi_init);
 
 void saa716x_msiint_disable(struct saa716x_dev *saa716x)
 {
-	SAA716x_WR(MSI, MSI_INT_ENA_L, 0x0);
-	SAA716x_WR(MSI, MSI_INT_ENA_H, 0x0);
-	SAA716x_WR(MSI, MSI_INT_STATUS_CLR_L, 0xffffffff);
-	SAA716x_WR(MSI, MSI_INT_STATUS_CLR_L, 0x0000ffff);
+	SAA716x_EPWR(MSI, MSI_INT_ENA_L, 0x0);
+	SAA716x_EPWR(MSI, MSI_INT_ENA_H, 0x0);
+	SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_L, 0xffffffff);
+	SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_L, 0x0000ffff);
 }
 EXPORT_SYMBOL_GPL(saa716x_msiint_disable);
