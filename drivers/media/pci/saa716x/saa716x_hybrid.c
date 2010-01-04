@@ -19,8 +19,12 @@
 #include "saa716x_i2c.h"
 #include "saa716x_msi.h"
 #include "saa716x_hybrid.h"
+#include "saa716x_gpio.h"
+#include "saa716x_reg.h"
+#include "saa716x_rom.h"
 
 #include "zl10353.h"
+#include "mb86a16.h"
 
 unsigned int verbose;
 module_param(verbose, int, 0644);
@@ -31,45 +35,6 @@ module_param(int_type, int, 0644);
 MODULE_PARM_DESC(int_type, "force Interrupt Handler type: 0=INT-A, 1=MSI, 2=MSI-X. default INT-A mode");
 
 #define DRIVER_NAME	"SAA716x Hybrid"
-
-static int read_eeprom_byte(struct saa716x_dev *saa716x, u8 *data, u8 len)
-{
-	struct saa716x_i2c *i2c = saa716x->i2c;
-	struct i2c_adapter *adapter = &i2c[1].i2c_adapter;
-
-	int err;
-
-	struct i2c_msg msg[] = {
-		{.addr = 0x50, .flags = 0,		.buf = data, .len = 1},
-		{.addr = 0x50, .flags = I2C_M_RD,	.buf = data, .len = len},
-	};
-
-	err = i2c_transfer(adapter, msg, 2);
-	if (err < 0) {
-		dprintk(SAA716x_ERROR, 1, "<err=%d, d0=0x%02x, d1=0x%02x>", err, data[0], data[1]);
-		return err;
-	}
-
-	return 0;
-}
-
-static int read_eeprom(struct saa716x_dev *saa716x)
-{
-	u8 buf[32];
-	int i, err = 0;
-
-	err = read_eeprom_byte(saa716x, buf, 32);
-	if (err < 0) {
-		dprintk(SAA716x_ERROR, 1, "EEPROM Read error");
-		return err;
-	}
-	dprintk(SAA716x_DEBUG, 0, "EEPROM=[");
-	for (i = 0; i < 32; i++)
-		dprintk(SAA716x_DEBUG, 0, " %02x", buf[i]);
-
-	dprintk(SAA716x_DEBUG, 0, " ]\n");
-	return 0;
-}
 
 static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
 {
@@ -120,7 +85,6 @@ static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct
 		goto fail1;
 	}
 
-//	saa716x_core_reset(saa716x);
 	pci_read_config_dword(pdev, 0x06, &sts);
 
 	err = saa716x_i2c_init(saa716x);
@@ -135,9 +99,10 @@ static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct
 		goto fail4;
 	}
 
-	msleep(500);
-	/* Experiments */
-	read_eeprom(saa716x);
+	err = saa716x_dump_eeprom(saa716x);
+	if (err) {
+		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM dump failed");
+	}
 
 	return 0;
 
@@ -248,13 +213,74 @@ static int load_config_vp6090(struct saa716x_dev *saa716x)
 	return ret;
 }
 
+static int vp6090_dvbs_set_voltage(struct dvb_frontend *fe, fe_sec_voltage_t voltage)
+{
+	struct saa716x_dev *saa716x = fe->dvb->priv;
+
+	switch (voltage) {
+	case SEC_VOLTAGE_13:
+		dprintk(SAA716x_ERROR, 1, "Polarization=[13V]");
+		break;
+	case SEC_VOLTAGE_18:
+		dprintk(SAA716x_ERROR, 1, "Polarization=[18V]");
+		break;
+	case SEC_VOLTAGE_OFF:
+		dprintk(SAA716x_ERROR, 1, "Frontend (dummy) POWERDOWN");
+		break;
+	default:
+		dprintk(SAA716x_ERROR, 1, "Invalid = (%d)", (u32 ) voltage);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+struct mb86a16_config vp6090_mb86a16_config = {
+	.demod_address	= 0x08,
+	.set_voltage	= vp6090_dvbs_set_voltage,
+};
+
 static int saa716x_vp6090_frontend_attach(struct saa716x_adapter *adapter, int count)
 {
 	struct saa716x_dev *saa716x = adapter->saa716x;
+	struct saa716x_i2c *i2c = &saa716x->i2c[count];
 
-	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
+	dprintk(SAA716x_ERROR, 1, "Adapter (%d) SAA716x frontend Init", count);
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
 
+	dprintk(SAA716x_ERROR, 1, "Adapter (%d) Power ON", count);
+	saa716x_gpio_write(saa716x, GPIO_11, 0);
+	saa716x_gpio_write(saa716x, GPIO_10, 0);
+
+	saa716x_gpio_write(saa716x, GPIO_26, 1);
+	saa716x_gpio_write(saa716x, GPIO_27, 1);
+
+	msleep(100);
+
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) RESET", count);
+	saa716x_gpio_write(saa716x, GPIO_13, 0);
+	msleep(100);
+	saa716x_gpio_write(saa716x, GPIO_13, 1);
+	msleep(100);
+	saa716x_gpio_write(saa716x, GPIO_12, 0);
+	msleep(100);
+	saa716x_gpio_write(saa716x, GPIO_12, 1);
+	msleep(100);
+
+	dprintk(SAA716x_ERROR, 1, "Probing for MB86A16 (DVB-S/DSS)");
+	adapter->fe = mb86a16_attach(&vp6090_mb86a16_config, &i2c->i2c_adapter);
+	if (adapter->fe) {
+		dprintk(SAA716x_ERROR, 1, "found MB86A16 DVB-S/DSS frontend @0x%02x",
+			vp6090_mb86a16_config.demod_address);
+
+	} else {
+		goto exit;
+	}
+
+	dprintk(SAA716x_ERROR, 1, "Done!");
+	return 0;
+exit:
+	dprintk(SAA716x_ERROR, 1, "Frontend attach failed");
 	return -ENODEV;
 }
 
@@ -266,6 +292,7 @@ static struct saa716x_config saa716x_vp6090_config = {
 	.adapters		= 2,
 	.frontend_attach	= saa716x_vp6090_frontend_attach,
 	.irq_handler		= saa716x_hybrid_pci_irq,
+	.i2c_rate		= SAA716x_I2C_RATE_100,
 };
 
 /*
@@ -346,6 +373,7 @@ static int load_config_averhc82(struct saa716x_dev *saa716x)
 	return ret;
 }
 
+#if 0
 static struct zl10353_config saa716x_averhc82_zl10353_config = {
 	.demod_address		= 0x1f,
 	.adc_clock		= 450560,
@@ -353,6 +381,7 @@ static struct zl10353_config saa716x_averhc82_zl10353_config = {
 	.no_tuner		= 1,
 	.parallel_ts		= 1,
 };
+#endif
 
 static int saa716x_averhc82_frontend_attach(struct saa716x_adapter *adapter, int count)
 {
