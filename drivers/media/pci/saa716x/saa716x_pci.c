@@ -281,7 +281,7 @@ int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
 	u32 msi_cap;
 	u8 revision;
 
-	dprintk(SAA716x_ERROR, 1, "found a %s PCI Express card", saa716x->config->model_name);
+	dprintk(SAA716x_ERROR, 1, "found a %s PCIe card", saa716x->config->model_name);
 
 	err = pci_enable_device(pdev);
 	if (err != 0) {
@@ -319,7 +319,7 @@ int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
 		ret = -ENODEV;
 		goto fail1;
 	}
-
+#if 0
 	if (!request_mem_region(pci_resource_start(pdev, 2),
 				pci_resource_len(pdev, 2),
 				DRIVER_NAME)) {
@@ -331,7 +331,7 @@ int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
 		ret = -ENODEV;
 		goto fail1;
 	}
-
+#endif
 	saa716x->mmio = ioremap(pci_resource_start(pdev, 0),
 				pci_resource_len(pdev, 0));
 
@@ -340,7 +340,7 @@ int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
 		ret = -ENODEV;
 		goto fail2;
 	}
-
+#if 0
 	saa716x->mmbd = ioremap(pci_resource_start(pdev, 2),
 				pci_resource_len(pdev, 2));
 
@@ -349,7 +349,7 @@ int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
 		ret = -ENODEV;
 		goto fail2;
 	}
-
+#endif
 	for (i = 0; i < SAA716x_MSI_MAX_VECTORS; i++)
 		saa716x->msix_entries[i].entry = i;
 
@@ -372,10 +372,9 @@ int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
 		saa716x->pdev->subsystem_device);
 
 	dprintk(SAA716x_ERROR, 0,
-		"irq: %d,\n    mmio: 0x%p mmbd: 0x%p\n",
+		"irq: %d,\n    mmio: 0x%p\n",
 		saa716x->pdev->irq,
-		saa716x->mmio,
-		saa716x->mmbd);
+		saa716x->mmio);
 
 	dprintk(SAA716x_ERROR, 0, "    SAA%02x %sBit, MSI %s, MSI-X=%d msgs",
 		saa716x->pdev->device,
@@ -389,18 +388,19 @@ int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
 
 fail3:
 	dprintk(SAA716x_ERROR, 1, "Err: IO Unmap");
+#if 0
 	if (saa716x->mmbd)
 		iounmap(saa716x->mmbd);
-
+#endif
 	if (saa716x->mmio)
 		iounmap(saa716x->mmio);
 
 fail2:
 	dprintk(SAA716x_ERROR, 1, "Err: Release regions");
-
+#if 0
 	release_mem_region(pci_resource_start(pdev, 2),
 			   pci_resource_len(pdev, 2));
-
+#endif
 	release_mem_region(pci_resource_start(pdev, 0),
 			   pci_resource_len(pdev, 0));
 
@@ -420,16 +420,16 @@ void __devexit saa716x_pci_exit(struct saa716x_dev *saa716x)
 
 	saa716x_free_irq(saa716x);
 
-	dprintk(SAA716x_NOTICE, 1, "SAA%02x mem0: 0x%p mem1: 0x%p",
+	dprintk(SAA716x_NOTICE, 1, "SAA%02x mem0: 0x%p",
 		saa716x->pdev->device,
-		saa716x->mmio,
-		saa716x->mmbd);
-
+		saa716x->mmio);
+#if 0
 	if (saa716x->mmbd) {
 		iounmap(saa716x->mmbd);
 		release_mem_region(pci_resource_start(pdev, 2),
 				   pci_resource_len(pdev, 2));
 	}
+#endif
 	if (saa716x->mmio) {
 		iounmap(saa716x->mmio);
 		release_mem_region(pci_resource_start(pdev, 0),
