@@ -140,7 +140,7 @@ static int saa716x_i2c_hwinit(struct saa716x_i2c *i2c, u32 I2C_DEV)
 	struct saa716x_dev *saa716x = i2c->saa716x;
 	struct i2c_adapter *adapter = &i2c->i2c_adapter;
 
-	int i, err = -1;
+	int i, err = 0;
 	u32 reg;
 
 	reg = SAA716x_EPRD(I2C_DEV, I2C_STATUS);
@@ -169,6 +169,9 @@ static int saa716x_i2c_hwinit(struct saa716x_i2c *i2c, u32 I2C_DEV)
 			break;
 		}
 		msleep(1);
+
+		if (i == 99)
+			err = -EIO;
 	}
 
 	if (err) {
@@ -324,7 +327,7 @@ static int saa716x_i2c_send(struct saa716x_i2c *i2c, u32 I2C_DEV, u32 data)
 
 	if (!(reg & I2C_TRANSMIT_CLEAR)) {
 		dprintk(SAA716x_ERROR, 1, "TXFIFO not empty after Timeout!");
-		err = saa716x_i2c_hwinit(i2c,I2C_DEV);
+		err = saa716x_i2c_hwinit(i2c, I2C_DEV);
 		if (err < 0) {
 			dprintk(SAA716x_ERROR, 1, "Error Reinit");
 			err = -EIO;
