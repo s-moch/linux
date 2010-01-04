@@ -160,8 +160,8 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 	dprintk(SAA716x_DEBUG, 1, "I2C STAT 0=<%02x> 1=<%02x>, CTL 0=<%02x> 1=<%02x>",
 		SAA716x_EPRD(I2C_A, INT_STATUS),
 		SAA716x_EPRD(I2C_B, INT_STATUS),
-		SAA716x_EPRD(I2C_A, INT_CLR_STATUS),
-		SAA716x_EPRD(I2C_B, INT_CLR_STATUS));
+		SAA716x_EPRD(I2C_A, INT_ENABLE),
+		SAA716x_EPRD(I2C_B, INT_ENABLE));
 
 	dprintk(SAA716x_DEBUG, 1, "DCS STAT=<%02x>, CTL=<%02x>",
 		SAA716x_EPRD(DCS, DCSC_INT_STATUS),
