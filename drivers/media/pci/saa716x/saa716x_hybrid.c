@@ -16,7 +16,10 @@
 #include "saa716x_priv.h"
 #include "saa716x_reg.h"
 #include "saa716x_adap.h"
+#include "saa716x_i2c.h"
 #include "saa716x_hybrid.h"
+
+#include "zl10353.h"
 
 unsigned int verbose;
 module_param(verbose, int, 0644);
@@ -252,14 +255,38 @@ static int load_config_averhc82(struct saa716x_dev *saa716x)
 	return ret;
 }
 
+static struct zl10353_config saa716x_averhc82_zl10353_config = {
+	.demod_address		= 0x1f,
+	.adc_clock		= 450560,
+	.if2			= 361667,
+	.no_tuner		= 1,
+	.parallel_ts		= 1,
+};
+
 static int saa716x_averhc82_frontend_attach(struct saa716x_adapter *adapter, int count)
 {
 	struct saa716x_dev *saa716x = adapter->saa716x;
+	struct saa716x_i2c *i2c = &saa716x->i2c[count];
 
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
 
-	return -ENODEV;
+	adapter->fe = zl10353_attach(&saa716x_averhc82_zl10353_config, &i2c->i2c_adapter);
+	if (adapter->fe) {
+		dprintk(SAA716x_ERROR, 1, "Adapter (%d) ZL10353 demodulator succesfully attached", count);
+	} else {
+		if (dvb_register_frontend(&adapter->dvb_adapter, adapter->fe)) {
+			dprintk(SAA716x_ERROR, 1, "ERROR: Frontend registration failed");
+
+			if (adapter->fe->ops.release)
+				adapter->fe->ops.release(adapter->fe);
+
+			adapter->fe = NULL;
+			return -ENODEV;
+		}
+	}
+
+	return 0;
 }
 
 static struct saa716x_config saa716x_averhc82_config = {
