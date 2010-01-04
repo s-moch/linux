@@ -90,38 +90,46 @@ static int load_config_vp6090(struct saa716x_dev *saa716x)
 	return ret;
 }
 
+
+
+/*
+ * Twinhan/Azurewave VP-6090
+ * DVB-S Frontend: 2x MB86A16
+ * DVB-T Frontend: 2x TDA10046 + TDA8275
+ */
+#define SAA716x_MODEL_TWINHAN_VP6090	"Twinhan/Azurewave VP-6090"
+#define SAA716x_CHIPS_TWINHAN_VP6090	"2xMB86A16L + 2xTDA8275A + 2xTDA10046 + SAA7162"
+#define SAA716x_DEV_TWINHAN_VP6090	"2xDVB-S + 2xDVB-T + 2xAnalog"
+
+static struct saa716x_config saa716x_vp6090_config = {
+	.model_name		= SAA716x_MODEL_TWINHAN_VP6090,
+	.chips_desc		= SAA716x_CHIPS_TWINHAN_VP6090,
+	.dev_type		= SAA716x_DEV_TWINHAN_VP6090,
+	.boot_mode		= SAA716x_CGU_BOOT,
+	.load_config		= &load_config_vp6090,
+};
+
+/*
+ * NXP Reference design (NEMO)
+ * DVB-T Frontend: 1x TDA10046 + TDA8275
+ * Analog Decoder: External SAA7136
+ */
+#define SAA716x_MODEL_NXP_NENO		"NXP Semiconductors NEMO referrence board" 
+#define SAA716x_CHIPS_NXP_NEMO		"SAA7160 + TDA8275A + TDA10046 + SAA7136"
+#define SAA716x_DEV_NXP_NEMO		"DVB-T + Analog"
+
 static int load_config_nemo(struct saa716x_dev *saa716x)
 {
     int ret = 0;
     return ret;
 }
 
-
-#define SAA716x_MODEL_TWINHAN_VP6090	"Twinhan/Azurewave VP-6090"
-#define SAA716x_CHIPS_TWINHAN_VP6090       "2xTDA8263 + 2xMB86A16L + 2xTDA8275A + 2xTDA10046 + SAA7162"
-#define SAA716x_DEV_TWINHAN_VP6090	"2xDVB-S + 2xDVB-T + 2xAnalog"
-
-/*****************NXP Semiconductors reference design board ******************/
-#define SAA716x_MODEL_NXP_NENO     "NXP Semiconductors NEMO referrence board" 
-#define SAA716x_CHIPS_NXP_NEMO      "SAA7160 + TDA8275A + TDA10046 + SAA7136"
-#define SAA716x_DEV_NXP_NEMO         "DVB-T + Analog"
-/*******************************END*************************************/
-
-
-
-static struct saa716x_config saa716x_vp6090_config = {
-	.model_name		= SAA716x_MODEL_TWINHAN_VP6090,
-	.chips_desc            = SAA716x_CHIPS_TWINHAN_VP6090,
-	.dev_type		= SAA716x_DEV_TWINHAN_VP6090,
-	.boot_mode		= SAA716x_CGU_BOOT,
-	.load_config		= &load_config_vp6090,
-};
-
 static struct saa716x_config saa716x_nemo_config = {
-       .model_name        = SAA716x_MODEL_NXP_NENO,
-	.chips_desc           = SAA716x_CHIPS_NXP_NEMO,
-	.dev_type             = SAA716x_DEV_NXP_NEMO,
-	.load_config          = &load_config_nemo,
+	.model_name		= SAA716x_MODEL_NXP_NENO,
+	.chips_desc		= SAA716x_CHIPS_NXP_NEMO,
+	.dev_type		= SAA716x_DEV_NXP_NEMO,
+	.boot_mode		= SAA716x_CGU_BOOT,
+	.load_config		= &load_config_nemo,
 };
 
 
