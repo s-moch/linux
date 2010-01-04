@@ -1,6 +1,32 @@
-#include "saa716x_priv.h"
+#include <linux/kernel.h>
+#include <linux/spinlock.h>
+
 #include "saa716x_reg.h"
 #include "saa716x_gpio.h"
+#include "saa716x_spi.h"
+#include "saa716x_priv.h"
+
+int saa716x_get_gpio_mode(struct saa716x_dev *saa716x, u32 *config)
+{
+	*config = SAA716x_EPRD(GPIO, GPIO_WR_MODE);
+
+	return 0;
+}
+
+int saa716x_set_gpio_mode(struct saa716x_dev *saa716x, u32 mask, u32 config)
+{
+	unsigned long flags;
+	u32 reg;
+
+	spin_lock_irqsave(&saa716x->gpio_lock, flags);
+	reg = SAA716x_EPRD(GPIO, GPIO_WR_MODE);
+	reg &= ~mask;
+	reg |= (config & mask);
+	SAA716x_EPWR(GPIO, GPIO_WR_MODE, reg);
+	spin_unlock_irqrestore(&saa716x->gpio_lock, flags);
+
+	return 0;
+}
 
 u32 saa716x_gpio_rd(struct saa716x_dev *saa716x)
 {
@@ -12,7 +38,7 @@ void saa716x_gpio_wr(struct saa716x_dev *saa716x, u32 data)
 	SAA716x_EPWR(GPIO, GPIO_WR, data);
 }
 
-void saa716x_gpio_ctl(struct saa716x_dev *saa716x, u32 out)
+void saa716x_gpio_ctl(struct saa716x_dev *saa716x, u32 mask, u32 bits)
 {
 	unsigned long flags;
 	u32 reg;
@@ -20,10 +46,8 @@ void saa716x_gpio_ctl(struct saa716x_dev *saa716x, u32 out)
 	spin_lock_irqsave(&saa716x->gpio_lock, flags);
 
 	reg  = SAA716x_EPRD(GPIO, GPIO_OEN);
-	reg &= ~out;
-	/* TODO ! add maskable config bits in here */
-	/* reg |= (config->mask & out) */
-	reg |= out;
+	reg &= ~mask;
+	reg |= (bits & mask);
 	SAA716x_EPWR(GPIO, GPIO_OEN, reg);
 
 	spin_unlock_irqrestore(&saa716x->gpio_lock, flags);
@@ -69,13 +93,16 @@ EXPORT_SYMBOL_GPL(saa716x_gpio_set_input);
 void saa716x_gpio_write(struct saa716x_dev *saa716x, int gpio, int set)
 {
 	uint32_t value;
+	unsigned long flags;
 
+	spin_lock_irqsave(&saa716x->gpio_lock, flags);
 	value = SAA716x_EPRD(GPIO, GPIO_WR);
 	if (set)
 		value |= 1 << gpio;
 	else
 		value &= ~(1 << gpio);
 	SAA716x_EPWR(GPIO, GPIO_WR, value);
+	spin_unlock_irqrestore(&saa716x->gpio_lock, flags);
 }
 EXPORT_SYMBOL_GPL(saa716x_gpio_write);
 
