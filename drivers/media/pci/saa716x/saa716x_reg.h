@@ -621,7 +621,7 @@
 #define MSI_SW_RST			0xff0
 #define MSI_SW_RESET			(0x0001 <<  0)
 
-
+#define MSI_MODULE_ID			0xffc
 
 
 /* -------------- I2C Registers -------------- */
