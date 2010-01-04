@@ -154,7 +154,7 @@ static int saa716x_i2c_hwinit(struct saa716x_i2c *i2c, u32 I2C_DEV)
 
 	reg = SAA716x_EPRD(I2C_DEV, I2C_STATUS);
 	if (!(reg & 0xd)) {
-		dprintk(SAA716x_ERROR, 1, "Adapter (%d) %s RESET failed, Exiting !",
+		dprintk(SAA716x_ERROR, 1, "Adapter (%02x) %s RESET failed, Exiting !",
 			I2C_DEV, adapter->name);
 		err = -EIO;
 		goto exit;
@@ -173,7 +173,7 @@ static int saa716x_i2c_hwinit(struct saa716x_i2c *i2c, u32 I2C_DEV)
 	for (i = 0; i < 100; i++) {
 		reg = SAA716x_EPRD(I2C_DEV, I2C_CONTROL);
 		if (reg == 0xc0) {
-			dprintk(SAA716x_ERROR, 1, "Adapter (%d) %s RESET",
+			dprintk(SAA716x_ERROR, 1, "Adapter (%02x) %s RESET",
 				I2C_DEV, adapter->name);
 			break;
 		}
@@ -184,7 +184,7 @@ static int saa716x_i2c_hwinit(struct saa716x_i2c *i2c, u32 I2C_DEV)
 	}
 
 	if (err) {
-		dprintk(SAA716x_ERROR, 1, "Adapter (%d) %s RESET failed",
+		dprintk(SAA716x_ERROR, 1, "Adapter (%02x) %s RESET failed",
 			I2C_DEV, adapter->name);
 
 		saa716x_term_xfer(i2c, I2C_DEV);
@@ -259,7 +259,7 @@ static int saa716x_i2c_hwinit(struct saa716x_i2c *i2c, u32 I2C_DEV)
 	if (!(reg & 0xd)) {
 
 		dprintk(SAA716x_ERROR, 1,
-			"Adapter (%d) %s has bad state, Exiting !",
+			"Adapter (%02x) %s has bad state, Exiting !",
 			I2C_DEV,
 			adapter->name);
 
@@ -274,7 +274,7 @@ static int saa716x_i2c_hwinit(struct saa716x_i2c *i2c, u32 I2C_DEV)
 				SAA716x_I2C_ADAPTER(i));
 #endif
 	reg = SAA716x_EPRD(CGU, CGU_SCR_3);
-	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Autowake <%d> Active <%d>",
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%02x) Autowake <%d> Active <%d>",
 		I2C_DEV,
 		(reg >> 1) & 0x01,
 		reg & 0x01);
