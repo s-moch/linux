@@ -799,7 +799,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 		printk("%s: saa716x=NULL", __func__);
 		return IRQ_NONE;
 	}
-
+#if 0
 	dprintk(SAA716x_DEBUG, 1, "VI STAT 0=<%02x> 1=<%02x>, CTL 1=<%02x> 2=<%02x>",
 		SAA716x_EPRD(VI0, INT_STATUS),
 		SAA716x_EPRD(VI1, INT_STATUS),
@@ -839,7 +839,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 	dprintk(SAA716x_DEBUG, 1, "DCS STAT=<%02x>, CTL=<%02x>",
 		SAA716x_EPRD(DCS, DCSC_INT_STATUS),
 		SAA716x_EPRD(DCS, DCSC_INT_ENABLE));
-
+#endif
 	SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_L, SAA716x_EPRD(MSI, MSI_INT_STATUS_L));
 
 	msiStatusH = SAA716x_EPRD(MSI, MSI_INT_STATUS_H);
@@ -1044,11 +1044,11 @@ static int saa716x_s26400_frontend_attach(struct saa716x_adapter *adapter, int c
 {
 	struct saa716x_dev *saa716x	= adapter->saa716x;
 	struct saa716x_i2c *i2c		= saa716x->i2c;
-	struct i2c_adapter *i2c_adapter	= &i2c[1].i2c_adapter;
+	struct i2c_adapter *i2c_adapter	= &i2c[SAA716x_I2C_BUS_A].i2c_adapter;
 
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
-
+#if 0
 	if (count == 0) {
 		adapter->fe = stv090x_attach(&tt6400_config,
 					     i2c_adapter,
@@ -1089,7 +1089,7 @@ static int saa716x_s26400_frontend_attach(struct saa716x_adapter *adapter, int c
 			}
 		}
 	}
-
+#endif
 	return 0;
 }
 
