@@ -15,6 +15,7 @@
 #include <linux/i2c.h>
 #include "saa716x_priv.h"
 #include "saa716x_vip.h"
+#include "saa716x_msi.h"
 #include "saa716x_budget.h"
 
 unsigned int verbose;
@@ -98,6 +99,12 @@ static int __devinit saa716x_budget_pci_probe(struct pci_dev *pdev, const struct
 		goto fail2;
 	}
 	dprintk(SAA716x_DEBUG, 1, "SAA716x Core Boot Success");
+
+	err = saa716x_msi_init(saa716x);
+	if (err) {
+		dprintk(SAA716x_ERROR, 1, "SAA716x MSI Init failed");
+		goto fail2;
+	}
 
 	err = saa716x_jetpack_init(saa716x);
 	if (err) {
