@@ -6,5 +6,6 @@
 
 #define TWINHAN_VP_6090		0x0027
 #define AVERMEDIA_HC82		0x2355
+#define AVERMEDIA_H788		0x1455
 
 #endif /* __SAA716x_HYBRID_H */
