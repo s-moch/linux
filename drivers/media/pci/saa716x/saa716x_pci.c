@@ -18,60 +18,6 @@
 
 #define DRIVER_NAME				"SAA716x Core"
 
-static const char *msi_labels[] = {
-	"MSI_INT_TAGACK_VI0_0",
-	"MSI_INT_TAGACK_VI0_1",
-	"MSI_INT_TAGACK_VI0_2",
-	"MSI_INT_TAGACK_VI1_0",
-	"MSI_INT_TAGACK_VI1_1",
-	"MSI_INT_TAGACK_VI1_2",
-	"MSI_INT_TAGACK_FGPI_0",
-	"MSI_INT_TAGACK_FGPI_1",
-	"MSI_INT_TAGACK_FGPI_2",
-	"MSI_INT_TAGACK_FGPI_3",
-	"MSI_INT_TAGACK_AI_0",
-	"MSI_INT_TAGACK_AI_1",
-	"MSI_INT_OVRFLW_VI0_0",
-	"MSI_INT_OVRFLW_VI0_1",
-	"MSI_INT_OVRFLW_VI0_2",
-	"MSI_INT_OVRFLW_VI1_0",
-	"MSI_INT_OVRFLW_VI1_1",
-	"MSI_INT_OVRFLW_VI1_2",
-	"MSI_INT_OVRFLW_FGPI_O",
-	"MSI_INT_OVRFLW_FGPI_1",
-	"MSI_INT_OVRFLW_FGPI_2",
-	"MSI_INT_OVRFLW_FGPI_3",
-	"MSI_INT_OVRFLW_AI_0",
-	"MSI_INT_OVRFLW_AI_1",
-	"MSI_INT_AVINT_VI0",
-	"MSI_INT_AVINT_VI1",
-	"MSI_INT_AVINT_FGPI_0",
-	"MSI_INT_AVINT_FGPI_1",
-	"MSI_INT_AVINT_FGPI_2",
-	"MSI_INT_AVINT_FGPI_3",
-	"MSI_INT_AVINT_AI_0",
-	"MSI_INT_AVINT_AI_1",
-
-	"MSI_INT_UNMAPD_TC_INT",
-	"MSI_INT_EXTINT_0",
-	"MSI_INT_EXTINT_1",
-	"MSI_INT_EXTINT_2",
-	"MSI_INT_EXTINT_3",
-	"MSI_INT_EXTINT_4",
-	"MSI_INT_EXTINT_5",
-	"MSI_INT_EXTINT_6",
-	"MSI_INT_EXTINT_7",
-	"MSI_INT_EXTINT_8",
-	"MSI_INT_EXTINT_9",
-	"MSI_INT_EXTINT_10",
-	"MSI_INT_EXTINT_11",
-	"MSI_INT_EXTINT_12",
-	"MSI_INT_EXTINT_13",
-	"MSI_INT_EXTINT_14",
-	"MSI_INT_EXTINT_15",
-	"MSI_INT_I2CINT_0",
-	"MSI_INT_I2CINT_1"
-};
 
 static const char *i2c_labels[] = {
 	"INTERRUPT_MTD"
@@ -89,16 +35,12 @@ static const char *i2c_labels[] = {
 	"INTERRUPT_STFNF",
 };
 
-struct saa716x_msix_entry {
-	u8 desc[32];
-	irqreturn_t (*handler)(int irq, void *dev_id);
-};
-
 static irqreturn_t saa716x_msi_handler(int irq, void *dev_id)
 {
 	return IRQ_HANDLED;
 }
 
+#if 0
 static irqreturn_t saa716x_i2c_handler(int irq, void *dev_id)
 {
 	return IRQ_HANDLED;
@@ -107,6 +49,7 @@ static irqreturn_t saa716x_i2c_handler(int irq, void *dev_id)
 static struct saa716x_msix_entry saa716x_msix_handler[] = {
 	{ .desc = "SAA716x_I2C_HANDLER", .handler = saa716x_i2c_handler }
 };
+#endif
 
 #if 0
 static irqreturn_t saa716x_pci_irq(int irq, void *dev_id)
@@ -231,14 +174,14 @@ static int saa716x_request_irq(struct saa716x_dev *saa716x)
 	if (saa716x->int_type == MODE_MSI_X) {
 		for (i = 0; SAA716x_MSI_MAX_VECTORS; i++) {
 			ret = request_irq(saa716x->msix_entries[i].vector,
-					  saa716x_msix_handler[i].handler,
+					  saa716x->saa716x_msix_handler[i].handler,
 					  IRQF_SHARED,
-					  saa716x_msix_handler[i].desc,
+					  saa716x->saa716x_msix_handler[i].desc,
 					  saa716x);
 
-			dprintk(SAA716x_ERROR, 1, "%s @ 0x%p", saa716x_msix_handler[i].desc, saa716x_msix_handler[i].handler);
+			dprintk(SAA716x_ERROR, 1, "%s @ 0x%p", saa716x->saa716x_msix_handler[i].desc, saa716x->saa716x_msix_handler[i].handler);
 			if (ret) {
-				dprintk(SAA716x_ERROR, 1, "%s MSI-X-%d registration failed", saa716x_msix_handler[i].desc, i);
+				dprintk(SAA716x_ERROR, 1, "%s MSI-X-%d registration failed", saa716x->saa716x_msix_handler[i].desc, i);
 				return -1;
 			}
 		}
