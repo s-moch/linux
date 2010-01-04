@@ -389,118 +389,120 @@ exit:
 	return err;
 }
 
-static int saa716x_i2c_rd(struct saa716x_i2c *i2c,
-			  struct i2c_msg *msgs,
-			  u32 I2C_DEV)
-{
-	struct saa716x_dev *saa716x = i2c->saa716x;
-	int i, err = 0;
-	u32 rxd;
-
-	if (msgs[0].len) {
-		dprintk(SAA716x_DEBUG, 1, "length=%d Addr:0x%02x",
-			msgs[0].len, (msgs[0].addr << 1) | I2C_START_BIT);
-
-		err = saa716x_i2c_send(i2c, I2C_DEV, (msgs[0].addr << 1) | I2C_START_BIT);
-		if (err < 0) {
-			saa716x_i2c_hwinit(i2c, I2C_DEV);
-			err = saa716x_i2c_send(i2c, I2C_DEV, (msgs[0].addr << 1) | I2C_START_BIT);
-			if (err < 0) {
-				dprintk(SAA716x_ERROR, 1, "Transfer failed");
-				err = -EIO;
-				goto bail_out;
-			}
-		}
-
-		for (i = 0; i < msgs[0].len; i++) {
-			dprintk(SAA716x_DEBUG, 1, "B%d: 0x%02x", i, msgs[0].buf[i]);
-			err = saa716x_i2c_send(i2c, I2C_DEV, msgs[0].buf[i]);
-		}
-	}
-	dprintk(SAA716x_DEBUG, 1, "Addr:0x%02x", (msgs[0].addr << 1) | 0x1 | I2C_START_BIT);
-	saa716x_i2c_send(i2c, I2C_DEV, (msgs[0].addr << 1) | 0x1 | I2C_START_BIT);
-
-	for (i = 0; i < msgs[1].len; i++) {
-		if (i == msgs[1].len - 1) {
-			dprintk(SAA716x_DEBUG, 1, "Dummy + STOP B%d: 0x%02x", i + 1, I2C_STOP_BIT);
-			err = saa716x_i2c_send(i2c, I2C_DEV, I2C_STOP_BIT);
-			err = saa716x_i2c_recv(i2c, I2C_DEV, &rxd);
-			if (err < 0) {
-				dprintk(SAA716x_ERROR, 1, "Transfer failed");
-				err = -EIO;
-				goto bail_out;
-			}
-			dprintk(SAA716x_DEBUG, 1, "Read #2--->B%d: 0x%02x", i + 1, rxd);
-			msgs[1].buf[i] = rxd;
-		} else {
-			dprintk(SAA716x_DEBUG, 1, "Dummy B%d: 0x%02x", i, 0x00);
-			err = saa716x_i2c_send(i2c, I2C_DEV, 0x00);
-			err = saa716x_i2c_recv(i2c, I2C_DEV, &rxd);
-			if (err < 0) {
-				dprintk(SAA716x_ERROR, 1, "Transfer failed");
-				err = -EIO;
-				goto bail_out;
-			}
-			msgs[1].buf[i] = rxd;
-			dprintk(SAA716x_DEBUG, 1, "Read#1--->B%d: 0x%02x", i, rxd);
-		}
-	}
-
-	return 0;
-
-bail_out:
-	dprintk(SAA716x_ERROR, 1, "ERROR: Bailing out <%d>", err);
-	return err;
-}
-
-static int saa716x_i2c_wr(struct saa716x_i2c *i2c,
-			  struct i2c_msg *msgs,
-			  u32 I2C_DEV)
-{
-	struct saa716x_dev *saa716x = i2c->saa716x;
-	int i, err = 0;
-
-	for (i = 0; i < msgs[0].len; i++) {
-		if (i == msgs[0].len - 1) {
-			err = saa716x_i2c_send(i2c, I2C_DEV, msgs[0].buf[i] | I2C_STOP_BIT);
-			if (err < 0) {
-				dprintk(SAA716x_ERROR, 1, "Transfer failed");
-				err = -EIO;
-				goto bail_out;
-			}
-		} else {
-			err = saa716x_i2c_send(i2c, I2C_DEV, msgs[0].buf[i]);
-			if (err < 0) {
-				dprintk(SAA716x_ERROR, 1, "Transfer failed");
-				err = -EIO;
-				goto bail_out;
-			}
-		}
-	}
-
-	return 0;
-
-bail_out:
-	dprintk(SAA716x_ERROR, 1, "ERROR: Bailing out <%d>", err);
-	return err;
-}
-
 static int saa716x_i2c_xfer(struct i2c_adapter *adapter, struct i2c_msg *msgs, int num)
 {
 	struct saa716x_i2c *i2c		= i2c_get_adapdata(adapter);
 	struct saa716x_dev *saa716x	= i2c->saa716x;
 
 	u32 DEV = I2C_B;
-	int err = 0;
+	int i = 0, j, err = 0;
+	u32 rxd;
 
 	dprintk(SAA716x_DEBUG, 0, "\n");
 	dprintk(SAA716x_DEBUG, 1, "Bus(%02x) I2C transfer", DEV);
 	mutex_lock(&i2c->i2c_lock);
 
-	if (msgs[1].flags & I2C_M_RD)
-		err = saa716x_i2c_rd(i2c, msgs, DEV);
-	else
-		err = saa716x_i2c_wr(i2c, msgs, DEV);
+	while (i < num) {
+		if (((i + 1) < num) && (msgs[i + 1].flags & I2C_M_RD)) {
+			if (msgs[i].len) {
+				dprintk(SAA716x_DEBUG, 1, "length=%d Addr:0x%02x",
+					msgs[i].len, (msgs[i].addr << 1) | I2C_START_BIT);
+
+				err = saa716x_i2c_send(i2c, DEV, (msgs[i].addr << 1) | I2C_START_BIT);
+				if (err < 0) {
+					saa716x_i2c_hwinit(i2c, DEV);
+					err = saa716x_i2c_send(i2c, DEV, (msgs[i].addr << 1) | I2C_START_BIT);
+					if (err < 0) {
+						dprintk(SAA716x_ERROR, 1, "Transfer failed");
+						err = -EIO;
+						goto bail_out;
+					}
+				}
+
+				for (j = 0; j < msgs[i].len; j++) {
+					dprintk(SAA716x_DEBUG, 0, "    <W %04x> 0x%02x\n",
+						i, msgs[i].buf[j]);
+
+					err = saa716x_i2c_send(i2c, DEV, msgs[i].buf[j]);
+					if (err < 0) {
+						dprintk(SAA716x_ERROR, 1, "Transfer failed");
+						err = -EIO;
+						goto bail_out;
+					}
+
+				}
+			}
+			dprintk(SAA716x_DEBUG, 1, "Addr:0x%02x",
+				(msgs[i].addr << 1) | 0x1 | I2C_START_BIT);
+
+			err = saa716x_i2c_send(i2c, DEV, (msgs[i].addr << 1) | 0x1 | I2C_START_BIT);
+			if (err < 0) {
+				dprintk(SAA716x_ERROR, 1, "Transfer failed");
+				err = -EIO;
+				goto bail_out;
+			}
+
+			for (j = 0; j < msgs[i + 1].len; j++) {
+				if (j == msgs[i + 1].len - 1) {
+					err = saa716x_i2c_send(i2c, DEV, I2C_STOP_BIT); /* Dummy */
+					if (err < 0) {
+						dprintk(SAA716x_ERROR, 1, "Transfer failed");
+						err = -EIO;
+						goto bail_out;
+					}
+
+					err = saa716x_i2c_recv(i2c, DEV, &rxd);
+					if (err < 0) {
+						dprintk(SAA716x_ERROR, 1, "Transfer failed");
+						err = -EIO;
+						goto bail_out;
+					}
+					dprintk(SAA716x_DEBUG, 0, "    <R %04x> 0x%02x\n\n",
+						j + 1, rxd);
+
+					msgs[i + 1].buf[j] = rxd;
+				} else {
+					err = saa716x_i2c_send(i2c, DEV, 0x00); /* Dummy */
+					if (err < 0) {
+						dprintk(SAA716x_ERROR, 1, "Transfer failed");
+						err = -EIO;
+						goto bail_out;
+					}
+
+					err = saa716x_i2c_recv(i2c, DEV, &rxd);
+					if (err < 0) {
+						dprintk(SAA716x_ERROR, 1, "Transfer failed");
+						err = -EIO;
+						goto bail_out;
+					}
+					msgs[i + 1].buf[j] = rxd;
+					dprintk(SAA716x_DEBUG, 0, "    <R %04x> 0x%02x\n",
+						j, rxd);
+				}
+			}
+			i += 2;
+
+		} else {
+			for (j = 0; j < msgs[i].len; j++) {
+				if (j == msgs[i].len - 1) {
+					err = saa716x_i2c_send(i2c, DEV, msgs[i].buf[j] | I2C_STOP_BIT);
+					if (err < 0) {
+						dprintk(SAA716x_ERROR, 1, "Transfer failed");
+						err = -EIO;
+						goto bail_out;
+					}
+				} else {
+					err = saa716x_i2c_send(i2c, DEV, msgs[i].buf[j]);
+					if (err < 0) {
+						dprintk(SAA716x_ERROR, 1, "Transfer failed");
+						err = -EIO;
+						goto bail_out;
+					}
+				}
+			}
+			i++;
+		}
+	}
 
 	if (err < 0) {
 		dprintk(SAA716x_ERROR, 1, "Transfer failed");
