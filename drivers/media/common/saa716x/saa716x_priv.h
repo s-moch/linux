@@ -53,8 +53,11 @@
 		.driver_data	= (unsigned long) (__configptr)		\
 }
 
-#define SAA716x_WR(__offst, __addr, __data)	writel((__data), (saa716x->mmio + (__offst + __addr)))
-#define SAA716x_RD(__offst, __addr)		readl((saa716x->mmio + (__offst + __addr)))
+#define SAA716x_EPWR(__offst, __addr, __data)	writel((__data), (saa716x->mmio + (__offst + __addr)))
+#define SAA716x_EPRD(__offst, __addr)		readl((saa716x->mmio + (__offst + __addr)))
+
+#define SAA716x_RCWR(__offst, __addr, __data)	writel((__data), (saa716x->mmio + (__offst + __addr)))
+#define SAA716x_RCRD(__offst, __addr)		readl((saa716x->mmio + (__offst + __addr)))
 
 struct saa716x_dev;
 
