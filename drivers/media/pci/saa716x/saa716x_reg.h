@@ -119,20 +119,24 @@
 #define GPIO_SW_RESET			(0x0001 <<  0)
 
 /* CGU */
-#define CGU_SCR0			0x000
-#define CGU_SCR1			0x004
-#define CGU_SCR2			0x008
-#define CGU_SCR3			0x00c
-#define CGU_SCR4			0x010
-#define CGU_SCR5			0x014
-#define CGU_SCR6			0x018
-#define CGU_SCR7			0x01c
-#define CGU_SCR8			0x020
-#define CGU_SCR9			0x024
-#define CGU_SCR10			0x028
-#define CGU_SCR11			0x02c
-#define CGU_SCR12			0x030
-#define CGU_SCR13			0x034
+#define CGU_SCR_0			0x000
+#define CGU_SCR_1			0x004
+#define CGU_SCR_2			0x008
+#define CGU_SCR_3			0x00c
+#define CGU_SCR_4			0x010
+#define CGU_SCR_5			0x014
+#define CGU_SCR_6			0x018
+#define CGU_SCR_7			0x01c
+#define CGU_SCR_8			0x020
+#define CGU_SCR_9			0x024
+#define CGU_SCR_10			0x028
+#define CGU_SCR_11			0x02c
+#define CGU_SCR_12			0x030
+#define CGU_SCR_13			0x034
+#define CGU_SCR_STOP			(0x0001 <<  3)
+#define CGU_SCR_RESET			(0x0001 <<  2)
+#define CGU_SCR_ENF2			(0x0001 <<  1)
+#define CGU_SCR_ENF1			(0x0001 <<  0)
 
 #define CGU_FS1_0			0x038
 #define CGU_FS1_1			0x03c
@@ -263,6 +267,7 @@
 #define CGU_ESR_11			0x20c
 #define CGU_ESR_12			0x210
 #define CGU_ESR_13			0x214
+#define CGU_ESR_FD_EN			(0x0001 <<  0)
 
 #define CGU_FDC_0			0x218
 #define CGU_FDC_1			0x21c
