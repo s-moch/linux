@@ -1,6 +1,9 @@
+#include <linux/kernel.h>
+
 #include "saa716x_reg.h"
-#include "saa716x_priv.h"
+#include "saa716x_spi.h"
 #include "saa716x_aip.h"
+#include "saa716x_priv.h"
 
 int saa716x_aip_status(struct saa716x_dev *saa716x, u32 dev)
 {
