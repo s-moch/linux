@@ -181,7 +181,7 @@ int saa716x_msi_event(struct saa716x_dev *saa716x, u32 stat_l, u32 stat_h)
 	if (stat_l & MSI_INT_OVRFLW_VI1_2)
 		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[17]);
 
-	if (stat_l & MSI_INT_OVRFLW_FGPI_O)
+	if (stat_l & MSI_INT_OVRFLW_FGPI_0)
 		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[18]);
 
 	if (stat_l & MSI_INT_OVRFLW_FGPI_1)
