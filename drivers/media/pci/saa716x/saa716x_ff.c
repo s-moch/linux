@@ -503,6 +503,7 @@ static int dvb_video_ioctl(struct inode *inode, struct file *file,
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, 1);
 		}
 		else {
+			dvb_ringbuffer_flush_spinlock_wakeup(&sti7109->tsout);
 			/* select FIFO 1 for TS mux 1 */
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_TSR_MUX1, 4);
 			/* reset FIFO 1 */
@@ -510,6 +511,11 @@ static int dvb_video_ioctl(struct inode *inode, struct file *file,
 			/* start FIFO 1 */
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, 2);
 		}
+		break;
+	}
+	case VIDEO_CLEAR_BUFFER:
+	{
+		dvb_ringbuffer_flush_spinlock_wakeup(&sti7109->tsout);
 		break;
 	}
 	default:
