@@ -2,6 +2,6 @@
 #define __SAA716x_HYBRID_H
  
 #define TWINHAN_TECHNOLOGIES	0x1822
-#define TWINHAN_VP_6090		0x6090
+#define TWINHAN_VP_6090		0x0027
 
 #endif /* __SAA716x_HYBRID_H */
