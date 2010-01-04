@@ -119,8 +119,6 @@ static void __devexit saa716x_ff_pci_remove(struct pci_dev *pdev)
 static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 {
 	struct saa716x_dev *saa716x	= (struct saa716x_dev *) dev_id;
-	struct saa716x_i2c *i2c_a	= &saa716x->i2c[0];
-	struct saa716x_i2c *i2c_b	= &saa716x->i2c[1];
 
 	if (unlikely(saa716x == NULL)) {
 		printk("%s: saa716x=NULL", __func__);
