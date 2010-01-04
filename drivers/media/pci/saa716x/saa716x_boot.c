@@ -68,6 +68,7 @@ int saa716x_core_boot(struct saa716x_dev *saa716x)
 	case SAA716x_CGU_BOOT:
 	default:
 		dprintk(SAA716x_ERROR, 1, "Using CGU Setup");
+		saa716x_cgu_init(saa716x);
 		break;
 	}
 
