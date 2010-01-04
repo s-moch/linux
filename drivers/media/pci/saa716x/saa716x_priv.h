@@ -177,7 +177,4 @@ extern void saa716x_audio_exit(struct saa716x_dev *saa716x);
 extern int saa716x_core_boot(struct saa716x_dev *saa716x);
 extern int saa716x_jetpack_init(struct saa716x_dev *saa716x);
 
-/* FGPI */
-extern void saa716x_fgpiint_disable(struct saa716x_dev *saa716x);
-
 #endif /* __SAA716x_PRIV_H */
