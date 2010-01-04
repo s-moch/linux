@@ -1048,7 +1048,7 @@ static int saa716x_s26400_frontend_attach(struct saa716x_adapter *adapter, int c
 
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
-#if 0
+
 	if (count == 0) {
 		adapter->fe = stv090x_attach(&tt6400_config,
 					     i2c_adapter,
@@ -1089,7 +1089,7 @@ static int saa716x_s26400_frontend_attach(struct saa716x_adapter *adapter, int c
 			}
 		}
 	}
-#endif
+
 	return 0;
 }
 
