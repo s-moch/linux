@@ -2,8 +2,8 @@
 #define __SAA716x_FGPI_H
 
 #define FGPI_BUFFERS		8
-#define PTA_LSB(__mem)		((u32 ) *(__mem))
-#define PTA_MSB(__mem)		((u32 ) (*(__mem) >> 32))
+#define PTA_LSB(__mem)		((u32 ) (__mem))
+#define PTA_MSB(__mem)		((u32 ) ((u64)(__mem) >> 32))
 
 #define BAM_DMA_BUF_MODE_BASE		0x0d8
 #define BAM_DMA_BUF_MODE_OFFSET		0x24
