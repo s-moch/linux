@@ -361,6 +361,7 @@ static struct saa716x_config saa716x_nemo_config = {
 	.adapters		= 1,
 	.frontend_attach	= saa716x_nemo_frontend_attach,
 	.irq_handler		= saa716x_hybrid_pci_irq,
+	.i2c_rate		= SAA716x_I2C_RATE_100,
 };
 
 
