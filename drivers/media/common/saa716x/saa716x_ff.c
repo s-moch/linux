@@ -35,6 +35,9 @@
 #include <linux/dvb/video.h>
 #include <linux/dvb/osd.h>
 
+#include "stv090x_reg.h"
+#include "stv090x.h"
+
 unsigned int verbose;
 module_param(verbose, int, 0644);
 MODULE_PARM_DESC(verbose, "verbose startup messages, default is 1 (yes)");
@@ -1024,13 +1027,70 @@ static int load_config_s26400(struct saa716x_dev *saa716x)
 #define SAA716x_MODEL_S2_6400_DUAL	"Technotrend S2 6400 Dual S2 Premium"
 #define SAA716x_DEV_S2_6400_DUAL	"2x DVB-S/S2 + Hardware decode"
 
+static struct stv090x_config tt6400_config = {
+	.demod_mode	= STV090x_DUAL,
+	.clk_mode	= STV090x_CLK_EXT,
+
+	.xtal		= 8000000,
+	.address	= 0x68,
+
+	.ref_clk	= 27000000,
+
+	.ts1_mode	= STV090x_TSMODE_SERIAL_CONTINUOUS,
+	.ts2_mode	= STV090x_TSMODE_SERIAL_CONTINUOUS,
+};
+
 static int saa716x_s26400_frontend_attach(struct saa716x_adapter *adapter, int count)
 {
-	struct saa716x_dev *saa716x = adapter->saa716x;
+	struct saa716x_dev *saa716x	= adapter->saa716x;
+	struct saa716x_i2c *i2c		= saa716x->i2c;
+	struct i2c_adapter *i2c_adapter	= &i2c[1].i2c_adapter;
+
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
 
-	return -ENODEV;
+	if (count == 0) {
+		adapter->fe = stv090x_attach(&tt6400_config,
+					     i2c_adapter,
+					     STV090x_DEMODULATOR_0);
+
+		if (adapter->fe == NULL) {
+			dprintk(SAA716x_ERROR, 1, "A frontend driver was not found for [%04x:%04x subsystem [%04x:%04x]\n",
+				saa716x->pdev->vendor,
+				saa716x->pdev->device,
+				saa716x->pdev->subsystem_vendor,
+				saa716x->pdev->subsystem_device);
+
+		} else {
+			if (dvb_register_frontend(&adapter->dvb_adapter, adapter->fe)) {
+				dprintk(SAA716x_ERROR, 1, "Frontend registration failed!\n");
+				dvb_frontend_detach(adapter->fe);
+				adapter->fe = NULL;
+			}
+		}
+
+	} else if (count == 1) {
+		adapter->fe = stv090x_attach(&tt6400_config,
+					     i2c_adapter,
+					     STV090x_DEMODULATOR_1);
+
+		if (adapter->fe == NULL) {
+			dprintk(SAA716x_ERROR, 1, "A frontend driver was not found for [%04x:%04x subsystem [%04x:%04x]\n",
+				saa716x->pdev->vendor,
+				saa716x->pdev->device,
+				saa716x->pdev->subsystem_vendor,
+				saa716x->pdev->subsystem_device);
+
+		} else {
+			if (dvb_register_frontend(&adapter->dvb_adapter, adapter->fe)) {
+				dprintk(SAA716x_ERROR, 1, "Frontend registration failed!\n");
+				dvb_frontend_detach(adapter->fe);
+				adapter->fe = NULL;
+			}
+		}
+	}
+
+	return 0;
 }
 
 static struct saa716x_config saa716x_s26400_config = {
@@ -1041,6 +1101,7 @@ static struct saa716x_config saa716x_s26400_config = {
 	.adapters		= 2,
 	.frontend_attach	= saa716x_s26400_frontend_attach,
 	.irq_handler		= saa716x_ff_pci_irq,
+	.i2c_rate		= SAA716x_I2C_RATE_100,
 
 	.adap_config		= {
 		{
