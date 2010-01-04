@@ -116,7 +116,7 @@ static int __devinit saa716x_budget_pci_probe(struct pci_dev *pdev, const struct
 	err = saa716x_i2c_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x I2C Initialization failed");
-		goto fail2;
+		goto fail3;
 	}
 #if 0
 	/* Experiments */
@@ -124,12 +124,12 @@ static int __devinit saa716x_budget_pci_probe(struct pci_dev *pdev, const struct
 #endif
 	return 0;
 
+fail3:
+	saa716x_i2c_exit(saa716x);
 fail2:
 	saa716x_pci_exit(saa716x);
-
 fail1:
 	kfree(saa716x);
-
 fail0:
 	return err;
 }
