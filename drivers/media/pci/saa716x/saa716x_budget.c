@@ -174,6 +174,7 @@ static struct saa716x_config saa716x_vp1028_config = {
 	.dev_type		= SAA716x_DEV_TWINHAN_VP1028,
 	.boot_mode		= SAA716x_EXT_BOOT,
 	.load_config		= &load_config_vp1028,
+	.adapters		= 1,
 };
 
 
