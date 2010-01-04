@@ -16,7 +16,7 @@ struct saa716x_dmabuf {
 
 	void			*mem_virt_noalign;
 	void			*mem_virt; /* page aligned */
-	dma_addr_t		*mem_ptab_phys;
+	dma_addr_t		mem_ptab_phys;
 	void			*mem_ptab_virt;
 	void			*sg_list; /* SG list */
 
@@ -29,6 +29,8 @@ struct saa716x_dmabuf {
 extern int saa716x_dmabuf_alloc(struct saa716x_dev *saa716x,
 				struct saa716x_dmabuf *dmabuf,
 				int size);
+extern void saa716x_dmabuf_free(struct saa716x_dev *saa716x,
+				struct saa716x_dmabuf *dmabuf);
 
 extern void saa716x_dmabufsync_dev(struct saa716x_dmabuf *dmabuf);
 extern void saa716x_dmabufsync_cpu(struct saa716x_dmabuf *dmabuf);
