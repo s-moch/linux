@@ -20,6 +20,7 @@
 #include "saa716x_reg.h"
 #include "saa716x_budget.h"
 #include "saa716x_adap.h"
+#include "saa716x_gpio.h"
 
 unsigned int verbose;
 module_param(verbose, int, 0644);
