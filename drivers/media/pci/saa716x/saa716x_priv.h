@@ -83,8 +83,8 @@ struct saa716x_config {
 	int				adapters;
 	int				frontends;
 	u8				demodulator_addr;
-	u8				tuner_addr,
-	u8				decoder_addr,
+	u8				tuner_addr;
+	u8				decoder_addr;
 };
 
 struct saa716x_adapter {
