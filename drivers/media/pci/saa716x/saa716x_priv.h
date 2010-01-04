@@ -79,6 +79,9 @@ struct saa716x_config {
 	enum saa716x_boot_mode		boot_mode;
 
 	saa716x_load_config_t		load_config;
+
+	int				adapters;
+	int				frontends;
 };
 
 struct saa716x_adapter {
