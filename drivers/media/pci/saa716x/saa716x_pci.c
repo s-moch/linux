@@ -198,11 +198,13 @@ static int saa716x_request_irq(struct saa716x_dev *saa716x)
 	struct pci_dev *pdev = saa716x->pdev;
 	int i, ret = 0;
 
-	if (saa716x->int_type == MODE_MSI)
+	if (saa716x->int_type == MODE_MSI) {
+		dprintk(SAA716x_DEBUG, 1, "Using MSI mode");
 		ret = saa716x_enable_msi(saa716x);
-
-	else if (saa716x->int_type == MODE_MSI_X)
+	} else if (saa716x->int_type == MODE_MSI_X) {
+		dprintk(SAA716x_DEBUG, 1, "Using MSI-X mode");
 		ret = saa716x_enable_msix(saa716x);
+	}
 
 	if (ret) {
 		dprintk(SAA716x_ERROR, 1, "INT-A Mode");
@@ -245,9 +247,10 @@ static int saa716x_request_irq(struct saa716x_dev *saa716x)
 				  IRQF_SHARED,
 				  DRIVER_NAME,
 				  saa716x);
-
-		dprintk(SAA716x_ERROR, 1, "SAA716x IRQ registration failed");
-		ret = -ENODEV;
+		if (ret < 0) {
+			dprintk(SAA716x_ERROR, 1, "SAA716x IRQ registration failed");
+			ret = -ENODEV;
+		}
 	}
 
 	return ret;
@@ -319,19 +322,6 @@ int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
 		ret = -ENODEV;
 		goto fail1;
 	}
-#if 0
-	if (!request_mem_region(pci_resource_start(pdev, 2),
-				pci_resource_len(pdev, 2),
-				DRIVER_NAME)) {
-
-		dprintk(SAA716x_ERROR, 1, "BAR2 Request failed");
-		release_mem_region(pci_resource_start(pdev, 0),
-				   pci_resource_len(pdev, 0));
-
-		ret = -ENODEV;
-		goto fail1;
-	}
-#endif
 	saa716x->mmio = ioremap(pci_resource_start(pdev, 0),
 				pci_resource_len(pdev, 0));
 
@@ -340,22 +330,13 @@ int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
 		ret = -ENODEV;
 		goto fail2;
 	}
-#if 0
-	saa716x->mmbd = ioremap(pci_resource_start(pdev, 2),
-				pci_resource_len(pdev, 2));
 
-	if (!saa716x->mmbd) {
-		dprintk(SAA716x_ERROR, 1, "Mem 1 remap failed");
-		ret = -ENODEV;
-		goto fail2;
-	}
-#endif
 	for (i = 0; i < SAA716x_MSI_MAX_VECTORS; i++)
 		saa716x->msix_entries[i].entry = i;
 
 	err = saa716x_request_irq(saa716x);
 	if (err < 0) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x IRQ registration failed");
+		dprintk(SAA716x_ERROR, 1, "SAA716x IRQ registration failed, err=%d", err);
 		ret = -ENODEV;
 		goto fail3;
 	}
@@ -382,25 +363,18 @@ int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
 		(((msi_cap >> 16) & 0x01) == 1 ? "Enabled" : "Disabled"),
 		(1 << ((msi_cap >> 17) & 0x07)));
 
+	dprintk(SAA716x_ERROR, 0, "\n");
+
 	pci_set_drvdata(pdev, saa716x);
 
 	return 0;
 
 fail3:
 	dprintk(SAA716x_ERROR, 1, "Err: IO Unmap");
-#if 0
-	if (saa716x->mmbd)
-		iounmap(saa716x->mmbd);
-#endif
 	if (saa716x->mmio)
 		iounmap(saa716x->mmio);
-
 fail2:
 	dprintk(SAA716x_ERROR, 1, "Err: Release regions");
-#if 0
-	release_mem_region(pci_resource_start(pdev, 2),
-			   pci_resource_len(pdev, 2));
-#endif
 	release_mem_region(pci_resource_start(pdev, 0),
 			   pci_resource_len(pdev, 0));
 
@@ -423,13 +397,7 @@ void __devexit saa716x_pci_exit(struct saa716x_dev *saa716x)
 	dprintk(SAA716x_NOTICE, 1, "SAA%02x mem0: 0x%p",
 		saa716x->pdev->device,
 		saa716x->mmio);
-#if 0
-	if (saa716x->mmbd) {
-		iounmap(saa716x->mmbd);
-		release_mem_region(pci_resource_start(pdev, 2),
-				   pci_resource_len(pdev, 2));
-	}
-#endif
+
 	if (saa716x->mmio) {
 		iounmap(saa716x->mmio);
 		release_mem_region(pci_resource_start(pdev, 0),
