@@ -81,6 +81,20 @@ struct saa716x_config {
 	saa716x_load_config_t		load_config;
 };
 
+struct saa716x_adapter {
+	struct dvb_adapter		dvb_adapter;
+	struct dvb_frontend		*fe;
+	struct dvb_demux		demux;
+	struct dmxdev			dmxdev;
+	struct dmx_frontend		fe_hw;
+	struct dmx_frontend		fe_mem;
+	struct dvb_net			dvb_net;
+
+	struct saa716x_dev		*saa716x;
+
+	u8				feeds;
+};
+
 struct saa716x_dev {
 	struct saa716x_config		*config;
 	struct pci_dev			*pdev;
@@ -104,18 +118,10 @@ struct saa716x_dev {
 	struct saa716x_i2c		i2c[2];
 	u32				i2c_rate; /* init time */
 
+	struct saa716x_adapter		saa716x_adap[2];
+
 	/* DMA */
 
-	/* DVB */
-	struct dvb_adapter		dvb_adapter;
-	struct dvb_frontend		*fe;
-	struct dvb_demux		demux;
-	struct dmxdev			dmxdev;
-	struct dmx_frontend		fe_hw;
-	struct dmx_frontend		fe_mem;
-	struct dvb_net			dvb_net;
-
-	u8				feeds;
 };
 
 /* PCI */
@@ -134,10 +140,6 @@ extern void saa716x_spi_exit(struct saa716x_dev *saa716x);
 /* DMA */
 extern int saa716x_dma_init(struct saa716x_dev *saa716x);
 extern void saa716x_dma_exit(struct saa716x_dev *saa716x);
-
-/* DVB */
-extern int saa716x_dvb_init(struct saa716x_dev *saa716x);
-extern void saa716x_dvb_exit(struct saa716x_dev *saa716x);
 
 /* AUDIO */
 extern int saa716x_audio_init(struct saa716x_dev *saa716x);
