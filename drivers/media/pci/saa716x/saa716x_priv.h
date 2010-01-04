@@ -125,9 +125,6 @@ extern int saa716x_jetpack_init(struct saa716x_dev *saa716x);
 /* CGU */
 extern int saa716x_cgu_init(struct saa716x_dev *saa716x);
 
-/* VIP */
-extern void saa716x_vipint_disable(struct saa716x_dev *saa716x);
-
 /* FGPI */
 extern void saa716x_fgpiint_disable(struct saa716x_dev *saa716x);
 
