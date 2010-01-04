@@ -11,13 +11,82 @@
 #include <linux/sched.h>
 #include <linux/interrupt.h>
 
-
+#include "saa716x_reg.h"
 #include "saa716x_priv.h"
 
 #define DRIVER_NAME				"SAA716x Core"
 
+#define AI0				0x00006000
+#define AI1				0x00007000
+#define BAM				0x00008000
+#define MMU				0x00009000
+#define SPI				0x0000d000
+//#define GPIO				0x0000e000
+#define PHI_0				0x0000f000
+#define GREG				0x00012000
+#define CGU				0x00013000
+#define DCS				0x00014000
+
 static irqreturn_t saa716x_pci_irq(int irq, void *dev_id)
 {
+	struct saa716x_dev *saa716x	= (struct saa716x_dev *) dev_id;
+	struct saa716x_i2c *i2c_a	= &saa716x->i2c[0];
+	struct saa716x_i2c *i2c_b	= &saa716x->i2c[1];
+	u32 i2c_stat_0, i2c_stat_1, msi_stat_l, msi_stat_h;
+	u32 fgpi_stat_0, fgpi_stat_1, fgpi_stat_2, fgpi_stat_3;
+	u32 vi_stat_0, vi_stat_1;
+	u32 dcs_stat;
+
+	if (unlikely(saa716x == NULL)) {
+		printk("%s: saa716x=NULL", __func__);
+		return IRQ_NONE;
+	}
+
+	/* I2C_A/B */
+	i2c_stat_0 = SAA716x_RD(I2C_A, INT_STATUS);
+	i2c_stat_1 = SAA716x_RD(I2C_B, INT_STATUS);
+	SAA716x_WR(I2C_A, INT_CLR_STATUS, i2c_stat_0);
+	SAA716x_WR(I2C_B, INT_CLR_STATUS, i2c_stat_1);
+
+	/* MSI */
+	msi_stat_l = SAA716x_RD(MSI, MSI_INT_STATUS_L);
+	msi_stat_h = SAA716x_RD(MSI, MSI_INT_STATUS_H);
+	SAA716x_WR(MSI, MSI_INT_STATUS_CLR_L, msi_stat_l);
+	SAA716x_WR(MSI, MSI_INT_STATUS_CLR_H, msi_stat_h);
+
+	/* FGPI */
+	fgpi_stat_0 = SAA716x_RD(FGPI0, 0xfe0);
+	fgpi_stat_1 = SAA716x_RD(FGPI1, 0xfe0);
+	fgpi_stat_2 = SAA716x_RD(FGPI2, 0xfe0);
+	fgpi_stat_3 = SAA716x_RD(FGPI3, 0xfe0);
+	SAA716x_WR(FGPI0, 0xfe8, fgpi_stat_0);
+	SAA716x_WR(FGPI1, 0xfe8, fgpi_stat_1);
+	SAA716x_WR(FGPI2, 0xfe8, fgpi_stat_2);
+	SAA716x_WR(FGPI3, 0xfe8, fgpi_stat_3);
+
+	/* VI0/1 */
+	vi_stat_0 = SAA716x_RD(VI0, 0xfe0);
+	vi_stat_1 = SAA716x_RD(VI1, 0xfe0);
+	SAA716x_WR(VI0, 0xfe8, vi_stat_0);
+	SAA716x_WR(VI1, 0xfe8, vi_stat_1);
+
+	/* DCS */
+	dcs_stat = SAA716x_RD(DCS, 0xfe0);
+	SAA716x_WR(DCS, 0xfe8, dcs_stat);
+
+	dprintk(SAA716x_DEBUG, 1, "SAA716x IRQ VI 0=0x%02x, 1=0x%02x", vi_stat_0, vi_stat_1);
+
+	if (i2c_stat_0) {
+		dprintk(SAA716x_DEBUG, 1, "SAA716x IRQ, I2C_A=0x%02x", i2c_stat_0);
+		wake_up(&i2c_a->i2c_wq);
+	}
+
+	if (i2c_stat_1) {
+		dprintk(SAA716x_DEBUG, 1, "SAA716x IRQ, I2C_B=0x%02x", i2c_stat_1);
+		wake_up(&i2c_b->i2c_wq);
+	}
+
+
 	return IRQ_HANDLED;
 }
 
