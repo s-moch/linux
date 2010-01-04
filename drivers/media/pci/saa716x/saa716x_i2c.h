@@ -1,6 +1,8 @@
 #ifndef __SAA716x_I2C_H
 #define __SAA716x_I2C_H
 
+#define SAA716x_I2C_ADAPTERS	2
+
 struct saa716x_dev;
 
 enum saa716x_i2c_rate {
