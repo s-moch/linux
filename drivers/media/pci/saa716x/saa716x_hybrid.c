@@ -41,6 +41,9 @@ static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct
 	if ((err = saa716x_pci_init(saa716x)) != 0)
 		goto fail1;
 
+
+	return 0;
+
 fail1:
 	kfree(saa716x);
 
