@@ -13,8 +13,9 @@
 #include <linux/interrupt.h>
 
 #include "saa716x_reg.h"
-#include "saa716x_priv.h"
+#include "saa716x_spi.h"
 #include "saa716x_msi.h"
+#include "saa716x_priv.h"
 
 #define DRIVER_NAME				"SAA716x Core"
 

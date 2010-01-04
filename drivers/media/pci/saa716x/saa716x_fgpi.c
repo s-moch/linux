@@ -1,7 +1,10 @@
+#include <linux/kernel.h>
+
 #include "saa716x_reg.h"
-#include "saa716x_priv.h"
-#include "saa716x_fgpi.h"
 #include "saa716x_dma.h"
+#include "saa716x_fgpi.h"
+#include "saa716x_spi.h"
+#include "saa716x_priv.h"
 
 static const u32 mmu_pta_base[] = {
 	MMU_PTA_BASE0,

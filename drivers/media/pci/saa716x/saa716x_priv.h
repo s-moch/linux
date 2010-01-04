@@ -77,6 +77,7 @@ struct saa716x_msix_entry {
 
 struct saa716x_dev;
 struct saa716x_adapter;
+struct saa716x_spi_config;
 
 typedef int (*saa716x_load_config_t)(struct saa716x_dev *saa716x);
 
@@ -146,6 +147,9 @@ struct saa716x_dev {
 	u32				i2c_rate; /* init time */
 	u32				I2C_DEV[2];
 
+	struct saa716x_spi_state	*saa716x_spi;
+	struct saa716x_spi_config	spi_config;
+
 	struct saa716x_adapter		saa716x_adap[2];
 	struct saa716x_cgu		cgu;
 
@@ -164,10 +168,6 @@ extern void saa716x_pci_exit(struct saa716x_dev *saa716x);
 extern int saa716x_msi_init(struct saa716x_dev *saa716x);
 extern void saa716x_msi_exit(struct saa716x_dev *saa716x);
 extern void saa716x_msiint_disable(struct saa716x_dev *saa716x);
-
-/* SPI */
-extern int saa716x_spi_init(struct saa716x_dev *saa716x);
-extern void saa716x_spi_exit(struct saa716x_dev *saa716x);
 
 /* DMA */
 extern int saa716x_dma_init(struct saa716x_dev *saa716x);
