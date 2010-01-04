@@ -16,17 +16,6 @@
 
 #define DRIVER_NAME				"SAA716x Core"
 
-#define AI0				0x00006000
-#define AI1				0x00007000
-#define BAM				0x00008000
-#define MMU				0x00009000
-#define SPI				0x0000d000
-//#define GPIO				0x0000e000
-#define PHI_0				0x0000f000
-#define GREG				0x00012000
-#define CGU				0x00013000
-#define DCS				0x00014000
-
 static irqreturn_t saa716x_pci_irq(int irq, void *dev_id)
 {
 	struct saa716x_dev *saa716x	= (struct saa716x_dev *) dev_id;
