@@ -34,5 +34,4 @@ void saa716x_greg_restore(struct saa716x_dev *saa716x)
 	SAA716x_EPWR(GREG, GREG_TAG_ACK_FLEN, g_save[9]);
 
 	SAA716x_EPWR(GREG, GREG_VIDEO_IN_CTRL, g_save[10]);
-
 }

@@ -63,7 +63,7 @@ static int saa716x_ext_boot(struct saa716x_dev *saa716x)
 	 * DW_19 = 0x0000_2000
 	 */
 	SAA716x_EPWR(GREG, GREG_RSTU_CTRL, 0x00002000);
-
+#if 0
 	/* End of Boot script command
 	 * DW_20 = 0x0000_0006
 	 * Where to write this value ??
@@ -71,7 +71,7 @@ static int saa716x_ext_boot(struct saa716x_dev *saa716x)
 	 * Boot Control State Machine !
 	 */
 	SAA716x_EPWR(VI0, 0x00000006, 0xffffffff);
-
+#endif
 	return 0;
 }
 
