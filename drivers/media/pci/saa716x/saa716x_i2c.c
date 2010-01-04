@@ -551,6 +551,8 @@ int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 			* Master Transaction Data Request
 			* (0xc7)
 			*/
+			msleep(5);
+
 			SAA716x_EPWR(I2C_DEV[i], INT_SET_ENABLE, I2C_MASTER_INTERRUPT_MTDR	| \
 							I2C_ERROR_IBE			| \
 							I2C_ENABLE_MTNA			| \
