@@ -68,6 +68,12 @@
 
 #define SAA716x_MSI_MAX_VECTORS			16
 
+struct saa716x_msix_entry {
+	int vector;
+	u8 desc[32];
+	irqreturn_t (*handler)(int irq, void *dev_id);
+};
+
 struct saa716x_dev;
 struct saa716x_adapter;
 
@@ -130,6 +136,8 @@ struct saa716x_dev {
 	u8				int_type;
 
 	struct msix_entry		msix_entries[SAA716x_MSI_MAX_VECTORS];
+	struct saa716x_msix_entry	saa716x_msix_handler[56];
+	u8				handlers; /* no. of active handlers */
 
 	/* I2C */
 	struct saa716x_i2c		i2c[2];
