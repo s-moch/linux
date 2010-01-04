@@ -32,6 +32,7 @@
 #include "saa716x_spi.h"
 #include "saa716x_priv.h"
 
+#include <linux/dvb/video.h>
 #include <linux/dvb/osd.h>
 
 unsigned int verbose;
@@ -223,6 +224,7 @@ static int sti7109_raw_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
 {
 	struct saa716x_dev * saa716x = sti7109->dev;
 	unsigned long timeout;
+	u8 * data;
 
 	timeout = 1 * HZ;
 	timeout = wait_event_interruptible_timeout(sti7109->cmd_ready_wq,
@@ -232,6 +234,7 @@ static int sti7109_raw_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
 	if (timeout == -ERESTARTSYS || sti7109->cmd_ready == 0) {
 		if (timeout == -ERESTARTSYS) {
 			/* a signal arrived */
+			dprintk(SAA716x_ERROR, 1, "cmd ERESTARTSYS");
 			return -ERESTARTSYS;
 		}
 		dprintk(SAA716x_ERROR, 1, "timed out waiting for command ready");
@@ -240,6 +243,9 @@ static int sti7109_raw_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
 
 	sti7109->cmd_ready = 0;
 	sti7109->result_avail = 0;
+	data = (u8 *) cmd->cmd_data;
+	dprintk(SAA716x_INFO, 1, "cmd %02X %02X %02X %02X %02X %02X",
+		data[0], data[1], data[2], data[3], data[4], data[5]);
 	saa716x_phi_write(saa716x, 0x0000, cmd->cmd_data, cmd->cmd_len);
 	SAA716x_EPWR(PHI_1, FPGA_ADDR_PHI_ISET, ISR_CMD_MASK);
 
@@ -253,6 +259,7 @@ static int sti7109_raw_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
 			cmd->result_len = 0;
 			if (timeout == -ERESTARTSYS) {
 				/* a signal arrived */
+				dprintk(SAA716x_ERROR, 1, "result ERESTARTSYS");
 				return -ERESTARTSYS;
 			}
 			dprintk(SAA716x_ERROR, 1, "timed out waiting for command result");
@@ -291,6 +298,7 @@ static int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 	if (timeout == -ERESTARTSYS || sti7109->data_ready == 0) {
 		if (timeout == -ERESTARTSYS) {
 			/* a signal arrived */
+			dprintk(SAA716x_ERROR, 1, "data ERESTARTSYS");
 			return -ERESTARTSYS;
 		}
 		dprintk(SAA716x_ERROR, 1, "timed out waiting for data ready");
@@ -332,15 +340,11 @@ static int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 		SAA716x_EPWR(PHI_1, FPGA_ADDR_PHI_ISET, ISR_BLOCK_MASK);
 
 		timeout = 1 * HZ;
-		timeout = wait_event_interruptible_timeout(sti7109->block_done_wq,
-							   sti7109->block_done == 1,
-							   timeout);
+		timeout = wait_event_timeout(sti7109->block_done_wq,
+					     sti7109->block_done == 1,
+					     timeout);
 
-		if (timeout == -ERESTARTSYS || sti7109->block_done == 0) {
-			if (timeout == -ERESTARTSYS) {
-				/* a signal arrived */
-				return -ERESTARTSYS;
-			}
+		if (sti7109->block_done == 0) {
 			dprintk(SAA716x_ERROR, 1, "timed out waiting for block done");
 			return -EIO;
 		}
@@ -348,6 +352,7 @@ static int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 	}
 
 	data->data_handle = sti7109->data_handle;
+	dprintk(SAA716x_INFO, 1, "data %d", data->data_handle);
 	sti7109->data_handle++;
 	return 0;
 }
@@ -357,13 +362,20 @@ static int dvb_osd_ioctl(struct inode *inode, struct file *file,
 {
 	struct dvb_device *dvbdev	= file->private_data;
 	struct sti7109_dev *sti7109	= dvbdev->priv;
+	int ret_val = -EINVAL;
 
-	if (cmd == OSD_RAW_CMD)
-		return sti7109_raw_cmd(sti7109, (osd_raw_cmd_t *) parg);
-	else if (cmd == OSD_RAW_DATA)
-		return sti7109_raw_data(sti7109, (osd_raw_data_t *) parg);
+	if (cmd == OSD_RAW_CMD) {
+		mutex_lock(&sti7109->cmd_lock);
+		ret_val = sti7109_raw_cmd(sti7109, (osd_raw_cmd_t *) parg);
+		mutex_unlock(&sti7109->cmd_lock);
+	}
+	else if (cmd == OSD_RAW_DATA) {
+		mutex_lock(&sti7109->data_lock);
+		ret_val = sti7109_raw_data(sti7109, (osd_raw_data_t *) parg);
+		mutex_unlock(&sti7109->data_lock);
+	}
 
-	return -EINVAL;
+	return ret_val;
 }
 
 
@@ -395,49 +407,153 @@ static int saa716x_ff_osd_init(struct saa716x_dev *saa716x)
 	struct saa716x_adapter *saa716x_adap	= saa716x->saa716x_adap;
 	struct sti7109_dev *sti7109		= saa716x->priv;
 
-	init_waitqueue_head(&sti7109->cmd_ready_wq);
-	sti7109->cmd_ready = 0;
-
-	init_waitqueue_head(&sti7109->result_avail_wq);
-	sti7109->result_avail = 0;
-
-	sti7109->data_handle = 0;
-	init_waitqueue_head(&sti7109->data_ready_wq);
-	sti7109->data_ready = 0;
-	init_waitqueue_head(&sti7109->block_done_wq);
-	sti7109->block_done = 0;
-
 	dvb_register_device(&saa716x_adap->dvb_adapter,
 			    &sti7109->osd_dev,
 			    &dvbdev_osd,
 			    sti7109,
 			    DVB_DEVICE_OSD);
+
 	return 0;
 }
 
-static int sti7109_send_cmd(struct sti7109_dev * sti7109, const uint8_t * data, int length)
+#define FREE_COND_TS (dvb_ringbuffer_free(&sti7109->tsout) >= TS_SIZE)
+
+static ssize_t dvb_video_write(struct file *file, const char __user *buf,
+			       size_t count, loff_t *ppos)
 {
-	struct saa716x_dev * saa716x = sti7109->dev;
-	unsigned long timeout;
+	struct dvb_device *dvbdev	= file->private_data;
+	struct sti7109_dev *sti7109	= dvbdev->priv;
+	struct saa716x_dev *saa716x	= sti7109->dev;
+	unsigned long todo = count;
 
-	timeout = 10 * HZ;
-	timeout = wait_event_interruptible_timeout(sti7109->cmd_ready_wq,
-						   sti7109->cmd_ready == 1,
-						   timeout);
+	if ((file->f_flags & O_ACCMODE) == O_RDONLY)
+		return -EPERM;
+/*
+	if (av7110->videostate.stream_source != VIDEO_SOURCE_MEMORY)
+		return -EPERM;
+*/
+	if ((file->f_flags & O_NONBLOCK) && !FREE_COND_TS)
+		return -EWOULDBLOCK;
 
-	if (timeout == -ERESTARTSYS || sti7109->cmd_ready == 0) {
-		if (timeout == -ERESTARTSYS) {
-			/* a signal arrived */
-			return -ERESTARTSYS;
+	while (todo >= TS_SIZE) {
+		if (!FREE_COND_TS) {
+			if (file->f_flags & O_NONBLOCK)
+				break;
+			if (wait_event_interruptible(sti7109->tsout.queue, FREE_COND_TS))
+				break;
 		}
-		dprintk(SAA716x_ERROR, 1, "timed out waiting for command ready");
-		return -EIO;
+		dvb_ringbuffer_write(&sti7109->tsout, buf, TS_SIZE);
+		todo -= TS_SIZE;
+		buf += TS_SIZE;
 	}
 
-	sti7109->cmd_ready = 0;
-	sti7109->result_avail = 0;
-	saa716x_phi_write(saa716x, 0x0000, data, length);
-	SAA716x_EPWR(PHI_1, FPGA_ADDR_PHI_ISET, ISR_CMD_MASK);
+	if (count > todo) {
+		u32 fifoCtrl;
+
+		fifoCtrl = SAA716x_EPRD(PHI_1, FPGA_ADDR_FIFO_CTRL);
+		fifoCtrl |= 0x4;
+		SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, fifoCtrl);
+	}
+
+	return count - todo;
+}
+
+static unsigned int dvb_video_poll(struct file *file, poll_table *wait)
+{
+	struct dvb_device *dvbdev	= file->private_data;
+	struct sti7109_dev *sti7109	= dvbdev->priv;
+	unsigned int mask = 0;
+
+	if ((file->f_flags & O_ACCMODE) != O_RDONLY)
+		poll_wait(file, &sti7109->tsout.queue, wait);
+
+	if ((file->f_flags & O_ACCMODE) != O_RDONLY) {
+		if (1/*sti7109->playing*/) {
+			if (FREE_COND_TS)
+				mask |= (POLLOUT | POLLWRNORM);
+		} else /* if not playing: may play if asked for */
+			mask |= (POLLOUT | POLLWRNORM);
+	}
+
+	return mask;
+}
+
+static int dvb_video_ioctl(struct inode *inode, struct file *file,
+			   unsigned int cmd, void *parg)
+{
+	struct dvb_device *dvbdev	= file->private_data;
+	struct sti7109_dev *sti7109	= dvbdev->priv;
+	struct saa716x_dev *saa716x	= sti7109->dev;
+	int ret = 0;
+
+	switch (cmd) {
+	case VIDEO_SELECT_SOURCE:
+	{
+		video_stream_source_t stream_source;
+
+		stream_source = (video_stream_source_t) parg;
+		if (stream_source == VIDEO_SOURCE_DEMUX) {
+			/* select TS input 1 for TS mux 1 */
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_TSR_MUX1, 1);
+			/* stop and reset FIFO 1 */
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, 1);
+		}
+		else {
+			/* select FIFO 1 for TS mux 1 */
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_TSR_MUX1, 4);
+			/* reset FIFO 1 */
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, 1);
+			/* start FIFO 1 */
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, 2);
+		}
+		break;
+	}
+	default:
+		ret = -ENOIOCTLCMD;
+		break;
+	}
+	return ret;
+}
+
+static struct file_operations dvb_video_fops = {
+	.owner		= THIS_MODULE,
+	.write		= dvb_video_write,
+	.ioctl		= dvb_generic_ioctl,
+	.open		= dvb_generic_open,
+	.release	= dvb_generic_release,
+	.poll		= dvb_video_poll,
+};
+
+static struct dvb_device dvbdev_video = {
+	.priv		= NULL,
+	.users		= 1,
+	.writers	= 1,
+	.fops		= &dvb_video_fops,
+	.kernel_ioctl	= dvb_video_ioctl,
+};
+
+static int saa716x_ff_video_exit(struct saa716x_dev *saa716x)
+{
+	struct sti7109_dev *sti7109 = saa716x->priv;
+
+	dvb_unregister_device(sti7109->video_dev);
+	return 0;
+}
+
+static int saa716x_ff_video_init(struct saa716x_dev *saa716x)
+{
+	struct saa716x_adapter *saa716x_adap	= saa716x->saa716x_adap;
+	struct sti7109_dev *sti7109		= saa716x->priv;
+
+	dvb_ringbuffer_init(&sti7109->tsout, sti7109->iobuf, TSOUT_LEN);
+	sti7109->tsbuf = (u8 *) (sti7109->iobuf + TSOUT_LEN);
+
+	dvb_register_device(&saa716x_adap->dvb_adapter,
+			    &sti7109->video_dev,
+			    &dvbdev_video,
+			    sti7109,
+			    DVB_DEVICE_VIDEO);
+
 	return 0;
 }
 
@@ -447,6 +563,7 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 	struct sti7109_dev *sti7109;
 	int err = 0;
 	u32 value;
+	unsigned long timeout;
 
 	saa716x = kzalloc(sizeof (struct saa716x_dev), GFP_KERNEL);
 	if (saa716x == NULL) {
@@ -503,6 +620,8 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 		goto fail3;
 	}
 
+	saa716x_gpio_init(saa716x);
+
 	/* prepare the sti7109 device struct */
 	sti7109 = kzalloc(sizeof(struct sti7109_dev), GFP_KERNEL);
 	if (!sti7109) {
@@ -513,10 +632,34 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 	sti7109->dev	= saa716x;
 	saa716x->priv	= sti7109;
 
+	sti7109->iobuf = vmalloc(TSOUT_LEN + TSBUF_LEN);
+	if (!sti7109->iobuf)
+		goto fail4;
+
+	mutex_init(&sti7109->cmd_lock);
+	mutex_init(&sti7109->data_lock);
+
+	init_waitqueue_head(&sti7109->boot_finish_wq);
+	sti7109->boot_finished = 0;
+
+	init_waitqueue_head(&sti7109->cmd_ready_wq);
+	sti7109->cmd_ready = 0;
+
+	init_waitqueue_head(&sti7109->result_avail_wq);
+	sti7109->result_avail = 0;
+
+	sti7109->data_handle = 0;
+	init_waitqueue_head(&sti7109->data_ready_wq);
+	sti7109->data_ready = 0;
+	init_waitqueue_head(&sti7109->block_done_wq);
+	sti7109->block_done = 0;
+
 	saa716x_gpio_set_output(saa716x, TT_PREMIUM_GPIO_POWER_ENABLE);
 	saa716x_gpio_set_output(saa716x, TT_PREMIUM_GPIO_RESET_BACKEND);
 	saa716x_gpio_set_output(saa716x, TT_PREMIUM_GPIO_FPGA_CS0);
+	saa716x_gpio_set_mode(saa716x, TT_PREMIUM_GPIO_FPGA_CS0, 1);
 	saa716x_gpio_set_output(saa716x, TT_PREMIUM_GPIO_FPGA_CS1);
+	saa716x_gpio_set_mode(saa716x, TT_PREMIUM_GPIO_FPGA_CS1, 1);
 	saa716x_gpio_set_output(saa716x, TT_PREMIUM_GPIO_FPGA_PROGRAMN);
 	saa716x_gpio_set_input(saa716x, TT_PREMIUM_GPIO_FPGA_DONE);
 	saa716x_gpio_set_input(saa716x, TT_PREMIUM_GPIO_FPGA_INITN);
@@ -531,7 +674,7 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 	err = saa716x_ff_fpga_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x FF FPGA Initialization failed");
-		goto fail4;
+		goto fail5;
 	}
 
 	/* enable interrupts from ST7109 -> PC */
@@ -546,7 +689,7 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 	err = saa716x_ff_st7109_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x FF STi7109 initialization failed");
-		goto fail4;
+		goto fail5;
 	}
 
 	err = saa716x_dump_eeprom(saa716x);
@@ -562,115 +705,53 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 	err = saa716x_dvb_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x DVB initialization failed");
-		goto fail5;
+		goto fail6;
+	}
+
+	/* wait a maximum of 10 seconds for the STi7109 to boot */
+	timeout = 10 * HZ;
+	timeout = wait_event_interruptible_timeout(sti7109->boot_finish_wq,
+						   sti7109->boot_finished == 1,
+						   timeout);
+
+	if (timeout == -ERESTARTSYS || sti7109->boot_finished == 0) {
+		if (timeout == -ERESTARTSYS) {
+			/* a signal arrived */
+			goto fail5;
+		}
+		dprintk(SAA716x_ERROR, 1, "timed out waiting for boot finish");
+		goto fail6;
+	}
+	dprintk(SAA716x_INFO, 1, "STi7109 finished booting");
+
+	err = saa716x_ff_video_init(saa716x);
+	if (err) {
+		dprintk(SAA716x_ERROR, 1, "SAA716x FF VIDEO initialization failed");
+		goto fail7;
 	}
 
 	err = saa716x_ff_osd_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x FF OSD initialization failed");
-		goto fail6;
-	}
-
-	if (0) {
-		u8 data[32];
-
-		memset(data, 0, sizeof(data));
-		data[0] = 0;
-		data[1] = 13;
-		data[2] = 0;
-		// command group
-		data[3] = 4;
-		// command id
-		data[4] = 0;
-		data[5] = 10; // create display
-		// width
-		data[6] = 0;
-		data[7] = 0;
-		data[8] = 0x07;
-		data[9] = 0x80;
-		// height
-		data[10] = 0;
-		data[11] = 0;
-		data[12] = 0x04;
-		data[13] = 0x38;
-		// color type
-		data[14] = 4;
-		sti7109_send_cmd(sti7109, data, 15);
-
-		msleep(100);
-
-		memset(data, 0, sizeof(data));
-		data[0] = 0;
-		data[1] = 28;
-		data[2] = 0;
-		// command group
-		data[3] = 4;
-		// command id
-		data[4] = 0;
-		data[5] = 71; // draw rectangle
-		// display handle
-		data[6] = 0;
-		data[7] = 0;
-		data[8] = 0;
-		data[9] = 0;
-		// x
-		data[10] = 0;
-		data[11] = 0;
-		data[12] = 0;
-		data[13] = 100;
-		// y
-		data[14] = 0;
-		data[15] = 0;
-		data[16] = 0;
-		data[17] = 200;
-		// w
-		data[18] = 0;
-		data[19] = 0;
-		data[20] = 0x02;
-		data[21] = 0x00;
-		// h
-		data[22] = 0;
-		data[23] = 0;
-		data[24] = 0x01;
-		data[25] = 0x00;
-		// color
-		data[26] = 0xFF;
-		data[27] = 0xFF;
-		data[28] = 0x00;
-		data[29] = 0x00;
-		sti7109_send_cmd(sti7109, data, 30);
-
-		msleep(100);
-
-		memset(data, 0, sizeof(data));
-		data[0] = 0;
-		data[1] = 8;
-		data[2] = 0;
-		// command group
-		data[3] = 4;
-		// command id
-		data[4] = 0;
-		data[5] = 15; // render display
-		// handle
-		data[6] = 0;
-		data[7] = 0;
-		data[8] = 0;
-		data[9] = 0;
-		sti7109_send_cmd(sti7109, data, 10);
+		goto fail8;
 	}
 
 	return 0;
 
-fail6:
+fail8:
 	saa716x_ff_osd_exit(saa716x);
-fail5:
+fail7:
+	saa716x_ff_video_exit(saa716x);
+fail6:
 	saa716x_dvb_exit(saa716x);
-fail4:
+fail5:
 	SAA716x_EPWR(MSI, MSI_INT_ENA_CLR_H, MSI_INT_EXTINT_0);
 
 	/* disable board power */
 	saa716x_gpio_write(saa716x, TT_PREMIUM_GPIO_POWER_ENABLE, 0);
 
+	vfree(sti7109->iobuf);
+fail4:
 	kfree(sti7109);
 fail3:
 	saa716x_i2c_exit(saa716x);
@@ -688,6 +769,8 @@ static void __devexit saa716x_ff_pci_remove(struct pci_dev *pdev)
 	struct sti7109_dev *sti7109 = saa716x->priv;
 
 	saa716x_ff_osd_exit(saa716x);
+
+	saa716x_ff_video_exit(saa716x);
 
 	saa716x_dvb_exit(saa716x);
 
@@ -764,14 +847,14 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 		struct sti7109_dev *sti7109 = saa716x->priv;
 
 		phiISR = SAA716x_EPRD(PHI_1, FPGA_ADDR_EMI_ISR);
-		dprintk(SAA716x_INFO, 1, "interrupt status register: %08X", phiISR);
+		//dprintk(SAA716x_INFO, 1, "interrupt status register: %08X", phiISR);
 		if (phiISR & ISR_CMD_MASK) {
 
 			u32 value;
 			u32 length;
-			dprintk(SAA716x_INFO, 1, "CMD interrupt source");
+			/*dprintk(SAA716x_INFO, 1, "CMD interrupt source");*/
 
-			value = SAA716x_EPRD(PHI_1, 0);
+			value = SAA716x_EPRD(PHI_1, ADDR_CMD_DATA);
 			value = __cpu_to_be32(value);
 			length = (value >> 16) + 2;
 
@@ -782,33 +865,149 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 				length = MAX_RESULT_LEN;
 			}
 
-			saa716x_phi_read(saa716x, 0, sti7109->result_data, length);
+			saa716x_phi_read(saa716x, ADDR_CMD_DATA, sti7109->result_data, length);
 			sti7109->result_len = length;
 			sti7109->result_avail = 1;
 			wake_up(&sti7109->result_avail_wq);
 
+			phiISR &= ~ISR_CMD_MASK;
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_CMD_MASK);
 		}
 
 		if (phiISR & ISR_READY_MASK) {
-			dprintk(SAA716x_INFO, 1, "READY interrupt source");
+			/*dprintk(SAA716x_INFO, 1, "READY interrupt source");*/
 			sti7109->cmd_ready = 1;
 			wake_up(&sti7109->cmd_ready_wq);
+			phiISR &= ~ISR_READY_MASK;
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_READY_MASK);
 		}
 
 		if (phiISR & ISR_BLOCK_MASK) {
-			dprintk(SAA716x_INFO, 1, "BLOCK interrupt source");
+			/*dprintk(SAA716x_INFO, 1, "BLOCK interrupt source");*/
 			sti7109->block_done = 1;
 			wake_up(&sti7109->block_done_wq);
+			phiISR &= ~ISR_BLOCK_MASK;
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_BLOCK_MASK);
 		}
 
 		if (phiISR & ISR_DATA_MASK) {
-			dprintk(SAA716x_INFO, 1, "DATA interrupt source");
+			/*dprintk(SAA716x_INFO, 1, "DATA interrupt source");*/
 			sti7109->data_ready = 1;
 			wake_up(&sti7109->data_ready_wq);
+			phiISR &= ~ISR_DATA_MASK;
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_DATA_MASK);
+		}
+
+		if (phiISR & ISR_BOOT_FINISH_MASK) {
+			/*dprintk(SAA716x_INFO, 1, "BOOT FINISH interrupt source");*/
+			sti7109->boot_finished = 1;
+			wake_up(&sti7109->boot_finish_wq);
+			phiISR &= ~ISR_BOOT_FINISH_MASK;
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_BOOT_FINISH_MASK);
+		}
+
+		if (phiISR & ISR_AUDIO_PTS_MASK) {
+			u8 data[8];
+
+			saa716x_phi_read(saa716x, ADDR_AUDIO_PTS, data, 8);
+			sti7109->audio_pts = ((u64) (data[3] & 0x01) << 32)
+					    | (u64) (data[4] << 24)
+					    | (u64) (data[5] << 16)
+					    | (u64) (data[6] << 8)
+					    | (u64) (data[7]);
+
+			phiISR &= ~ISR_AUDIO_PTS_MASK;
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_AUDIO_PTS_MASK);
+
+			/*dprintk(SAA716x_INFO, 1, "AUDIO PTS: %llu", sti7109->audio_pts);*/
+		}
+
+		if (phiISR & ISR_VIDEO_PTS_MASK) {
+			u8 data[8];
+
+			saa716x_phi_read(saa716x, ADDR_VIDEO_PTS, data, 8);
+			sti7109->video_pts = ((u64) (data[3] & 0x01) << 32)
+					    | (u64) (data[4] << 24)
+					    | (u64) (data[5] << 16)
+					    | (u64) (data[6] << 8)
+					    | (u64) (data[7]);
+
+			phiISR &= ~ISR_VIDEO_PTS_MASK;
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_VIDEO_PTS_MASK);
+
+			/*dprintk(SAA716x_INFO, 1, "VIDEO PTS: %llu", sti7109->video_pts);*/
+		}
+
+		if (phiISR & ISR_CURRENT_STC_MASK) {
+			u8 data[8];
+
+			saa716x_phi_read(saa716x, ADDR_CURRENT_STC, data, 8);
+			sti7109->current_stc = ((u64) (data[3] & 0x01) << 32)
+					      | (u64) (data[4] << 24)
+					      | (u64) (data[5] << 16)
+					      | (u64) (data[6] << 8)
+					      | (u64) (data[7]);
+
+			phiISR &= ~ISR_CURRENT_STC_MASK;
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_CURRENT_STC_MASK);
+
+			/*dprintk(SAA716x_INFO, 1, "CURRENT STC: %llu", sti7109->current_stc);*/
+		}
+
+		if (phiISR & ISR_REMOTE_EVENT_MASK) {
+			u8 data[4];
+
+			saa716x_phi_read(saa716x, ADDR_REMOTE_EVENT, data, 4);
+			sti7109->remote_event = (data[0] << 24)
+					      | (data[1] << 16)
+					      | (data[2] << 8)
+					      | (data[3]);
+
+			phiISR &= ~ISR_REMOTE_EVENT_MASK;
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_REMOTE_EVENT_MASK);
+
+			dprintk(SAA716x_INFO, 1, "REMOTE EVENT: %u", sti7109->remote_event);
+		}
+
+		if (phiISR & ISR_FIFO_EMPTY_MASK) {
+			u32 fifoCtrl;
+			u32 fifoStat;
+			u16 fifoSize;
+			u16 fifoUsage;
+			u16 fifoFree;
+			int len;
+
+			/*dprintk(SAA716x_INFO, 1, "FIFO EMPTY interrupt source");*/
+			fifoCtrl = SAA716x_EPRD(PHI_1, FPGA_ADDR_FIFO_CTRL);
+			fifoCtrl &= ~0x4;
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, fifoCtrl);
+			fifoStat = SAA716x_EPRD(PHI_1, FPGA_ADDR_FIFO_STAT);
+			fifoSize = (u16) (fifoStat >> 16);
+			fifoUsage = (u16) fifoStat;
+			fifoFree = fifoSize - fifoUsage;
+			spin_lock(&sti7109->tsout.lock);
+			len = dvb_ringbuffer_avail(&sti7109->tsout);
+			if (len > fifoFree)
+				len = fifoFree;
+			if (len >= TS_SIZE)
+			{
+				while (len >= TS_SIZE)
+				{
+					dvb_ringbuffer_read(&sti7109->tsout, sti7109->tsbuf, (size_t) TS_SIZE, 0);
+					saa716x_phi_write_fifo(saa716x, sti7109->tsbuf, TS_SIZE);
+					len -= TS_SIZE;
+				}
+				wake_up(&sti7109->tsout.queue);
+				fifoCtrl |= 0x4;
+				SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, fifoCtrl);
+			}
+			spin_unlock(&sti7109->tsout.lock);
+			phiISR &= ~ISR_FIFO_EMPTY_MASK;
+		}
+
+		if (phiISR) {
+			dprintk(SAA716x_INFO, 1, "unknown interrupt source");
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, phiISR);
 		}
 	}
 
