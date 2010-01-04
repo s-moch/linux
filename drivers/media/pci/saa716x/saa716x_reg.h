@@ -880,6 +880,7 @@
 
 #define PHI_CSN_DEASSERT		(0x00000001 <<  2)
 #define PHI_AUTO_INCREMENT		(0x00000001 <<  1)
+#define PHI_FIFO_MODE			(0x00000001 <<  0)
 
 #define PHI_DELAY_RD_WR			(0x0000001f << 27)
 #define PHI_EXTEND_RDY3			(0x00000003 << 25)
