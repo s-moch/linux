@@ -12,8 +12,13 @@
 #include <linux/init.h>
 #include <linux/device.h>
 
+#include <asm/irq.h>
+#include <linux/signal.h>
+#include <linux/sched.h>
+#include <linux/interrupt.h>
 
-#include "saa716x_priv.h"
+#include <linux/i2c.h>
+
 #include "saa716x_reg.h"
 #include "saa716x_adap.h"
 #include "saa716x_i2c.h"
@@ -22,6 +27,8 @@
 #include "saa716x_gpio.h"
 #include "saa716x_reg.h"
 #include "saa716x_rom.h"
+#include "saa716x_spi.h"
+#include "saa716x_priv.h"
 
 #include "zl10353.h"
 #include "mb86a16.h"
