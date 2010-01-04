@@ -59,6 +59,9 @@
 #define SAA716x_RCWR(__offst, __addr, __data)	writel((__data), (saa716x->mmio + (__offst + __addr)))
 #define SAA716x_RCRD(__offst, __addr)		readl((saa716x->mmio + (__offst + __addr)))
 
+
+#define SAA716x_MSI_MAX_VECTORS			16
+
 struct saa716x_dev;
 
 typedef int (*saa716x_load_config_t)(struct saa716x_dev *saa716x);
@@ -82,9 +85,15 @@ struct saa716x_dev {
 	u8 				revision;
 
 	/* PCI */
-	unsigned long			addr;
 	void __iomem			*mmio;
-	u32				len;
+	void __iomem			*mmbd;
+
+#define MODE_INTA	0
+#define MODE_MSI	1
+#define MODE_MSI_X	2
+	u8				int_type;
+
+	struct msix_entry		msix_entries[SAA716x_MSI_MAX_VECTORS];
 
 	/* I2C */
 	struct saa716x_i2c		i2c[2];
