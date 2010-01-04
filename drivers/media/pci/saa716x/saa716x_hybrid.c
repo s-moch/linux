@@ -400,6 +400,7 @@ static struct saa716x_config saa716x_atlantis_config = {
 	.adapters		= 2,
 	.frontend_attach	= saa716x_atlantis_frontend_attach,
 	.irq_handler		= saa716x_hybrid_pci_irq,
+	.i2c_rate		= SAA716x_I2C_RATE_100,
 };
 
 /*
@@ -534,6 +535,7 @@ static struct saa716x_config saa716x_averhc82_config = {
 	.decoder_addr		= 0x42,
 	.frontend_attach	= saa716x_averhc82_frontend_attach,
 	.irq_handler		= saa716x_hybrid_pci_irq,
+	.i2c_rate		= SAA716x_I2C_RATE_100,
 
 	.adap_config		= {
 		{ /* Adapter 0 */
@@ -573,6 +575,7 @@ static struct saa716x_config saa716x_averh788_config = {
 	.decoder_addr		= 0x42,
 	.frontend_attach	= saa716x_averh88_frontend_attach,
 	.irq_handler		= saa716x_hybrid_pci_irq,
+	.i2c_rate		= SAA716x_I2C_RATE_100,
 
 	.adap_config		= {
 		{ /* Adapter 0 */
