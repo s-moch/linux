@@ -15,7 +15,9 @@
 #include <linux/i2c.h>
 #include "saa716x_priv.h"
 #include "saa716x_vip.h"
+#include "saa716x_aip.h"
 #include "saa716x_msi.h"
+#include "saa716x_reg.h"
 #include "saa716x_budget.h"
 
 unsigned int verbose;
@@ -64,14 +66,6 @@ static int read_eeprom(struct saa716x_dev *saa716x)
 	return 0;
 }
 
-static void saa716x_disable_interrupts(struct saa716x_dev *saa716x)
-{
-	saa716x_i2cint_disable(saa716x);
-	saa716x_msiint_disable(saa716x);
-	saa716x_vipint_disable(saa716x);
-	saa716x_fgpiint_disable(saa716x);
-}
-
 static int __devinit saa716x_budget_pci_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
 {
 	struct saa716x_dev *saa716x;
@@ -118,8 +112,6 @@ static int __devinit saa716x_budget_pci_probe(struct pci_dev *pdev, const struct
 		dprintk(SAA716x_ERROR, 1, "SAA716x Jetpack core initialization failed");
 		goto fail1;
 	}
-
-	saa716x_disable_interrupts(saa716x);
 
 	err = saa716x_i2c_init(saa716x);
 	if (err) {
