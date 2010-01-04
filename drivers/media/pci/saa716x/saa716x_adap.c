@@ -64,44 +64,13 @@ static int saa716x_dvb_stop_feed(struct dvb_demux_feed *dvbdmxfeed)
 	return 0;
 }
 
-int __devinit saa716x_frontend_init(struct saa716x_adapter *saa716x_adap, int count)
-{
-	struct saa716x_dev *saa716x = saa716x_adap->saa716x;
-
-	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
-	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
-	switch (saa716x->pdev->subsystem_device) {
-	default:
-		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Unknown frontend:[0x%02x]",
-			count,
-			saa716x->pdev->subsystem_device);
-
-		return -ENODEV;
-	}
-	if (saa716x_adap->fe == NULL) {
-		dprintk(SAA716x_ERROR, 1, "Adapter (%d)!!! NO Frontends found !!!", count);
-		return -ENODEV;
-	} else {
-		if (dvb_register_frontend(&saa716x_adap->dvb_adapter, saa716x_adap->fe)) {
-			dprintk(SAA716x_ERROR, 1, "Adapter (%d) ERROR: Frontend registration failed", count);
-
-			if (saa716x_adap->fe->ops.release)
-				saa716x_adap->fe->ops.release(saa716x_adap->fe);
-
-			saa716x_adap->fe = NULL;
-			return -ENODEV;
-		}
-	}
-
-	return 0;
-}
-
 int __devinit saa716x_dvb_init(struct saa716x_dev *saa716x)
 {
 	struct saa716x_adapter *saa716x_adap = saa716x->saa716x_adap;
+	struct saa716x_config *config = saa716x->config;
 	int result, i;
 
-	for (i = 0; i < saa716x->config->adapters; i++) {
+	for (i = 0; i < config->adapters; i++) {
 
 		dprintk(SAA716x_DEBUG, 1, "dvb_register_adapter");
 		if (dvb_register_adapter(&saa716x_adap->dvb_adapter,
@@ -163,7 +132,11 @@ int __devinit saa716x_dvb_init(struct saa716x_dev *saa716x)
 //		tasklet_init(&saa716x_adap->tasklet, saa716x_dma_xfer, (unsigned long) saa716x);
 		dprintk(SAA716x_DEBUG, 1, "Frontend Init");
 		saa716x_adap->saa716x = saa716x;
-		saa716x_frontend_init(saa716x_adap, i);
+		if (config->frontend_attach)
+			config->frontend_attach(saa716x_adap, i);
+		else
+			dprintk(SAA716x_ERROR, 1, "Frontend attach = NULL");
+
 		saa716x_adap++;
 	}
 
