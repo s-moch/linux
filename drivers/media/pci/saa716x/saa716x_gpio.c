@@ -6,6 +6,12 @@
 #include "saa716x_spi.h"
 #include "saa716x_priv.h"
 
+void saa716x_gpio_init(struct saa716x_dev *saa716x)
+{
+	spin_lock_init(&saa716x->gpio_lock);
+}
+EXPORT_SYMBOL_GPL(saa716x_gpio_init);
+
 int saa716x_get_gpio_mode(struct saa716x_dev *saa716x, u32 *config)
 {
 	*config = SAA716x_EPRD(GPIO, GPIO_WR_MODE);
@@ -89,6 +95,19 @@ void saa716x_gpio_set_input(struct saa716x_dev *saa716x, int gpio)
 	SAA716x_EPWR(GPIO, GPIO_OEN, value);
 }
 EXPORT_SYMBOL_GPL(saa716x_gpio_set_input);
+
+void saa716x_gpio_set_mode(struct saa716x_dev *saa716x, int gpio, int mode)
+{
+	uint32_t value;
+
+	value = SAA716x_EPRD(GPIO, GPIO_WR_MODE);
+	if (mode)
+		value |= 1 << gpio;
+	else
+		value &= ~(1 << gpio);
+	SAA716x_EPWR(GPIO, GPIO_WR_MODE, value);
+}
+EXPORT_SYMBOL_GPL(saa716x_gpio_set_mode);
 
 void saa716x_gpio_write(struct saa716x_dev *saa716x, int gpio, int set)
 {
