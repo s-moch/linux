@@ -4,7 +4,6 @@
 enum saa716x_boot_mode {
 	SAA716x_EXT_BOOT = 1,
 	SAA716x_INT_BOOT, /* GPIO[31:30] = 0x01 */
-	SAA716x_CGU_BOOT,
 };
 
 extern int saa716x_core_boot(struct saa716x_dev *saa716x);
