@@ -483,6 +483,20 @@ static int saa716x_i2c_xfer(struct i2c_adapter *adapter, struct i2c_msg *msgs, i
 			i += 2;
 
 		} else {
+			dprintk(SAA716x_DEBUG, 1, "length=%d Addr:0x%02x",
+				msgs[i].len, (msgs[i].addr << 1) | I2C_START_BIT);
+
+			err = saa716x_i2c_send(i2c, DEV, (msgs[i].addr << 1) | I2C_START_BIT);
+			if (err < 0) {
+				saa716x_i2c_hwinit(i2c, DEV);
+				err = saa716x_i2c_send(i2c, DEV, (msgs[i].addr << 1) | I2C_START_BIT);
+				if (err < 0) {
+					dprintk(SAA716x_ERROR, 1, "Transfer failed");
+					err = -EIO;
+					goto bail_out;
+				}
+			}
+
 			for (j = 0; j < msgs[i].len; j++) {
 				if (j == msgs[i].len - 1) {
 					err = saa716x_i2c_send(i2c, DEV, msgs[i].buf[j] | I2C_STOP_BIT);
