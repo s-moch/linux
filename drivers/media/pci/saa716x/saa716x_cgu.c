@@ -2,7 +2,7 @@
 #include "saa716x_reg.h"
 #include "saa716x_priv.h"
 
-#define CGU_CLKS	15
+#define CGU_CLKS	14
 #define PLL_FREQ	2500
 
 int saa716x_cgu_init(struct saa716x_dev *saa716x)
@@ -10,8 +10,8 @@ int saa716x_cgu_init(struct saa716x_dev *saa716x)
 	s16 M;
 	s8 N;
 	u8 i;
-	u32 boot_div[15], freq[15];
-	u32 CGU_FDC[15] = {
+	u32 boot_div[14], freq[14];
+	u32 CGU_FDC[14] = {
 		CGU_FDC_0,
 		CGU_FDC_1,
 		CGU_FDC_2,
@@ -49,7 +49,7 @@ int saa716x_cgu_init(struct saa716x_dev *saa716x)
 		M  = ((boot_div[i] >> 3) & 0xff) + N;
 
 		if (M)
-			freq[i] = (N * PLL_FREQ) / M;
+			freq[i] = ((u32)N * PLL_FREQ) / (u32)M;
 		else
 			freq[i] = 0;
 
@@ -105,7 +105,7 @@ int saa716x_cgu_init(struct saa716x_dev *saa716x)
 	SAA716x_EPWR(CGU, CGU_FS1_12, 0x00000000);
 	SAA716x_EPWR(CGU, CGU_ESR_12, CGU_ESR_FD_EN);
 
-	msleep(50); /* wait for PLL */
+	msleep(1000); /* wait for PLL */
 
 	return 0;
 }
