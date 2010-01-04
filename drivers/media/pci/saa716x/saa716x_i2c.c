@@ -7,7 +7,12 @@
 
 #include <linux/i2c.h>
 
-#include "saa716x_reg.h"
+#include "saa716x_mod.h"
+
+#include "saa716x_i2c_reg.h"
+#include "saa716x_msi_reg.h"
+#include "saa716x_cgu_reg.h"
+
 #include "saa716x_i2c.h"
 #include "saa716x_msi.h"
 #include "saa716x_spi.h"
