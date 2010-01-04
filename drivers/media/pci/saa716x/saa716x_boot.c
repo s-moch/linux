@@ -193,7 +193,6 @@ int saa716x_core_boot(struct saa716x_dev *saa716x)
 	switch (config->boot_mode) {
 	case SAA716x_EXT_BOOT:
 		dprintk(SAA716x_DEBUG, 1, "Using External Boot from config");
-		saa716x_cgu_init(saa716x);
 		saa716x_ext_boot(saa716x);
 		break;
 	case SAA716x_INT_BOOT:
