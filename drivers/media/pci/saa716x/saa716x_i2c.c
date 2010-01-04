@@ -650,6 +650,9 @@ int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 					      i2c_vec[i].handler,
 					      SAA716x_I2C_ADAPTER(i));
 
+			reg = SAA716x_EPRD(CGU, CGU_SCR_3);
+			dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Autowake <%d> Active <%d>", i, (reg >> 1) & 0x01, reg & 0x01);
+
 			i2c->saa716x = saa716x;
 		}
 		i2c++;
