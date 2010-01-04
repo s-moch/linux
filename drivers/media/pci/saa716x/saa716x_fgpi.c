@@ -1,6 +1,10 @@
 #include <linux/kernel.h>
 
-#include "saa716x_reg.h"
+#include "saa716x_mod.h"
+
+#include "saa716x_fgpi_reg.h"
+#include "saa716x_dma_reg.h"
+
 #include "saa716x_dma.h"
 #include "saa716x_fgpi.h"
 #include "saa716x_spi.h"
