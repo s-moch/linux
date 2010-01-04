@@ -12,6 +12,7 @@
 #include <linux/init.h>
 #include <linux/device.h>
 
+#include <linux/i2c.h>
 #include "saa716x_priv.h"
 #include "saa716x_budget.h"
 
@@ -21,6 +22,53 @@ MODULE_PARM_DESC(verbose, "verbose startup messages, default is 1 (yes)");
 
 
 #define DRIVER_NAME	"SAA716x Budget"
+
+static int read_eeprom_byte(struct saa716x_dev *saa716x, u8 *data, u8 len)
+{
+	struct saa716x_i2c *i2c = saa716x->i2c;
+	struct i2c_adapter *adapter = &i2c[0].i2c_adapter;
+
+	int err;
+
+	struct i2c_msg msg[] = {
+		{.addr = 0x50, .flags = 0,		.buf = data, .len = 1},
+		{.addr = 0x50, .flags = I2C_M_RD,	.buf = data, .len = len},
+	};
+
+	err = i2c_transfer(adapter, msg, 2);
+	if (err < 0) {
+		dprintk(SAA716x_ERROR, 1, "<err=%d, d0=0x%02x, d1=0x%02x>", err, data[0], data[1]);
+		return err;
+	}
+
+	return 0;
+}
+
+static int read_eeprom(struct saa716x_dev *saa716x)
+{
+	u8 buf[32];
+	int i, err = 0;
+
+	err = read_eeprom_byte(saa716x, buf, 32);
+	if (err < 0) {
+		dprintk(SAA716x_ERROR, 1, "EEPROM Read error");
+		return err;
+	}
+	dprintk(SAA716x_DEBUG, 0, "EEPROM=[");
+	for (i = 0; i < 32; i++)
+		dprintk(SAA716x_DEBUG, 0, " %02x", buf[i]);
+
+	dprintk(SAA716x_DEBUG, 0, " ]\n");
+	return 0;
+}
+
+static void saa716x_disable_interrupts(struct saa716x_dev *saa716x)
+{
+	saa716x_i2cint_disable(saa716x);
+	saa716x_msiint_disable(saa716x);
+	saa716x_vipint_disable(saa716x);
+	saa716x_fgpiint_disable(saa716x);
+}
 
 static int __devinit saa716x_budget_pci_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
 {
@@ -55,12 +103,18 @@ static int __devinit saa716x_budget_pci_probe(struct pci_dev *pdev, const struct
 		dprintk(SAA716x_ERROR, 1, "SAA716x Jetpack core initialization failed");
 		goto fail1;
 	}
+
+	saa716x_disable_interrupts(saa716x);
+
 	err = saa716x_i2c_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x I2C Initialization failed");
 		goto fail2;
 	}
-
+#if 0
+	/* Experiments */
+	read_eeprom(saa716x);
+#endif
 	return 0;
 
 fail2:
