@@ -55,6 +55,7 @@ typedef int (*saa716x_load_config_t)(struct saa716x_dev *saa716x);
 struct saa716x_config {
 	char				*model_name;
 	char				*dev_type;
+	char				*chips_desc;
 	saa716x_load_config_t		load_config;
 };
 
