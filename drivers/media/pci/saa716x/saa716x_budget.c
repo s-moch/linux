@@ -160,7 +160,6 @@ static void __devexit saa716x_budget_pci_remove(struct pci_dev *pdev)
 
 static int load_config_vp1028(struct saa716x_dev *saa716x)
 {
-//	int ret = -ENODEV;
 	int ret = 0;
 
 	return ret;
@@ -169,12 +168,23 @@ static int load_config_vp1028(struct saa716x_dev *saa716x)
 #define SAA716x_MODEL_TWINHAN_VP1028	"Twinhan/Azurewave VP-1028"
 #define SAA716x_DEV_TWINHAN_VP1028	"DVB-S"
 
+static int saa716x_vp1028_frontend_attach(struct saa716x_adapter *adapter, int count)
+{
+	struct saa716x_dev *saa716x = adapter->saa716x;
+
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
+
+	return -ENODEV;
+}
+
 static struct saa716x_config saa716x_vp1028_config = {
 	.model_name		= SAA716x_MODEL_TWINHAN_VP1028,
 	.dev_type		= SAA716x_DEV_TWINHAN_VP1028,
 	.boot_mode		= SAA716x_EXT_BOOT,
 	.load_config		= &load_config_vp1028,
 	.adapters		= 1,
+	.frontend_attach	= saa716x_vp1028_frontend_attach,
 };
 
 static int load_config_vp6002(struct saa716x_dev *saa716x)
@@ -187,12 +197,23 @@ static int load_config_vp6002(struct saa716x_dev *saa716x)
 #define SAA716x_MODEL_TWINHAN_VP6002	"Twinhan/Azurewave VP-6002"
 #define SAA716x_DEV_TWINHAN_VP6002	"DVB-S"
 
+static int saa716x_vp6002_frontend_attach(struct saa716x_adapter *adapter, int count)
+{
+	struct saa716x_dev *saa716x = adapter->saa716x;
+
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
+
+	return -ENODEV;
+}
+
 static struct saa716x_config saa716x_vp6002_config = {
 	.model_name		= SAA716x_MODEL_TWINHAN_VP6002,
 	.dev_type		= SAA716x_DEV_TWINHAN_VP6002,
 	.boot_mode		= SAA716x_EXT_BOOT,
 	.load_config		= &load_config_vp6002,
 	.adapters		= 1,
+	.frontend_attach	= saa716x_vp6002_frontend_attach,
 };
 
 static struct pci_device_id saa716x_budget_pci_table[] = {
