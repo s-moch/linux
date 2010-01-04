@@ -41,14 +41,14 @@ static int saa716x_ff_fpga_init(struct saa716x_dev *saa716x);
 static int saa716x_ff_st7109_init(struct saa716x_dev *saa716x);
 static int saa716x_ff_osd_init(struct saa716x_dev *saa716x);
 static int saa716x_ff_osd_exit(struct saa716x_dev *saa716x);
-static int sti7109_send_cmd(struct sti7109_dev * sti7109, const uint8_t * data, int length);
+static int sti7109_send_cmd(struct sti7109_dev *sti7109, const u8 *data, int length);
 
 static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
 {
 	struct saa716x_dev *saa716x;
 	struct sti7109_dev *sti7109;
 	int err = 0;
-	uint32_t value;
+	u32 value;
 
 	saa716x = kzalloc(sizeof (struct saa716x_dev), GFP_KERNEL);
 	if (saa716x == NULL) {
@@ -112,8 +112,8 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 		goto fail3;
 	}
 
-	sti7109->dev = saa716x;
-	saa716x->priv = sti7109;
+	sti7109->dev	= saa716x;
+	saa716x->priv	= sti7109;
 
 	saa716x_gpio_set_output(saa716x, TT_PREMIUM_GPIO_POWER_ENABLE);
 	saa716x_gpio_set_output(saa716x, TT_PREMIUM_GPIO_RESET_BACKEND);
@@ -163,9 +163,8 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 		goto fail6;
 	}
 
-	if (0)
-	{
-		uint8_t data[32];
+	if (0) {
+		u8 data[32];
 
 		memset(data, 0, sizeof(data));
 		data[0] = 0;
@@ -352,18 +351,16 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 	msiStatusH = SAA716x_EPRD(MSI, MSI_INT_STATUS_H);
 	SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_H, msiStatusH);
 
-	if (msiStatusH & MSI_INT_EXTINT_0)
-	{
-		struct sti7109_dev * sti7109;
+	if (msiStatusH & MSI_INT_EXTINT_0) {
 
-		sti7109 = saa716x->priv;
+		struct sti7109_dev *sti7109 = saa716x->priv;
 
 		phiISR = SAA716x_EPRD(PHI_1, FPGA_ADDR_EMI_ISR);
 		dprintk(SAA716x_INFO, 1, "interrupt status register: %08X", phiISR);
-		if (phiISR & ISR_CMD_MASK)
-		{
-			uint32_t value;
-			uint32_t length;
+		if (phiISR & ISR_CMD_MASK) {
+
+			u32 value;
+			u32 length;
 			dprintk(SAA716x_INFO, 1, "CMD interrupt source");
 
 			value = SAA716x_EPRD(PHI_1, 0);
@@ -372,11 +369,11 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 
 			dprintk(SAA716x_INFO, 1, "CMD length: %d", length);
 
-			if (length > MAX_RESULT_LEN)
-			{
+			if (length > MAX_RESULT_LEN) {
 				dprintk(SAA716x_ERROR, 1, "CMD length %d > %d", length, MAX_RESULT_LEN);
 				length = MAX_RESULT_LEN;
 			}
+
 			saa716x_phi_read(saa716x, 0, sti7109->result_data, length);
 			sti7109->result_len = length;
 			sti7109->result_avail = 1;
@@ -384,22 +381,22 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_CMD_MASK);
 		}
-		if (phiISR & ISR_READY_MASK)
-		{
+
+		if (phiISR & ISR_READY_MASK) {
 			dprintk(SAA716x_INFO, 1, "READY interrupt source");
 			sti7109->cmd_ready = 1;
 			wake_up(&sti7109->cmd_ready_wq);
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_READY_MASK);
 		}
-		if (phiISR & ISR_BLOCK_MASK)
-		{
+
+		if (phiISR & ISR_BLOCK_MASK) {
 			dprintk(SAA716x_INFO, 1, "BLOCK interrupt source");
 			sti7109->block_done = 1;
 			wake_up(&sti7109->block_done_wq);
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_BLOCK_MASK);
 		}
-		if (phiISR & ISR_DATA_MASK)
-		{
+
+		if (phiISR & ISR_DATA_MASK) {
 			dprintk(SAA716x_INFO, 1, "DATA interrupt source");
 			sti7109->data_ready = 1;
 			wake_up(&sti7109->data_ready_wq);
@@ -413,16 +410,15 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 static void saa716x_spi_write(struct saa716x_dev *saa716x, const uint8_t * data, int length)
 {
 	int i;
-	uint32_t value;
+	u32 value;
 	int rounds;
 
-	for (i = 0; i < length; i++)
-	{
+	for (i = 0; i < length; i++) {
 		SAA716x_EPWR(SPI, SPI_DATA, data[i]);
 		rounds = 0;
 		value = SAA716x_EPRD(SPI, SPI_STATUS);
-		while ((value & SPI_TRANSFER_FLAG) == 0 && rounds < 5000)
-		{
+
+		while ((value & SPI_TRANSFER_FLAG) == 0 && rounds < 5000) {
 			value = SAA716x_EPRD(SPI, SPI_STATUS);
 			rounds++;
 		}
@@ -464,8 +460,7 @@ static int saa716x_ff_fpga_init(struct saa716x_dev *saa716x)
 
 	rounds = 0;
 	fpgaInit = saa716x_gpio_read(saa716x, TT_PREMIUM_GPIO_FPGA_INITN);
-	while (fpgaInit == 0 && rounds < 5000)
-	{
+	while (fpgaInit == 0 && rounds < 5000) {
 		//msleep(1);
 		fpgaInit = saa716x_gpio_read(saa716x, TT_PREMIUM_GPIO_FPGA_INITN);
 		rounds++;
@@ -488,9 +483,7 @@ static int saa716x_ff_fpga_init(struct saa716x_dev *saa716x)
 	release_firmware(fw);
 
 	if (!fpgaDone)
-	{
 		return -EINVAL;
-	}
 
 	return 0;
 }
@@ -499,14 +492,14 @@ static int saa716x_ff_st7109_init(struct saa716x_dev *saa716x)
 {
 	int i;
 	int length;
-	uint32_t requestedBlock;
-	uint32_t writtenBlock;
-	uint32_t numBlocks;
-	uint32_t blockSize;
-	uint32_t lastBlockSize;
-	uint64_t startTime;
-	uint64_t currentTime;
-	uint64_t waitTime;
+	u32 requestedBlock;
+	u32 writtenBlock;
+	u32 numBlocks;
+	u32 blockSize;
+	u32 lastBlockSize;
+	u64 startTime;
+	u64 currentTime;
+	u64 waitTime;
 	int ret;
 	const struct firmware *fw;
 
@@ -534,19 +527,16 @@ static int saa716x_ff_st7109_init(struct saa716x_dev *saa716x)
 
 	startTime = jiffies;
 	waitTime = 0;
-	do
-	{
+	do {
 		requestedBlock = SAA716x_EPRD(PHI_1, 0x3ffc);
 		if (requestedBlock == 1)
-		{
 			break;
-		}
+
 		currentTime = jiffies;
 		waitTime = currentTime - startTime;
 	} while (waitTime < (1 * HZ));
 
-	if (waitTime >= 1 * HZ)
-	{
+	if (waitTime >= 1 * HZ) {
 		dprintk(SAA716x_ERROR, 1, "STi7109 seems to be DEAD!");
 		return -1;
 	}
@@ -572,39 +562,33 @@ static int saa716x_ff_st7109_init(struct saa716x_dev *saa716x)
 	length = fw->size;
 	numBlocks = length / blockSize;
 	lastBlockSize = length % blockSize;
-	for (i = 0; i < length; i += blockSize)
-	{
+	for (i = 0; i < length; i += blockSize) {
 		writtenBlock++;
 		/* write one block (last may differ from blockSize) */
 		if (lastBlockSize && writtenBlock == (numBlocks + 1))
-		{
 			saa716x_phi_write(saa716x, 0, &fw->data[i], lastBlockSize);
-		}
 		else
-		{
 			saa716x_phi_write(saa716x, 0, &fw->data[i], blockSize);
-		}
+
 		SAA716x_EPWR(PHI_1, 0x3ff8, writtenBlock);
 		startTime = jiffies;
 		waitTime = 0;
-		do
-		{
+		do {
 			requestedBlock = SAA716x_EPRD(PHI_1, 0x3ffc);
 			if (requestedBlock == (writtenBlock + 1))
-			{
 				break;
-			}
+
 			currentTime = jiffies;
 			waitTime = currentTime - startTime;
 		} while (waitTime < (1 * HZ));
 
-		if (waitTime >= 1 * HZ)
-		{
+		if (waitTime >= 1 * HZ) {
 			dprintk(SAA716x_ERROR, 1, "STi7109 seems to be DEAD!");
 			release_firmware(fw);
 			return -1;
 		}
 	}
+
 	writtenBlock++;
 	writtenBlock |= 0x80000000;
 	SAA716x_EPWR(PHI_1, 0x3ff8, writtenBlock);
@@ -622,7 +606,10 @@ static int sti7109_send_cmd(struct sti7109_dev * sti7109, const uint8_t * data, 
 	unsigned long timeout;
 
 	timeout = 10 * HZ;
-	timeout = wait_event_interruptible_timeout(sti7109->cmd_ready_wq, sti7109->cmd_ready == 1, timeout);
+	timeout = wait_event_interruptible_timeout(sti7109->cmd_ready_wq,
+						   sti7109->cmd_ready == 1,
+						   timeout);
+
 	if (timeout == -ERESTARTSYS || sti7109->cmd_ready == 0) {
 		if (timeout == -ERESTARTSYS) {
 			/* a signal arrived */
@@ -645,7 +632,10 @@ static int sti7109_raw_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
 	unsigned long timeout;
 
 	timeout = 1 * HZ;
-	timeout = wait_event_interruptible_timeout(sti7109->cmd_ready_wq, sti7109->cmd_ready == 1, timeout);
+	timeout = wait_event_interruptible_timeout(sti7109->cmd_ready_wq,
+						   sti7109->cmd_ready == 1,
+						   timeout);
+
 	if (timeout == -ERESTARTSYS || sti7109->cmd_ready == 0) {
 		if (timeout == -ERESTARTSYS) {
 			/* a signal arrived */
@@ -660,10 +650,12 @@ static int sti7109_raw_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
 	saa716x_phi_write(saa716x, 0x0000, cmd->cmd_data, cmd->cmd_len);
 	SAA716x_EPWR(PHI_1, FPGA_ADDR_PHI_ISET, ISR_CMD_MASK);
 
-	if (cmd->result_len > 0)
-	{
+	if (cmd->result_len > 0) {
 		timeout = 1 * HZ;
-		timeout = wait_event_interruptible_timeout(sti7109->result_avail_wq, sti7109->result_avail == 1, timeout);
+		timeout = wait_event_interruptible_timeout(sti7109->result_avail_wq,
+							   sti7109->result_avail == 1,
+							   timeout);
+
 		if (timeout == -ERESTARTSYS || sti7109->result_avail == 0) {
 			cmd->result_len = 0;
 			if (timeout == -ERESTARTSYS) {
@@ -673,19 +665,17 @@ static int sti7109_raw_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
 			dprintk(SAA716x_ERROR, 1, "timed out waiting for command result");
 			return -EIO;
 		}
-		if (sti7109->result_len > 0)
-		{
-			if (sti7109->result_len > cmd->result_len)
-			{
+
+		if (sti7109->result_len > 0) {
+			if (sti7109->result_len > cmd->result_len) {
 				memcpy(cmd->result_data, sti7109->result_data, cmd->result_len);
-			}
-			else
-			{
+			} else {
 				memcpy(cmd->result_data, sti7109->result_data, sti7109->result_len);
 				cmd->result_len = sti7109->result_len;
 			}
 		}
 	}
+
 	return 0;
 }
 
@@ -693,15 +683,18 @@ static int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 {
 	struct saa716x_dev * saa716x = sti7109->dev;
 	unsigned long timeout;
-	uint16_t blockSize;
-	uint16_t lastBlockSize;
-	uint16_t numBlocks;
-	uint16_t blockIndex;
-	uint8_t blockHeader[SIZE_BLOCK_HEADER];
-	uint8_t * blockPtr;
+	u16 blockSize;
+	u16 lastBlockSize;
+	u16 numBlocks;
+	u16 blockIndex;
+	u8 blockHeader[SIZE_BLOCK_HEADER];
+	u8 * blockPtr;
 
 	timeout = 1 * HZ;
-	timeout = wait_event_interruptible_timeout(sti7109->data_ready_wq, sti7109->data_ready == 1, timeout);
+	timeout = wait_event_interruptible_timeout(sti7109->data_ready_wq,
+						   sti7109->data_ready == 1,
+						   timeout);
+
 	if (timeout == -ERESTARTSYS || sti7109->data_ready == 0) {
 		if (timeout == -ERESTARTSYS) {
 			/* a signal arrived */
@@ -710,6 +703,7 @@ static int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 		dprintk(SAA716x_ERROR, 1, "timed out waiting for data ready");
 		return -EIO;
 	}
+
 	sti7109->data_ready = 0;
 
 	/* 8 bytes is the size of the block header. Block header structure is:
@@ -722,20 +716,17 @@ static int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 	numBlocks = data->data_length / blockSize;
 	lastBlockSize = data->data_length % blockSize;
 	if (lastBlockSize > 0)
-	{
 		numBlocks++;
-	}
-	blockHeader[2] = (uint8_t) (numBlocks >> 8);
-	blockHeader[3] = (uint8_t) numBlocks;
-	blockHeader[6] = (uint8_t) (sti7109->data_handle >> 8);
-	blockHeader[7] = (uint8_t) sti7109->data_handle;
-	blockPtr = (uint8_t *) data->data_buffer;
-	for (blockIndex = 0; blockIndex < numBlocks; blockIndex++)
-	{
+
+	blockHeader[2] = (u8) (numBlocks >> 8);
+	blockHeader[3] = (u8) numBlocks;
+	blockHeader[6] = (u8) (sti7109->data_handle >> 8);
+	blockHeader[7] = (u8) sti7109->data_handle;
+	blockPtr = (u8 *) data->data_buffer;
+	for (blockIndex = 0; blockIndex < numBlocks; blockIndex++) {
+
 		if (lastBlockSize && (blockIndex == (numBlocks - 1)))
-		{
 			blockSize = lastBlockSize;
-		}
 
 		blockHeader[0] = (uint8_t) (blockIndex >> 8);
 		blockHeader[1] = (uint8_t) blockIndex;
@@ -748,7 +739,10 @@ static int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 		SAA716x_EPWR(PHI_1, FPGA_ADDR_PHI_ISET, ISR_BLOCK_MASK);
 
 		timeout = 1 * HZ;
-		timeout = wait_event_interruptible_timeout(sti7109->block_done_wq, sti7109->block_done == 1, timeout);
+		timeout = wait_event_interruptible_timeout(sti7109->block_done_wq,
+							   sti7109->block_done == 1,
+							   timeout);
+
 		if (timeout == -ERESTARTSYS || sti7109->block_done == 0) {
 			if (timeout == -ERESTARTSYS) {
 				/* a signal arrived */
@@ -759,6 +753,7 @@ static int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 		}
 		blockPtr += blockSize;
 	}
+
 	data->data_handle = sti7109->data_handle;
 	sti7109->data_handle++;
 	return 0;
@@ -767,17 +762,13 @@ static int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 static int dvb_osd_ioctl(struct inode *inode, struct file *file,
 			 unsigned int cmd, void *parg)
 {
-	struct dvb_device *dvbdev = file->private_data;
-	struct sti7109_dev *sti7109 = dvbdev->priv;
+	struct dvb_device *dvbdev	= file->private_data;
+	struct sti7109_dev *sti7109	= dvbdev->priv;
 
 	if (cmd == OSD_RAW_CMD)
-	{
 		return sti7109_raw_cmd(sti7109, (osd_raw_cmd_t *) parg);
-	}
 	else if (cmd == OSD_RAW_DATA)
-	{
 		return sti7109_raw_data(sti7109, (osd_raw_data_t *) parg);
-	}
 
 	return -EINVAL;
 }
@@ -799,8 +790,8 @@ static struct dvb_device dvbdev_osd = {
 
 static int saa716x_ff_osd_init(struct saa716x_dev *saa716x)
 {
-	struct saa716x_adapter *saa716x_adap = saa716x->saa716x_adap;
-	struct sti7109_dev *sti7109 = saa716x->priv;
+	struct saa716x_adapter *saa716x_adap	= saa716x->saa716x_adap;
+	struct sti7109_dev *sti7109		= saa716x->priv;
 
 	init_waitqueue_head(&sti7109->cmd_ready_wq);
 	sti7109->cmd_ready = 0;
@@ -814,8 +805,11 @@ static int saa716x_ff_osd_init(struct saa716x_dev *saa716x)
 	init_waitqueue_head(&sti7109->block_done_wq);
 	sti7109->block_done = 0;
 
-	dvb_register_device(&saa716x_adap->dvb_adapter, &sti7109->osd_dev,
-			    &dvbdev_osd, sti7109, DVB_DEVICE_OSD);
+	dvb_register_device(&saa716x_adap->dvb_adapter,
+			    &sti7109->osd_dev,
+			    &dvbdev_osd,
+			    sti7109,
+			    DVB_DEVICE_OSD);
 	return 0;
 }
 
