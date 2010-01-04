@@ -47,9 +47,72 @@ static int saa716x_ext_boot(struct saa716x_dev *saa716x)
 	return 0;
 }
 
-static int saa716x_int_boot(struct saa716x_dev *saa716x)
+static void saa716x_int_boot(struct saa716x_dev *saa716x)
 {
-	return 0;
+	/* Write GREG boot_ready to 0
+	 * DW_0 = 0x0001_2018
+	 * DW_1 = 0x0000_0000
+	 */
+	SAA716x_WR(GREG, GREG_RSTU_CTRL, 0x00000000);
+
+	/* Clear VI0 interrupt
+	 * DW_2 = 0x0000_0fe8
+	 * DW_3 = 0x0000_03ff
+	 */
+	SAA716x_WR(VI0, INT_CLR_STATUS, 0x000003ff);
+
+	/* Clear VI1 interrupt
+	 * DW_4 = 0x0000_1fe8
+	 * DW_5 = 0x0000_03ff
+	 */
+	SAA716x_WR(VI1, INT_CLR_STATUS, 0x000003ff);
+
+	/* CLear FGPI0 interrupt
+	 * DW_6 = 0x0000_2fe8
+	 * DW_7 = 0x0000_007f
+	 */
+	SAA716x_WR(FGPI0, INT_CLR_STATUS, 0x0000007f);
+
+	/* Clear FGPI1 interrupt
+	 * DW_8 = 0x0000_3fe8
+	 * DW_9 = 0x0000_007f
+	 */
+	SAA716x_WR(FGPI1, INT_CLR_STATUS, 0x0000007f);
+
+	/* Clear FGPI2 interrupt
+	 * DW_10 = 0x0000_4fe8
+	 * DW_11 = 0x0000_007f
+	 */
+	SAA716x_WR(FGPI2, INT_CLR_STATUS, 0x0000007f);
+
+	/* Clear FGPI3 interrupt
+	 * DW_12 = 0x0000_5fe8
+	 * DW_13 = 0x0000_007f
+	 */
+	SAA716x_WR(FGPI3, INT_CLR_STATUS, 0x0000007f);
+
+	/* Clear AI0 interrupt
+	 * DW_14 = 0x0000_6020
+	 * DW_15 = 0x0000_000f
+	 */
+	SAA716x_WR(AI0, AI_INT_ACK, 0x0000000f)
+
+	/* Clear AI1 interrupt
+	 * DW_16 = 0x0000_7020
+	 * DW_17 = 0x0000_200f
+	 */
+	SAA716x_WR(AI1, AI_INT_ACK, 0x0000000f);
+
+	/* Set GREG boot_ready bit to 1
+	 * DW_18 = 0x0001_2018
+	 * DW_19 = 0x0000_2000
+	 */
+	SAA716x_WR(GREG, GREG_RSTU_CTRL, 0x00002000);
+
+	/* End of Boot script command
+	 * DW_20 = 0x0000_0006
+	 * Where to write this value ??
+	 */
 }
 
 int saa716x_core_boot(struct saa716x_dev *saa716x)
