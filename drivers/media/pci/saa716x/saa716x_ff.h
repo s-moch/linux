@@ -47,10 +47,10 @@ struct sti7109_dev {
 
 	wait_queue_head_t	result_avail_wq;
 	int			result_avail;
-	uint8_t			result_data[MAX_RESULT_LEN];
-	uint32_t		result_len;
+	u8			result_data[MAX_RESULT_LEN];
+	u32			result_len;
 
-	uint16_t		data_handle;
+	u16			data_handle;
 	wait_queue_head_t	data_ready_wq;
 	int			data_ready;
 	wait_queue_head_t	block_done_wq;
