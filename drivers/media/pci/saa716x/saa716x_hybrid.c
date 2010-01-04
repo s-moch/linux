@@ -210,6 +210,39 @@ static struct saa716x_config saa716x_vp6090_config = {
 	.irq_handler		= saa716x_hybrid_pci_irq,
 };
 
+/*
+ * NXP Reference design (Atlantis)
+ * 2x DVB-T Frontend: 2x TDA10046
+ * Analog Decoder: 2x Internal
+ */
+#define SAA716x_MODEL_NXP_ATLANTIS	"Atlantis reference board"
+#define SAA716x_DEV_NXP_ATLANTIS	"2x DVB-T + 2x Analog"
+
+static int load_config_atlantis(struct saa716x_dev *saa716x)
+{
+	int ret = 0;
+	return ret;
+}
+
+static int saa716x_atlantis_frontend_attach(struct saa716x_adapter *adapter, int count)
+{
+	struct saa716x_dev *saa716x = adapter->saa716x;
+
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
+
+	return -ENODEV;
+}
+
+static struct saa716x_config saa716x_atlantis_config = {
+	.model_name		= SAA716x_MODEL_NXP_ATLANTIS,
+	.dev_type		= SAA716x_DEV_NXP_ATLANTIS,
+	.boot_mode		= SAA716x_EXT_BOOT,
+	.load_config		= &load_config_atlantis,
+	.adapters		= 2,
+	.frontend_attach	= saa716x_atlantis_frontend_attach,
+	.irq_handler		= saa716x_hybrid_pci_irq,
+};
 
 /*
  * NXP Reference design (NEMO)
@@ -339,6 +372,7 @@ static struct saa716x_config saa716x_averh788_config = {
 static struct pci_device_id saa716x_hybrid_pci_table[] = {
 
 	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_6090, SAA7162, &saa716x_vp6090_config),
+	MAKE_ENTRY(NXP_REFERENCE_BOARD, PCI_ANY_ID, SAA7162, &saa716x_atlantis_config),
 	MAKE_ENTRY(NXP_REFERENCE_BOARD, PCI_ANY_ID, SAA7160, &saa716x_nemo_config),
 	MAKE_ENTRY(AVERMEDIA, AVERMEDIA_HC82, SAA7160, &saa716x_averhc82_config),
 	MAKE_ENTRY(AVERMEDIA, AVERMEDIA_H788, SAA7160, &saa716x_averh788_config),
