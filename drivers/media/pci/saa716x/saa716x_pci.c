@@ -108,6 +108,7 @@ static struct saa716x_msix_entry saa716x_msix_handler[] = {
 	{ .desc = "SAA716x_I2C_HANDLER", .handler = saa716x_i2c_handler }
 };
 
+#if 0
 static irqreturn_t saa716x_pci_irq(int irq, void *dev_id)
 {
 	struct saa716x_dev *saa716x	= (struct saa716x_dev *) dev_id;
@@ -161,6 +162,7 @@ static irqreturn_t saa716x_pci_irq(int irq, void *dev_id)
 
 	return IRQ_HANDLED;
 }
+#endif
 
 static int saa716x_enable_msi(struct saa716x_dev *saa716x)
 {
@@ -196,6 +198,7 @@ static int saa716x_enable_msix(struct saa716x_dev *saa716x)
 static int saa716x_request_irq(struct saa716x_dev *saa716x)
 {
 	struct pci_dev *pdev = saa716x->pdev;
+	struct saa716x_config *config = saa716x->config;
 	int i, ret = 0;
 
 	if (saa716x->int_type == MODE_MSI) {
@@ -243,7 +246,7 @@ static int saa716x_request_irq(struct saa716x_dev *saa716x)
 
 	if (saa716x->int_type == MODE_INTA) {
 		ret = request_irq(pdev->irq,
-				  saa716x_pci_irq,
+				  config->irq_handler,
 				  IRQF_SHARED,
 				  DRIVER_NAME,
 				  saa716x);
