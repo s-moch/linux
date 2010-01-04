@@ -80,6 +80,7 @@ struct saa716x_i2c {
 	struct i2c_adapter		i2c_adapter;
 	struct mutex			i2c_lock;
 	struct saa716x_dev		*saa716x;
+	u32				i2c_dev;
 
 	enum saa716x_i2c_rate		i2c_rate; /* run time */
 };
