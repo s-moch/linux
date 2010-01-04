@@ -1,64 +1,122 @@
 #include <linux/delay.h>
 #include "saa716x_reg.h"
 #include "saa716x_priv.h"
+#include "saa716x_msi.h"
 
-#define MSI_CONFIG_REGS		49
+#define SAA716x_MSI_VECTORS		50
+
+static const char *vector_name[] = {
+	"TAGACK_VI0_0",
+	"TAGACK_VI0_1",
+	"TAGACK_VI0_2",
+	"TAGACK_VI1_0",
+	"TAGACK_VI1_1",
+	"TAGACK_VI1_2",
+	"TAGACK_FGPI_0",
+	"TAGACK_FGPI_1",
+	"TAGACK_FGPI_2",
+	"TAGACK_FGPI_3",
+	"TAGACK_AI_0",
+	"TAGACK_AI_1",
+	"OVRFLW_VI0_0",
+	"OVRFLW_VI0_1",
+	"OVRFLW_VI0_2",
+	"OVRFLW_VI1_0",
+	"OVRFLW_VI1_1",
+	"OVRFLW_VI1_2",
+	"OVRFLW_FGPI_O",
+	"OVRFLW_FGPI_1",
+	"OVRFLW_FGPI_2",
+	"OVRFLW_FGPI_3",
+	"OVRFLW_AI_0",
+	"OVRFLW_AI_1",
+	"AVINT_VI0",
+	"AVINT_VI1",
+	"AVINT_FGPI_0",
+	"AVINT_FGPI_1",
+	"AVINT_FGPI_2",
+	"AVINT_FGPI_3",
+	"AVINT_AI_0",
+	"AVINT_AI_1",
+	"UNMAPD_TC_INT",
+	"EXTINT_0",
+	"EXTINT_1",
+	"EXTINT_2",
+	"EXTINT_3",
+	"EXTINT_4",
+	"EXTINT_5",
+	"EXTINT_6",
+	"EXTINT_7",
+	"EXTINT_8",
+	"EXTINT_9",
+	"EXTINT_10",
+	"EXTINT_11",
+	"EXTINT_12",
+	"EXTINT_13",
+	"EXTINT_14",
+	"EXTINT_15",
+	"I2CINT_0",
+	"I2CINT_1"
+};
+
+static u32 MSI_CONFIG_REG[51] = {
+	MSI_CONFIG0,
+	MSI_CONFIG1,
+	MSI_CONFIG2,
+	MSI_CONFIG3,
+	MSI_CONFIG4,
+	MSI_CONFIG5,
+	MSI_CONFIG6,
+	MSI_CONFIG7,
+	MSI_CONFIG8,
+	MSI_CONFIG9,
+	MSI_CONFIG10,
+	MSI_CONFIG11,
+	MSI_CONFIG12,
+	MSI_CONFIG13,
+	MSI_CONFIG14,
+	MSI_CONFIG15,
+	MSI_CONFIG16,
+	MSI_CONFIG17,
+	MSI_CONFIG18,
+	MSI_CONFIG19,
+	MSI_CONFIG20,
+	MSI_CONFIG21,
+	MSI_CONFIG22,
+	MSI_CONFIG23,
+	MSI_CONFIG24,
+	MSI_CONFIG25,
+	MSI_CONFIG26,
+	MSI_CONFIG27,
+	MSI_CONFIG28,
+	MSI_CONFIG29,
+	MSI_CONFIG30,
+	MSI_CONFIG31,
+	MSI_CONFIG32,
+	MSI_CONFIG33,
+	MSI_CONFIG34,
+	MSI_CONFIG35,
+	MSI_CONFIG36,
+	MSI_CONFIG37,
+	MSI_CONFIG38,
+	MSI_CONFIG39,
+	MSI_CONFIG40,
+	MSI_CONFIG41,
+	MSI_CONFIG42,
+	MSI_CONFIG43,
+	MSI_CONFIG44,
+	MSI_CONFIG45,
+	MSI_CONFIG46,
+	MSI_CONFIG47,
+	MSI_CONFIG48,
+	MSI_CONFIG49,
+	MSI_CONFIG50
+};
 
 int saa716x_msi_init(struct saa716x_dev *saa716x)
 {
 	u32 ena_l, ena_h, sta_l, sta_h, mid;
 	int i;
-	u32 MSI_CONFIG_REG[49] = {
-		MSI_CONFIG0,
-		MSI_CONFIG1,
-		MSI_CONFIG2,
-		MSI_CONFIG3,
-		MSI_CONFIG4,
-		MSI_CONFIG5,
-		MSI_CONFIG6,
-		MSI_CONFIG7,
-		MSI_CONFIG8,
-		MSI_CONFIG9,
-		MSI_CONFIG10,
-		MSI_CONFIG11,
-		MSI_CONFIG12,
-		MSI_CONFIG13,
-		MSI_CONFIG14,
-		MSI_CONFIG15,
-		MSI_CONFIG16,
-		MSI_CONFIG17,
-		MSI_CONFIG18,
-		MSI_CONFIG19,
-		MSI_CONFIG20,
-		MSI_CONFIG21,
-		MSI_CONFIG22,
-		MSI_CONFIG23,
-		MSI_CONFIG24,
-		MSI_CONFIG25,
-		MSI_CONFIG26,
-		MSI_CONFIG27,
-		MSI_CONFIG28,
-		MSI_CONFIG29,
-		MSI_CONFIG30,
-		MSI_CONFIG31,
-		MSI_CONFIG32,
-		MSI_CONFIG33,
-		MSI_CONFIG34,
-		MSI_CONFIG35,
-		MSI_CONFIG36,
-		MSI_CONFIG37,
-		MSI_CONFIG38,
-		MSI_CONFIG39,
-		MSI_CONFIG40,
-		MSI_CONFIG41,
-		MSI_CONFIG42,
-		MSI_CONFIG43,
-		MSI_CONFIG44,
-		MSI_CONFIG45,
-		MSI_CONFIG46,
-		MSI_CONFIG47,
-		MSI_CONFIG48
-	};
 
 	dprintk(SAA716x_DEBUG, 1, "Initializing MSI ..");
 
@@ -78,7 +136,7 @@ int saa716x_msi_init(struct saa716x_dev *saa716x)
 	 * Traffic Class: 18:16 = 0x00
 	 * MSI ID: 4:0 = 0x00
 	 */
-	for (i = 0; i < MSI_CONFIG_REGS; i++)
+	for (i = 0; i < SAA716x_MSI_VECTORS; i++)
 		SAA716x_EPWR(MSI, MSI_CONFIG_REG[i], MSI_INT_POL_EDGE_RISE);
 
 	/* get Status */
@@ -125,3 +183,109 @@ void saa716x_msiint_disable(struct saa716x_dev *saa716x)
 	SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_L, 0x0000ffff);
 }
 EXPORT_SYMBOL_GPL(saa716x_msiint_disable);
+
+
+/* Map the given vector Id to the hardware bitmask. */
+static void saa716x_map_vector(struct saa716x_dev *saa716x, int vector, u32 *mask_l, u32 *mask_h)
+{
+	u32 tmp = 1;
+
+	if (vector < 32) {
+		/* Bits 0 - 31 */
+		tmp   <<= vector;
+		*mask_l = tmp;
+		*mask_h	= 0;
+	} else {
+		/* Bits 32 - 48 */
+		tmp <<= vector - 32;
+		*mask_l = 0;
+		*mask_h = tmp;
+	}
+}
+
+int saa716x_add_irqvector(struct saa716x_dev *saa716x,
+			  int vector,
+			  enum saa716x_edge edge,
+			  irqreturn_t (*handler)(int irq, void *dev_id),
+			  char *desc)
+{
+	struct saa716x_msix_entry *msix_handler = NULL;
+
+	u32 config, mask_l, mask_h;
+
+	BUG_ON(saa716x == NULL);
+	BUG_ON(vector > SAA716x_MSI_VECTORS);
+	dprintk(SAA716x_DEBUG, 1, "Adding Vector %d <%s>", vector, vector_name[vector]);
+
+	if ((vector > 32) && (vector < 49)) {
+		config = SAA716x_EPRD(MSI, MSI_CONFIG_REG[vector]);
+		config &= 0xfcffffff; /* clear polarity */
+
+		switch (edge) {
+		default:
+		case SAA716x_EDGE_RISING:
+			SAA716x_EPWR(MSI, MSI_CONFIG_REG[vector], config | 0x01000000);
+			break;
+
+		case SAA716x_EDGE_FALLING:
+			SAA716x_EPWR(MSI, MSI_CONFIG_REG[vector], config | 0x02000000);
+			break;
+
+		case SAA716x_EDGE_ANY:
+			SAA716x_EPWR(MSI, MSI_CONFIG_REG[vector], config | 0x03000000);
+			break;
+		}
+	}
+
+	saa716x_map_vector(saa716x, vector, &mask_l, &mask_h);
+
+	/* add callback */
+	msix_handler = &saa716x->saa716x_msix_handler[saa716x->handlers];
+	strcpy(msix_handler->desc, desc);
+	msix_handler->vector = vector;
+	msix_handler->handler = handler;
+	saa716x->handlers++;
+
+	SAA716x_EPWR(MSI, MSI_INT_ENA_SET_L, mask_l);
+	SAA716x_EPWR(MSI, MSI_INT_ENA_SET_H, mask_h);
+
+	return 0;
+}
+
+int saa716x_remove_irqvector(struct saa716x_dev *saa716x, int vector)
+{
+	struct saa716x_msix_entry *msix_handler;
+	int i;
+	u32 mask_l, mask_h;
+
+	msix_handler = &saa716x->saa716x_msix_handler[saa716x->handlers];
+	BUG_ON(msix_handler == NULL);
+	dprintk(SAA716x_DEBUG, 1, "Removing Vector %d <%s>", vector, vector_name[vector]);
+
+	/* loop through the registered handlers */
+	for (i = 0; i < saa716x->handlers; i++) {
+
+		/* we found our vector */
+		if (msix_handler->vector == vector) {
+			BUG_ON(msix_handler->handler == NULL); /* no handler yet */
+			dprintk(SAA716x_DEBUG, 1, "Vector %d <%s> removed",
+				msix_handler->vector,
+				msix_handler->desc);
+
+			/* check whether it is already released */
+			if (msix_handler->handler) {
+				msix_handler->vector = 0;
+				msix_handler->handler = NULL;
+				saa716x->handlers--;
+			}
+		}
+	}
+
+	saa716x_map_vector(saa716x, vector, &mask_l, &mask_h);
+
+	/* disable vector */
+	SAA716x_EPWR(MSI, MSI_INT_ENA_CLR_L, mask_l);
+	SAA716x_EPWR(MSI, MSI_INT_ENA_CLR_H, mask_h);
+
+	return 0;
+}
