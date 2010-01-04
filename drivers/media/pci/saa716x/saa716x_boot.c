@@ -8,61 +8,61 @@ static int saa716x_ext_boot(struct saa716x_dev *saa716x)
 	 * DW_0 = 0x0001_2018
 	 * DW_1 = 0x0000_0000
 	 */
-	SAA716x_WR(GREG, GREG_RSTU_CTRL, 0x00000000);
+	SAA716x_EPWR(GREG, GREG_RSTU_CTRL, 0x00000000);
 
 	/* Clear VI0 interrupt
 	 * DW_2 = 0x0000_0fe8
 	 * DW_3 = 0x0000_03ff
 	 */
-	SAA716x_WR(VI0, INT_CLR_STATUS, 0x000003ff);
+	SAA716x_EPWR(VI0, INT_CLR_STATUS, 0x000003ff);
 
 	/* Clear VI1 interrupt
 	 * DW_4 = 0x0000_1fe8
 	 * DW_5 = 0x0000_03ff
 	 */
-	SAA716x_WR(VI1, INT_CLR_STATUS, 0x000003ff);
+	SAA716x_EPWR(VI1, INT_CLR_STATUS, 0x000003ff);
 
 	/* CLear FGPI0 interrupt
 	 * DW_6 = 0x0000_2fe8
 	 * DW_7 = 0x0000_007f
 	 */
-	SAA716x_WR(FGPI0, INT_CLR_STATUS, 0x0000007f);
+	SAA716x_EPWR(FGPI0, INT_CLR_STATUS, 0x0000007f);
 
 	/* Clear FGPI1 interrupt
 	 * DW_8 = 0x0000_3fe8
 	 * DW_9 = 0x0000_007f
 	 */
-	SAA716x_WR(FGPI1, INT_CLR_STATUS, 0x0000007f);
+	SAA716x_EPWR(FGPI1, INT_CLR_STATUS, 0x0000007f);
 
 	/* Clear FGPI2 interrupt
 	 * DW_10 = 0x0000_4fe8
 	 * DW_11 = 0x0000_007f
 	 */
-	SAA716x_WR(FGPI2, INT_CLR_STATUS, 0x0000007f);
+	SAA716x_EPWR(FGPI2, INT_CLR_STATUS, 0x0000007f);
 
 	/* Clear FGPI3 interrupt
 	 * DW_12 = 0x0000_5fe8
 	 * DW_13 = 0x0000_007f
 	 */
-	SAA716x_WR(FGPI3, INT_CLR_STATUS, 0x0000007f);
+	SAA716x_EPWR(FGPI3, INT_CLR_STATUS, 0x0000007f);
 
 	/* Clear AI0 interrupt
 	 * DW_14 = 0x0000_6020
 	 * DW_15 = 0x0000_000f
 	 */
-	SAA716x_WR(AI0, AI_INT_ACK, 0x0000000f);
+	SAA716x_EPWR(AI0, AI_INT_ACK, 0x0000000f);
 
 	/* Clear AI1 interrupt
 	 * DW_16 = 0x0000_7020
 	 * DW_17 = 0x0000_200f
 	 */
-	SAA716x_WR(AI1, AI_INT_ACK, 0x0000000f);
+	SAA716x_EPWR(AI1, AI_INT_ACK, 0x0000000f);
 
 	/* Set GREG boot_ready bit to 1
 	 * DW_18 = 0x0001_2018
 	 * DW_19 = 0x0000_2000
 	 */
-	SAA716x_WR(GREG, GREG_RSTU_CTRL, 0x00002000);
+	SAA716x_EPWR(GREG, GREG_RSTU_CTRL, 0x00002000);
 
 	/* End of Boot script command
 	 * DW_20 = 0x0000_0006
@@ -70,7 +70,7 @@ static int saa716x_ext_boot(struct saa716x_dev *saa716x)
 	 * This seems very odd an address to trigger the
 	 * Boot Control State Machine !
 	 */
-	SAA716x_WR(VI0, 0x00000006, 0xffffffff);
+	SAA716x_EPWR(VI0, 0x00000006, 0xffffffff);
 
 	return 0;
 }
@@ -81,7 +81,7 @@ static void saa716x_int_boot(struct saa716x_dev *saa716x)
 	/* #1 Configure PCI COnfig space
 	 * GREG_JETSTR_CONFIG_0
 	 */
-	SAA716x_WR(GREG, GREG_SUBSYS_CONFIG, saa716x->pdev->subsystem_vendor);
+	SAA716x_EPWR(GREG, GREG_SUBSYS_CONFIG, saa716x->pdev->subsystem_vendor);
 
 	/* GREG_JETSTR_CONFIG_1
 	 * pmcsr_scale:7 = 0x00
@@ -96,7 +96,7 @@ static void saa716x_int_boot(struct saa716x_dev *saa716x)
 	 * BAR prefetch = no
 	 * MSI capable = 32 messages
 	 */
-	SAA716x_WR(GREG, GREG_MSI_BAR_PMCSR, 0x00001005);
+	SAA716x_EPWR(GREG, GREG_MSI_BAR_PMCSR, 0x00001005);
 
 	/* GREG_JETSTR_CONFIG_2
 	 * pmcsr_data:3 = 0x0
@@ -104,7 +104,7 @@ static void saa716x_int_boot(struct saa716x_dev *saa716x)
 	 * pmcsr_data:1 = 0x0
 	 * pmcsr_data:0 = 0x0
 	 */
-	SAA716x_WR(GREG, GREG_PMCSR_DATA_1, 0x00000000);
+	SAA716x_EPWR(GREG, GREG_PMCSR_DATA_1, 0x00000000);
 
 	/* GREG_JETSTR_CONFIG_3
 	 * pmcsr_data:7 = 0x0
@@ -112,20 +112,20 @@ static void saa716x_int_boot(struct saa716x_dev *saa716x)
 	 * pmcsr_data:5 = 0x0
 	 * pmcsr_data:4 = 0x0
 	 */
-	SAA716x_WR(GREG, GREG_PMCSR_DATA_2, 0x00000000);
+	SAA716x_EPWR(GREG, GREG_PMCSR_DATA_2, 0x00000000);
 
 	/* #2 Release GREG resets
 	 * ip_rst_an
 	 * dpa1_rst_an
 	 * jetsream_reset_an
 	 */
-	SAA716x_WR(GREG, GREG_RSTU_CTRL, 0x00000e00);
+	SAA716x_EPWR(GREG, GREG_RSTU_CTRL, 0x00000e00);
 
 	/* #3 GPIO Setup
 	 * GPIO 25:24 = Output
 	 * GPIO Output "0" after Reset
 	 */
-	SAA716x_WR(GPIO, GPIO_OEN, 0xfcffffff);
+	SAA716x_EPWR(GPIO, GPIO_OEN, 0xfcffffff);
 
 	/* #4 Custom stuff goes in here */
 
@@ -133,55 +133,55 @@ static void saa716x_int_boot(struct saa716x_dev *saa716x)
 	 * except for PHY, Jetstream, DPA1, DCS, Boot, GREG
 	 * CGU_PCR_0_3: pss_mmu_clk:0 = 0x0
 	 */
-	SAA716x_WR(CGU, CGU_PCR_0_3, 0x00000006);
+	SAA716x_EPWR(CGU, CGU_PCR_0_3, 0x00000006);
 
 	/* CGU_PCR_0_4: pss_dtl2mtl_mmu_clk:0 = 0x0 */
-	SAA716x_WR(CGU, CGU_PCR_0_4, 0x00000006);
+	SAA716x_EPWR(CGU, CGU_PCR_0_4, 0x00000006);
 
 	/* CGU_PCR_0_5: pss_msi_ck:0 = 0x0 */
-	SAA716x_WR(CGU, CGU_PCR_0_5, 0x00000006);
+	SAA716x_EPWR(CGU, CGU_PCR_0_5, 0x00000006);
 
 	/* CGU_PCR_0_7: pss_gpio_clk:0 = 0x0 */
-	SAA716x_WR(CGU, CGU_PCR_0_7, 0x00000006);
+	SAA716x_EPWR(CGU, CGU_PCR_0_7, 0x00000006);
 
 	/* CGU_PCR_2_1: spi_clk:0 = 0x0 */
-	SAA716x_WR(CGU, CGU_PCR_2_1, 0x00000006);
+	SAA716x_EPWR(CGU, CGU_PCR_2_1, 0x00000006);
 
 	/* CGU_PCR_3_2: i2c_clk:0 = 0x0 */
-	SAA716x_WR(CGU, CGU_PCR_3_2, 0x00000006);
+	SAA716x_EPWR(CGU, CGU_PCR_3_2, 0x00000006);
 
 	/* CGU_PCR_4_1: phi_clk:0 = 0x0 */
-	SAA716x_WR(CGU, CGU_PCR_4_1, 0x00000006);
+	SAA716x_EPWR(CGU, CGU_PCR_4_1, 0x00000006);
 
 	/* CGU_PCR_5: vip0_clk:0 = 0x0 */
-	SAA716x_WR(CGU, CGU_PCR_5, 0x00000006);
+	SAA716x_EPWR(CGU, CGU_PCR_5, 0x00000006);
 
 	/* CGU_PCR_6: vip1_clk:0 = 0x0 */
-	SAA716x_WR(CGU, CGU_PCR_6, 0x00000006);
+	SAA716x_EPWR(CGU, CGU_PCR_6, 0x00000006);
 
 	/* CGU_PCR_7: fgpi0_clk:0 = 0x0 */
-	SAA716x_WR(CGU, CGU_PCR_7, 0x00000006);
+	SAA716x_EPWR(CGU, CGU_PCR_7, 0x00000006);
 
 	/* CGU_PCR_8: fgpi1_clk:0 = 0x0 */
-	SAA716x_WR(CGU, CGU_PCR_8, 0x00000006);
+	SAA716x_EPWR(CGU, CGU_PCR_8, 0x00000006);
 
 	/* CGU_PCR_9: fgpi2_clk:0 = 0x0 */
-	SAA716x_WR(CGU, CGU_PCR_9, 0x00000006);
+	SAA716x_EPWR(CGU, CGU_PCR_9, 0x00000006);
 
 	/* CGU_PCR_10: fgpi3_clk:0 = 0x0 */
-	SAA716x_WR(CGU, CGU_PCR_10, 0x00000006);
+	SAA716x_EPWR(CGU, CGU_PCR_10, 0x00000006);
 
 	/* CGU_PCR_11: ai0_clk:0 = 0x0 */
-	SAA716x_WR(CGU, CGU_PCR_11, 0x00000006);
+	SAA716x_EPWR(CGU, CGU_PCR_11, 0x00000006);
 
 	/* CGU_PCR_12: ai1_clk:0 = 0x0 */
-	SAA716x_WR(CGU, CGU_PCR_12, 0x00000006);
+	SAA716x_EPWR(CGU, CGU_PCR_12, 0x00000006);
 
 	/* #6 Set GREG boot_ready = 0x1 */
-	SAA716x_WR(GREG, GREG_RSTU_CTRL, 0x00002000);
+	SAA716x_EPWR(GREG, GREG_RSTU_CTRL, 0x00002000);
 
 	/* #7 Disable GREG CGU Clock */
-	SAA716x_WR(CGU, CGU_PCR_0_6, 0x00000006);
+	SAA716x_EPWR(CGU, CGU_PCR_0_6, 0x00000006);
 
 	/* End of Bootscript command ?? */
 }
@@ -212,24 +212,24 @@ EXPORT_SYMBOL_GPL(saa716x_core_boot);
 int saa716x_jetpack_init(struct saa716x_dev *saa716x)
 {
 	/* Reset all blocks */
-	SAA716x_WR(MSI, MSI_SW_RST, MSI_SW_RESET);
-	SAA716x_WR(MMU, MMU_SW_RST, MMU_SW_RESET);
-	SAA716x_WR(BAM, BAM_SW_RST, BAM_SW_RESET);
+	SAA716x_EPWR(MSI, MSI_SW_RST, MSI_SW_RESET);
+	SAA716x_EPWR(MMU, MMU_SW_RST, MMU_SW_RESET);
+	SAA716x_EPWR(BAM, BAM_SW_RST, BAM_SW_RESET);
 
 	switch (saa716x->pdev->device) {
 	case SAA7162:
 		dprintk(SAA716x_DEBUG, 1, "SAA%02x Decoder disable", saa716x->pdev->device);
-		SAA716x_WR(GPIO, GPIO_OEN, 0xfcffffff);
-		SAA716x_WR(GPIO, GPIO_WR,  0x00000000); /* Disable decoders */
+		SAA716x_EPWR(GPIO, GPIO_OEN, 0xfcffffff);
+		SAA716x_EPWR(GPIO, GPIO_WR,  0x00000000); /* Disable decoders */
 		msleep(10);
-		SAA716x_WR(GPIO, GPIO_WR,  0x03000000); /* Enable decoders */
+		SAA716x_EPWR(GPIO, GPIO_WR,  0x03000000); /* Enable decoders */
 		break;
 	case SAA7161:
 		dprintk(SAA716x_DEBUG, 1, "SAA%02x Decoder disable", saa716x->pdev->device);
-		SAA716x_WR(GPIO, GPIO_OEN, 0xfeffffff);
-		SAA716x_WR(GPIO, GPIO_WR,  0x00000000); /* Disable decoders */
+		SAA716x_EPWR(GPIO, GPIO_OEN, 0xfeffffff);
+		SAA716x_EPWR(GPIO, GPIO_WR,  0x00000000); /* Disable decoders */
 		msleep(10);
-		SAA716x_WR(GPIO, GPIO_WR,  0x01000000); /* Enable decoder */
+		SAA716x_EPWR(GPIO, GPIO_WR,  0x01000000); /* Enable decoder */
 		break;
 	case SAA7160:
 		saa716x->i2c_rate = SAA716x_I2C_RATE_100;
@@ -240,7 +240,7 @@ int saa716x_jetpack_init(struct saa716x_dev *saa716x)
 	}
 
 	/* General setup for MMU */
-	SAA716x_WR(MMU, MMU_MODE, 0x14);
+	SAA716x_EPWR(MMU, MMU_MODE, 0x14);
 	dprintk(SAA716x_DEBUG, 1, "SAA%02x Jetpack Successfully initialized", saa716x->pdev->device);
 
 	return 0;
@@ -252,26 +252,26 @@ void saa716x_core_reset(struct saa716x_dev *saa716x)
 	dprintk(SAA716x_DEBUG, 1, "RESET Modules");
 
 	/* VIP */
-	SAA716x_WR(VI0, VI_MODE, SOFT_RESET);
-	SAA716x_WR(VI1, VI_MODE, SOFT_RESET);
+	SAA716x_EPWR(VI0, VI_MODE, SOFT_RESET);
+	SAA716x_EPWR(VI1, VI_MODE, SOFT_RESET);
 
 	/* FGPI */
-	SAA716x_WR(FGPI0, FGPI_SOFT_RESET, FGPI_SOFTWARE_RESET);
-	SAA716x_WR(FGPI1, FGPI_SOFT_RESET, FGPI_SOFTWARE_RESET);
-	SAA716x_WR(FGPI2, FGPI_SOFT_RESET, FGPI_SOFTWARE_RESET);
-	SAA716x_WR(FGPI3, FGPI_SOFT_RESET, FGPI_SOFTWARE_RESET);
+	SAA716x_EPWR(FGPI0, FGPI_SOFT_RESET, FGPI_SOFTWARE_RESET);
+	SAA716x_EPWR(FGPI1, FGPI_SOFT_RESET, FGPI_SOFTWARE_RESET);
+	SAA716x_EPWR(FGPI2, FGPI_SOFT_RESET, FGPI_SOFTWARE_RESET);
+	SAA716x_EPWR(FGPI3, FGPI_SOFT_RESET, FGPI_SOFTWARE_RESET);
 
 	/* AIP */
-	SAA716x_WR(AI0, AI_CTL, AI_RESET);
-	SAA716x_WR(AI1, AI_CTL, AI_RESET);
+	SAA716x_EPWR(AI0, AI_CTL, AI_RESET);
+	SAA716x_EPWR(AI1, AI_CTL, AI_RESET);
 
 	/* BAM */
-	SAA716x_WR(BAM, BAM_SW_RST, BAM_SW_RESET);
+	SAA716x_EPWR(BAM, BAM_SW_RST, BAM_SW_RESET);
 
 	/* MMU */
-	SAA716x_WR(MMU, MMU_SW_RST, MMU_SW_RESET);
+	SAA716x_EPWR(MMU, MMU_SW_RST, MMU_SW_RESET);
 
 	/* MSI */
-	SAA716x_WR(MSI, MSI_SW_RST, MSI_SW_RESET);
+	SAA716x_EPWR(MSI, MSI_SW_RST, MSI_SW_RESET);
 }
 EXPORT_SYMBOL_GPL(saa716x_core_reset);
