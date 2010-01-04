@@ -95,7 +95,7 @@ static void saa716x_int_boot(struct saa716x_dev *saa716x)
 	 * DW_14 = 0x0000_6020
 	 * DW_15 = 0x0000_000f
 	 */
-	SAA716x_WR(AI0, AI_INT_ACK, 0x0000000f)
+	SAA716x_WR(AI0, AI_INT_ACK, 0x0000000f);
 
 	/* Clear AI1 interrupt
 	 * DW_16 = 0x0000_7020
