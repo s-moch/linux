@@ -13,6 +13,24 @@
 #define SAA716x_I2C_RXBUSY	(I2C_RECEIVE		| \
 				 I2C_RECEIVE_CLEAR)
 
+static char* state[] = {
+	"Idle",
+	"DoneStop",
+	"Busy",
+	"TOscl",
+	"TOarb",
+	"DoneWrite",
+	"DoneRead",
+	"DoneWriteTO",
+	"DoneReadTO",
+	"NoDevice",
+	"NoACK",
+	"BUSErr",
+	"ArbLost",
+	"SEQErr",
+	"STErr"
+};
+
 static void saa716x_term_xfer(struct saa716x_i2c *i2c, u32 I2C_DEV)
 {
 	struct saa716x_dev *saa716x = i2c->saa716x;
@@ -46,7 +64,9 @@ static int saa716x_xfer_wait(struct saa716x_i2c *i2c, u32 I2C_DEV)
 
 	stat = SAA716x_EPRD(I2C_DEV, I2C_STATUS);
 	while (! (stat & I2C_TRANSMIT_CLEAR)) {
-		dprintk(SAA716x_ERROR, 1, "Waiting for TX FIFO to be empty");
+		dprintk(SAA716x_ERROR, 1, "Bus (%d) Waiting for TX FIFO to be empty (status=%02x <%s>)",
+			I2C_DEV, stat, state[stat]);
+
 		msleep(5);
 		timeout++;
 		if (timeout > 500) {
