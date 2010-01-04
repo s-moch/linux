@@ -69,6 +69,8 @@ static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct
 		goto fail1;
 	}
 
+	saa716x_core_reset(saa716x);
+
 	err = saa716x_i2c_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x I2C Initialization failed");
