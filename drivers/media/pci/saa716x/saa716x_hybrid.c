@@ -25,6 +25,7 @@
 
 #include "zl10353.h"
 #include "mb86a16.h"
+#include "tda1004x.h"
 
 unsigned int verbose;
 module_param(verbose, int, 0644);
@@ -93,15 +94,20 @@ static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct
 		goto fail3;
 	}
 
+	err = saa716x_dump_eeprom(saa716x);
+	if (err) {
+		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM dump failed");
+	}
+
+	err = saa716x_eeprom_data(saa716x);
+	if (err) {
+		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM dump failed");
+	}
+
 	err = saa716x_dvb_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x DVB initialization failed");
 		goto fail4;
-	}
-
-	err = saa716x_dump_eeprom(saa716x);
-	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM dump failed");
 	}
 
 	return 0;
@@ -337,6 +343,25 @@ static struct saa716x_config saa716x_atlantis_config = {
 #define SAA716x_MODEL_NXP_NEMO		"NEMO reference board"
 #define SAA716x_DEV_NXP_NEMO		"DVB-T + Analog"
 
+static int tda1004x_nemo_request_firmware(struct dvb_frontend *fe,
+					  const struct firmware **fw,
+					  char *name)
+{
+	struct saa716x_adapter *adapter = fe->dvb->priv;
+
+	return request_firmware(fw, name, &adapter->saa716x->pdev->dev);
+}
+
+static struct tda1004x_config tda1004x_nemo_config = {
+	.demod_address		= 0x8,
+	.invert			= 0,
+	.invert_oclk		= 0,
+	.xtal_freq		= TDA10046_XTAL_4M,
+	.agc_config		= TDA10046_AGC_DEFAULT,
+	.if_freq		= TDA10046_FREQ_3617,
+	.request_firmware	= tda1004x_nemo_request_firmware,
+};
+
 static int load_config_nemo(struct saa716x_dev *saa716x)
 {
     int ret = 0;
@@ -346,11 +371,30 @@ static int load_config_nemo(struct saa716x_dev *saa716x)
 static int saa716x_nemo_frontend_attach(struct saa716x_adapter *adapter, int count)
 {
 	struct saa716x_dev *saa716x = adapter->saa716x;
+	struct saa716x_i2c *i2c = &saa716x->i2c[1];
 
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
 
-	return -ENODEV;
+	dprintk(SAA716x_ERROR, 1, "Adapter (%d) Power ON", count);
+	saa716x_gpio_write(saa716x, GPIO_14, 1);
+	msleep(100);
+	adapter->fe = tda10046_attach(&tda1004x_nemo_config, &i2c->i2c_adapter);
+	if (adapter->fe == NULL) {
+		dprintk(SAA716x_ERROR, 1, "A frontend driver was not found for [%04x:%04x subsystem [%04x:%04x]\n",
+			saa716x->pdev->vendor,
+			saa716x->pdev->device,
+			saa716x->pdev->subsystem_vendor,
+			saa716x->pdev->subsystem_device);
+	} else {
+		if (dvb_register_frontend(&adapter->dvb_adapter, adapter->fe)) {
+			dprintk(SAA716x_ERROR, 1, "Frontend registration failed!\n");
+			dvb_frontend_detach(adapter->fe);
+			adapter->fe = NULL;
+		}
+	}
+
+	return 0;
 }
 
 static struct saa716x_config saa716x_nemo_config = {
