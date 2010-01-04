@@ -76,7 +76,6 @@ static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct
 
 	saa716x_core_reset(saa716x);
 	pci_read_config_dword(pdev, 0x06, &sts);
-	dprintk(SAA716x_ERROR, 0, "  INTx pending=%s", ((sts >> 2) & 0x01) == 1 ? "Yes": "None");
 
 	err = saa716x_i2c_init(saa716x);
 	if (err) {
