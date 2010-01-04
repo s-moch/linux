@@ -5,8 +5,7 @@
 #define MSB(__x)	((__x >> 8) & 0xff)
 #define LSB(__x)	(__x & 0xff)
 
-#define DUMP_BYTES	272
-//#define DUMP_BYTES	5
+#define DUMP_BYTES	0xf0
 #define DUMP_OFFST	0x000
 
 struct saa716x_dev;
@@ -26,12 +25,12 @@ struct saa716x_devinfo {
 	u8	master_devid;
 	u8	master_busid;
 	u32	device_type;
-	u8	implem_id;
+	u16	implem_id;
 	u8	path_id;
 	u8	gpio_id;
 	u16	addr_size;
 	u16	extd_data_size;
-};
+} __attribute__((packed));
 
 enum saa716x_device_types {
 	DECODER_DEVICE		= 0x00000001,
