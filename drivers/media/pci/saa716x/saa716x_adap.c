@@ -65,6 +65,30 @@ static int saa716x_dvb_stop_feed(struct dvb_demux_feed *dvbdmxfeed)
 	return 0;
 }
 
+static int saa716x_frontend_power(struct saa716x_dev *saa716x, u8 DEV, u8 control)
+{
+//	struct saa716x_config  *config	= saa716x->config;
+	struct saa716x_adapter *adapter = &saa716x->saa716x_adap[DEV];
+
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Power ON", DEV);
+	saa716x_gpio_ctl(saa716x, adapter->power_ctl);
+	saa716x_gpio_bits(saa716x, adapter->power_ctl);
+
+	return 0;
+}
+
+static int saa716x_frontend_reset(struct saa716x_dev *saa716x, u8 DEV)
+{
+//	struct saa716x_config  *config	= saa716x->config;
+	struct saa716x_adapter *adapter = &saa716x->saa716x_adap[DEV];
+
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) RESET", DEV);
+	saa716x_gpio_ctl(saa716x, adapter->reset_ctl);
+	saa716x_gpio_bits(saa716x, adapter->reset_ctl);
+
+	return 0;
+}
+
 int __devinit saa716x_dvb_init(struct saa716x_dev *saa716x)
 {
 	struct saa716x_adapter *saa716x_adap = saa716x->saa716x_adap;
@@ -110,29 +134,46 @@ int __devinit saa716x_dvb_init(struct saa716x_dev *saa716x)
 			dprintk(SAA716x_ERROR, 1, "dvb_dmxdev_init failed, ERROR=%d", result);
 			goto err1;
 		}
+
 		saa716x_adap->fe_hw.source = DMX_FRONTEND_0;
+
 		if ((result = saa716x_adap->demux.dmx.add_frontend(&saa716x_adap->demux.dmx,
 								   &saa716x_adap->fe_hw)) < 0) {
 
 			dprintk(SAA716x_ERROR, 1, "dvb_dmx_init failed, ERROR=%d", result);
 			goto err2;
 		}
+
 		saa716x_adap->fe_mem.source = DMX_MEMORY_FE;
+
 		if ((result = saa716x_adap->demux.dmx.add_frontend(&saa716x_adap->demux.dmx,
 								   &saa716x_adap->fe_mem)) < 0) {
 			dprintk(SAA716x_ERROR, 1, "dvb_dmx_init failed, ERROR=%d", result);
 			goto err3;
 		}
+
 		if ((result = saa716x_adap->demux.dmx.connect_frontend(&saa716x_adap->demux.dmx,
 								       &saa716x_adap->fe_hw)) < 0) {
 
 			dprintk(SAA716x_ERROR, 1, "dvb_dmx_init failed, ERROR=%d", result);
 			goto err4;
 		}
+
 		dvb_net_init(&saa716x_adap->dvb_adapter, &saa716x_adap->dvb_net, &saa716x_adap->demux.dmx);
 //		tasklet_init(&saa716x_adap->tasklet, saa716x_dma_xfer, (unsigned long) saa716x);
 		dprintk(SAA716x_DEBUG, 1, "Frontend Init");
 		saa716x_adap->saa716x = saa716x;
+
+		if ((result = saa716x_frontend_power(saa716x, i, 1)) < 0) {
+			dprintk(SAA716x_ERROR, 1, "SAA716x frontend powerup failed");
+			goto err5;
+		}
+
+		if ((result = saa716x_frontend_reset(saa716x, i)) < 0) {
+			dprintk(SAA716x_ERROR, 1, "SAA716x frontend reset failed");
+			goto err5;
+		}
+
 		if (config->frontend_attach)
 			config->frontend_attach(saa716x_adap, i);
 		else
@@ -144,6 +185,8 @@ int __devinit saa716x_dvb_init(struct saa716x_dev *saa716x)
 	return 0;
 
 	/* Error conditions */
+err5:
+	saa716x_frontend_power(saa716x, i, 0);
 err4:
 	saa716x_adap->demux.dmx.remove_frontend(&saa716x_adap->demux.dmx, &saa716x_adap->fe_mem);
 err3:
@@ -185,43 +228,3 @@ void __devexit saa716x_dvb_exit(struct saa716x_dev *saa716x)
 	return;
 }
 EXPORT_SYMBOL(saa716x_dvb_exit);
-
-int saa716x_frontend_power(struct saa716x_dev *saa716x, u8 control)
-{
-	struct saa716x_adapter *adapter = saa716x->saa716x_adap;
-	struct saa716x_config  *config	= saa716x->config;
-
-	int i;
-
-	for (i = 0; i < config->adapters; i++); {
-		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Power ON", i);
-
-		saa716x_gpio_ctl(saa716x, adapter->power_ctl);
-		saa716x_gpio_bits(saa716x, adapter->power_ctl);
-
-		adapter++;
-	}
-
-	return 0;
-}
-EXPORT_SYMBOL(saa716x_frontend_power);
-
-int saa716x_frontend_reset(struct saa716x_dev *saa716x)
-{
-	struct saa716x_adapter *adapter = saa716x->saa716x_adap;
-	struct saa716x_config  *config	= saa716x->config;
-
-	int i;
-
-	for (i = 0; i < config->adapters; i++) {
-		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) RESET", i);
-
-		saa716x_gpio_ctl(saa716x, adapter->reset_ctl);
-		saa716x_gpio_bits(saa716x, adapter->reset_ctl);
-
-		adapter++;
-	}
-
-	return 0;
-}
-EXPORT_SYMBOL(saa716x_frontend_reset);
