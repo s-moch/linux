@@ -394,7 +394,7 @@ static int saa716x_i2c_xfer(struct i2c_adapter *adapter, struct i2c_msg *msgs, i
 	struct saa716x_i2c *i2c		= i2c_get_adapdata(adapter);
 	struct saa716x_dev *saa716x	= i2c->saa716x;
 
-	u32 DEV = I2C_B;
+	u32 DEV = SAA716x_I2C_BUS(i2c->i2c_dev);
 	int i = 0, j, err = 0;
 	u32 rxd;
 
@@ -554,17 +554,8 @@ int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 	struct pci_dev *pdev		= saa716x->pdev;
 	struct saa716x_i2c *i2c		= saa716x->i2c;
 	struct i2c_adapter *adapter	= NULL;
-	u32 *I2C_DEV			= saa716x->I2C_DEV;
 
 	int i, err = 0;
-
-	if (saa716x->revision > 2) {
-		I2C_DEV[0] = I2C_A;
-		I2C_DEV[1] = I2C_B;
-	} else {
-		I2C_DEV[0] = I2C_B;
-		I2C_DEV[1] = I2C_A;
-	}
 
 	dprintk(SAA716x_DEBUG, 1, "Initializing SAA%02x I2C Core",
 		saa716x->pdev->device);
@@ -573,7 +564,7 @@ int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 
 		mutex_init(&i2c->i2c_lock);
 
-		i2c->i2c_dev	= I2C_DEV[i];
+		i2c->i2c_dev	= i;
 		i2c->i2c_rate	= saa716x->config->i2c_rate;
 		adapter		= &i2c->i2c_adapter;
 
@@ -603,7 +594,7 @@ int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 			}
 
 			i2c->saa716x = saa716x;
-			saa716x_i2c_hwinit(i2c, I2C_DEV[i]);
+			saa716x_i2c_hwinit(i2c, SAA716x_I2C_BUS(i));
 		}
 		i2c++;
 	}
