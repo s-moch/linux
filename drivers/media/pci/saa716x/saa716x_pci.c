@@ -274,7 +274,7 @@ static void saa716x_free_irq(struct saa716x_dev *saa716x)
 		pci_disable_msix(pdev);
 
 	} else {
-		free_irq(pdev->irq, pdev);
+		free_irq(pdev->irq, saa716x);
 		if (saa716x->int_type == MODE_MSI)
 			pci_disable_msi(pdev);
 	}
