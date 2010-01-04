@@ -72,11 +72,13 @@ static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct
 	err = saa716x_i2c_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x I2C Initialization failed");
-		goto fail2;
+		goto fail3;
 	}
 
 	return 0;
 
+fail3:
+	saa716x_i2c_exit(saa716x);
 fail2:
 	saa716x_pci_exit(saa716x);
 fail1:
@@ -90,6 +92,7 @@ static void __devexit saa716x_hybrid_pci_remove(struct pci_dev *pdev)
 {
 	struct saa716x_dev *saa716x = pci_get_drvdata(pdev);
 
+	saa716x_i2c_exit(saa716x);
 	saa716x_pci_exit(saa716x);
 	kfree(saa716x);
 }
@@ -123,7 +126,7 @@ static struct saa716x_config saa716x_vp6090_config = {
  * DVB-T Frontend: 1x TDA10046 + TDA8275
  * Analog Decoder: External SAA7136
  */
-#define SAA716x_MODEL_NXP_NENO		"NXP Semiconductors NEMO referrence board" 
+#define SAA716x_MODEL_NXP_NENO		"NEMO reference board" 
 #define SAA716x_DEV_NXP_NEMO		"DVB-T + Analog"
 
 static int load_config_nemo(struct saa716x_dev *saa716x)
@@ -143,7 +146,7 @@ static struct saa716x_config saa716x_nemo_config = {
 static struct pci_device_id saa716x_hybrid_pci_table[] = {
 
 	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_6090, SAA7162, &saa716x_vp6090_config),
-	MAKE_ENTRY(NXP_SEMICONDUCTOR, PCI_ANY_ID, SAA7160, &saa716x_nemo_config),
+	MAKE_ENTRY(NXP_REFERENCE_BOARD, PCI_ANY_ID, SAA7160, &saa716x_nemo_config),
 };
 MODULE_DEVICE_TABLE(pci, saa716x_hybrid_pci_table);
 
