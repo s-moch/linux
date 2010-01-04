@@ -19,13 +19,16 @@
 
 #include <linux/i2c.h>
 
-#include "saa716x_reg.h"
+#include "saa716x_mod.h"
+
+#include "saa716x_msi_reg.h"
+#include "saa716x_gpio_reg.h"
+
 #include "saa716x_adap.h"
 #include "saa716x_i2c.h"
 #include "saa716x_msi.h"
 #include "saa716x_hybrid.h"
 #include "saa716x_gpio.h"
-#include "saa716x_reg.h"
 #include "saa716x_rom.h"
 #include "saa716x_spi.h"
 #include "saa716x_priv.h"
