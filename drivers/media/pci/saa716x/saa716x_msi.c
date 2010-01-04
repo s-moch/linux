@@ -113,6 +113,173 @@ static u32 MSI_CONFIG_REG[51] = {
 	MSI_CONFIG50
 };
 
+int saa716x_msi_event(struct saa716x_dev *saa716x, u32 stat_l, u32 stat_h)
+{
+	dprintk(SAA716x_DEBUG, 0, "%s: MSI event ", __func__);
+
+	if (stat_l & MSI_INT_TAGACK_VI0_0)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[0]);
+
+	if (stat_l & MSI_INT_TAGACK_VI0_1)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[1]);
+
+	if (stat_l & MSI_INT_TAGACK_VI0_2)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[2]);
+
+	if (stat_l & MSI_INT_TAGACK_VI1_0)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[3]);
+
+	if (stat_l & MSI_INT_TAGACK_VI1_1)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[4]);
+
+	if (stat_l & MSI_INT_TAGACK_VI1_2)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[5]);
+
+	if (stat_l & MSI_INT_TAGACK_FGPI_0)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[6]);
+
+	if (stat_l & MSI_INT_TAGACK_FGPI_1)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[7]);
+
+	if (stat_l & MSI_INT_TAGACK_FGPI_2)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[8]);
+
+	if (stat_l & MSI_INT_TAGACK_FGPI_3)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[9]);
+
+	if (stat_l & MSI_INT_TAGACK_AI_0)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[10]);
+
+	if (stat_l & MSI_INT_TAGACK_AI_1)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[11]);
+
+	if (stat_l & MSI_INT_OVRFLW_VI0_0)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[12]);
+
+	if (stat_l & MSI_INT_OVRFLW_VI0_1)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[13]);
+
+	if (stat_l & MSI_INT_OVRFLW_VI0_2)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[14]);
+
+	if (stat_l & MSI_INT_OVRFLW_VI1_0)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[15]);
+
+	if (stat_l & MSI_INT_OVRFLW_VI1_1)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[16]);
+
+	if (stat_l & MSI_INT_OVRFLW_VI1_2)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[17]);
+
+	if (stat_l & MSI_INT_OVRFLW_FGPI_O)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[18]);
+
+	if (stat_l & MSI_INT_OVRFLW_FGPI_1)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[19]);
+
+	if (stat_l & MSI_INT_OVRFLW_FGPI_2)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[20]);
+
+	if (stat_l & MSI_INT_OVRFLW_FGPI_3)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[21]);
+
+	if (stat_l & MSI_INT_OVRFLW_AI_0)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[22]);
+
+	if (stat_l & MSI_INT_OVRFLW_AI_1)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[23]);
+
+	if (stat_l & MSI_INT_AVINT_VI0)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[24]);
+
+	if (stat_l & MSI_INT_AVINT_VI1)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[25]);
+
+	if (stat_l & MSI_INT_AVINT_FGPI_0)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[26]);
+
+	if (stat_l & MSI_INT_AVINT_FGPI_1)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[27]);
+
+	if (stat_l & MSI_INT_AVINT_FGPI_2)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[28]);
+
+	if (stat_l & MSI_INT_AVINT_FGPI_3)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[29]);
+
+	if (stat_l & MSI_INT_AVINT_AI_0)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[30]);
+
+	if (stat_l & MSI_INT_AVINT_AI_1)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[31]);
+
+	if (stat_h & MSI_INT_UNMAPD_TC_INT)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[32]);
+
+	if (stat_h & MSI_INT_EXTINT_0)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[33]);
+
+	if (stat_h & MSI_INT_EXTINT_1)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[34]);
+
+	if (stat_h & MSI_INT_EXTINT_2)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[35]);
+
+	if (stat_h & MSI_INT_EXTINT_3)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[36]);
+
+	if (stat_h & MSI_INT_EXTINT_4)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[37]);
+
+	if (stat_h & MSI_INT_EXTINT_5)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[38]);
+
+	if (stat_h & MSI_INT_EXTINT_6)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[39]);
+
+	if (stat_h & MSI_INT_EXTINT_7)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[40]);
+
+	if (stat_h & MSI_INT_EXTINT_8)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[41]);
+
+	if (stat_h & MSI_INT_EXTINT_9)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[42]);
+
+	if (stat_h & MSI_INT_EXTINT_10)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[43]);
+
+	if (stat_h & MSI_INT_EXTINT_11)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[44]);
+
+	if (stat_h & MSI_INT_EXTINT_12)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[45]);
+
+	if (stat_h & MSI_INT_EXTINT_13)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[46]);
+
+	if (stat_h & MSI_INT_EXTINT_14)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[47]);
+
+	if (stat_h & MSI_INT_EXTINT_15)
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[48]);
+
+	if (stat_h & MSI_INT_I2CINT_0) {
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[49]);
+		saa716x_i2c_irqevent(saa716x, 0);
+	}
+
+	if (stat_h & MSI_INT_I2CINT_1) {
+		dprintk(SAA716x_DEBUG, 0, "<%s> ", vector_name[50]);
+		saa716x_i2c_irqevent(saa716x, 1);
+	}
+
+	dprintk(SAA716x_DEBUG, 0, "\n");
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(saa716x_msi_event);
+
 int saa716x_msi_init(struct saa716x_dev *saa716x)
 {
 	u32 ena_l, ena_h, sta_l, sta_h, mid;
