@@ -273,10 +273,41 @@ static struct saa716x_config saa716x_vp6002_config = {
 	.irq_handler		= saa716x_budget_pci_irq,
 };
 
+static int load_config_knc1_duals2(struct saa716x_dev *saa716x)
+{
+	int ret = 0;
+
+	return ret;
+}
+
+#define SAA716x_MODEL_KNC1_DUALS2	"KNC One Dual S2"
+#define SAA716x_DEV_KNC1_DUALS2		"1xDVB-S + 1xDVB-S/S2"
+
+static int saa716x_knc1_duals2_frontend_attach(struct saa716x_adapter *adapter, int count)
+{
+	struct saa716x_dev *saa716x = adapter->saa716x;
+
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
+
+	return -ENODEV;
+}
+
+static struct saa716x_config saa716x_knc1_duals2_config = {
+	.model_name		= SAA716x_MODEL_KNC1_DUALS2,
+	.dev_type		= SAA716x_DEV_KNC1_DUALS2,
+	.boot_mode		= SAA716x_EXT_BOOT,
+	.load_config		= &load_config_knc1_duals2,
+	.adapters		= 2,
+	.frontend_attach	= saa716x_knc1_duals2_frontend_attach,
+	.irq_handler		= saa716x_budget_pci_irq,
+};
+
 static struct pci_device_id saa716x_budget_pci_table[] = {
 
 	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_1028, SAA7160, &saa716x_vp1028_config), /* VP-1028 */
 	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_6002, SAA7160, &saa716x_vp6002_config), /* VP-6002 */
+	MAKE_ENTRY(KNC_One,		 KNC_Dual_S2,	  SAA7160, &saa716x_knc1_duals2_config),
 	{
 		.vendor = 0,
 	}
