@@ -1,7 +1,10 @@
 #include <linux/kernel.h>
 #include <linux/spinlock.h>
 
-#include "saa716x_reg.h"
+#include "saa716x_mod.h"
+
+#include "saa716x_gpio_reg.h"
+
 #include "saa716x_gpio.h"
 #include "saa716x_spi.h"
 #include "saa716x_priv.h"
