@@ -14,6 +14,7 @@
 
 #include <linux/i2c.h>
 #include "saa716x_priv.h"
+#include "saa716x_vip.h"
 #include "saa716x_budget.h"
 
 unsigned int verbose;
