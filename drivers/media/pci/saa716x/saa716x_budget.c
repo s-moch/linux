@@ -230,6 +230,7 @@ static struct saa716x_config saa716x_vp3071_config = {
 	.adapters		= 2,
 	.frontend_attach	= saa716x_vp3071_frontend_attach,
 	.irq_handler		= saa716x_budget_pci_irq,
+	.i2c_rate		= SAA716x_I2C_RATE_100,
 
 	.adap_config		= {
 		{
@@ -319,6 +320,7 @@ static struct saa716x_config saa716x_vp1028_config = {
 	.adapters		= 1,
 	.frontend_attach	= saa716x_vp1028_frontend_attach,
 	.irq_handler		= saa716x_budget_pci_irq,
+	.i2c_rate		= SAA716x_I2C_RATE_100,
 
 	.adap_config		= {
 		{ /* Adapter 0 */
@@ -356,6 +358,7 @@ static struct saa716x_config saa716x_vp6002_config = {
 	.adapters		= 1,
 	.frontend_attach	= saa716x_vp6002_frontend_attach,
 	.irq_handler		= saa716x_budget_pci_irq,
+	.i2c_rate		= SAA716x_I2C_RATE_100,
 };
 
 static int load_config_knc1_duals2(struct saa716x_dev *saa716x)
@@ -386,6 +389,7 @@ static struct saa716x_config saa716x_knc1_duals2_config = {
 	.adapters		= 2,
 	.frontend_attach	= saa716x_knc1_duals2_frontend_attach,
 	.irq_handler		= saa716x_budget_pci_irq,
+	.i2c_rate		= SAA716x_I2C_RATE_100,
 };
 
 static struct pci_device_id saa716x_budget_pci_table[] = {
