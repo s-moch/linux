@@ -282,6 +282,13 @@ static struct saa716x_config saa716x_vp1028_config = {
 	.adapters		= 1,
 	.frontend_attach	= saa716x_vp1028_frontend_attach,
 	.irq_handler		= saa716x_budget_pci_irq,
+
+	.adap_config		= {
+		{ /* Adapter 0 */
+			.power_ctl	= GPIO_10,
+			.reset_ctl	= GPIO_12,
+		}
+	}
 };
 
 static int load_config_vp6002(struct saa716x_dev *saa716x)
