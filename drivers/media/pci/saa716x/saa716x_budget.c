@@ -356,9 +356,7 @@ static struct pci_device_id saa716x_budget_pci_table[] = {
 	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_3071, SAA7160, &saa716x_vp3071_config), /* VP-3071 */
 	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_6002, SAA7160, &saa716x_vp6002_config), /* VP-6002 */
 	MAKE_ENTRY(KNC_One,		 KNC_Dual_S2,	  SAA7160, &saa716x_knc1_duals2_config),
-	{
-		.vendor = 0,
-	}
+	{ }
 };
 MODULE_DEVICE_TABLE(pci, saa716x_budget_pci_table);
 
