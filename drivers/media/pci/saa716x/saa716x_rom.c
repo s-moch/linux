@@ -1,8 +1,10 @@
 #include <linux/kernel.h>
 #include <linux/string.h>
-#include "saa716x_priv.h"
+
 #include "saa716x_rom.h"
 #include "saa716x_adap.h"
+#include "saa716x_spi.h"
+#include "saa716x_priv.h"
 
 int i;
 
