@@ -103,6 +103,7 @@ struct saa716x_config {
 	irqreturn_t (*irq_handler)(int irq, void *dev_id);
 
 	struct saa716x_adap_config	adap_config[2];
+	enum saa716x_i2c_rate		i2c_rate;
 };
 
 struct saa716x_adapter {
