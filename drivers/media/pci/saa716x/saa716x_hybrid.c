@@ -44,12 +44,24 @@ static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct
 		goto fail1;
 	}
 
+	err = saa716x_cgu_init(saa716x);
+	if (err) {
+		dprintk(SAA716x_ERROR, 1, "SAA716x CGU Init failed");
+		goto fail1;
+	}
+
 	err = saa716x_core_boot(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x Core Boot failed");
 		goto fail2;
 	}
 	dprintk(SAA716x_DEBUG, 1, "SAA716x Core Boot Success");
+
+	err = saa716x_msi_init(saa716x);
+	if (err) {
+		dprintk(SAA716x_ERROR, 1, "SAA716x MSI Init failed");
+		goto fail2;
+	}
 
 	err = saa716x_jetpack_init(saa716x);
 	if (err) {
