@@ -70,3 +70,55 @@ int saa716x_init_phi(struct saa716x_dev *saa716x, u32 port, u8 slave)
 
 	return 0;
 }
+
+int saa716x_phi_init(struct saa716x_dev *saa716x)
+{
+	uint32_t value;
+
+	/* SRAM mode, auto increment on */
+	value = 0;
+	value |= PHI_AUTO_INCREMENT;
+	SAA716x_EPWR(PHI_0, PHI_1_MODE, value);
+
+	value = 0;
+	value |= 0x01; /* chip select 0 */
+	value |= 0x00 << 8; /* ready mask */
+	value |= 0x04 << 12; /* strobe time */
+	value |= 0x08 << 20; /* cycle time */
+	SAA716x_EPWR(PHI_0, PHI_1_0_CONFIG, value);
+
+	value = 0;
+	value |= PHI_ALE_POL; /* ALE is active high */
+	SAA716x_EPWR(PHI_0, PHI_POLARITY, value);
+
+	SAA716x_EPWR(PHI_0, PHI_TIMEOUT, 0x2a);
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(saa716x_phi_init);
+
+int saa716x_phi_write(struct saa716x_dev *saa716x, uint32_t address, const uint8_t * data, int length)
+{
+	int i;
+
+	for (i = 0; i < length; i += 4)
+	{
+		SAA716x_EPWR(PHI_1, address, *((uint32_t *) &data[i]));
+		address += 4;
+	}
+	return 0;
+}
+EXPORT_SYMBOL_GPL(saa716x_phi_write);
+
+int saa716x_phi_read(struct saa716x_dev *saa716x, uint32_t address, const uint8_t * data, int length)
+{
+	int i;
+
+	for (i = 0; i < length; i += 4)
+	{
+		*((uint32_t *) &data[i]) = SAA716x_EPRD(PHI_1, address);
+		address += 4;
+	}
+	return 0;
+}
+EXPORT_SYMBOL_GPL(saa716x_phi_read);
