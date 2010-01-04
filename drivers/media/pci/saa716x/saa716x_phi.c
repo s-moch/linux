@@ -1,6 +1,9 @@
+#include <linux/kernel.h>
+
 #include "saa716x_reg.h"
-#include "saa716x_priv.h"
+#include "saa716x_spi.h"
 #include "saa716x_phi.h"
+#include "saa716x_priv.h"
 
 u32 PHI_0_REGS[] = {
 	PHI_0_MODE,
