@@ -2,8 +2,6 @@
 #include "saa716x_priv.h"
 #include "saa716x_phi.h"
 
-
-
 u32 PHI_0_REGS[] = {
 	PHI_0_MODE,
 	PHI_0_0_CONFIG,
@@ -97,28 +95,28 @@ int saa716x_phi_init(struct saa716x_dev *saa716x)
 }
 EXPORT_SYMBOL_GPL(saa716x_phi_init);
 
-int saa716x_phi_write(struct saa716x_dev *saa716x, uint32_t address, const uint8_t * data, int length)
+int saa716x_phi_write(struct saa716x_dev *saa716x, u32 address, const u8 * data, int length)
 {
 	int i;
 
-	for (i = 0; i < length; i += 4)
-	{
-		SAA716x_EPWR(PHI_1, address, *((uint32_t *) &data[i]));
+	for (i = 0; i < length; i += 4) {
+		SAA716x_EPWR(PHI_1, address, *((u32 *) &data[i]));
 		address += 4;
 	}
+
 	return 0;
 }
 EXPORT_SYMBOL_GPL(saa716x_phi_write);
 
-int saa716x_phi_read(struct saa716x_dev *saa716x, uint32_t address, const uint8_t * data, int length)
+int saa716x_phi_read(struct saa716x_dev *saa716x, u32 address, const u8 * data, int length)
 {
 	int i;
 
-	for (i = 0; i < length; i += 4)
-	{
-		*((uint32_t *) &data[i]) = SAA716x_EPRD(PHI_1, address);
+	for (i = 0; i < length; i += 4) {
+		*((u32 *) &data[i]) = SAA716x_EPRD(PHI_1, address);
 		address += 4;
 	}
+
 	return 0;
 }
 EXPORT_SYMBOL_GPL(saa716x_phi_read);
