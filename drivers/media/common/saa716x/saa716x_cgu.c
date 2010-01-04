@@ -7,7 +7,8 @@
 
 int saa716x_cgu_init(struct saa716x_dev *saa716x)
 {
-	int M, N;
+	s16 M;
+	s8 N;
 	u8 i;
 	u32 boot_div[15], freq[15];
 	u32 CGU_FDC[15] = {
