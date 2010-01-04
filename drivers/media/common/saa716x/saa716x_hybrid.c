@@ -152,10 +152,27 @@ static struct saa716x_config saa716x_nemo_config = {
 };
 
 
+#define SAA716x_MODEL_AVERMEDIA_HC82	"Avermedia PCIe Expresscard HC82"
+#define SAA716x_DEV_AVERMEDIA_HC82	"DVB-T + ATSC + Analog"
+
+static int load_config_averhc82(struct saa716x_dev *saa716x)
+{
+	int ret = 0;
+	return ret;
+}
+
+static struct saa716x_config saa716x_averhc82_config = {
+	.model_name		= SAA716x_MODEL_AVERMEDIA_HC82,
+	.dev_type		= SAA716x_DEV_AVERMEDIA_HC82,
+	.boot_mode		= SAA716x_EXT_BOOT,
+	.load_config		= &load_config_averhc82,
+};
+
 static struct pci_device_id saa716x_hybrid_pci_table[] = {
 
 	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_6090, SAA7162, &saa716x_vp6090_config),
 	MAKE_ENTRY(NXP_REFERENCE_BOARD, PCI_ANY_ID, SAA7160, &saa716x_nemo_config),
+	MAKE_ENTRY(AVERMEDIA, AVERMEDIA_HC82, SAA7160, &saa716x_averhc82_config),
 	{
 		.vendor = 0,
 	}
