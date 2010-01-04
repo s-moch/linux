@@ -145,7 +145,7 @@ static irqreturn_t saa716x_pci_irq(int irq, void *dev_id)
 int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
 {
 	struct pci_dev *pdev = saa716x->pdev;
-	int err = 0, ret = -ENODEV, i;
+	int err = 0, ret = -ENODEV, i, use_dac;
 	u8 revision;
   
 	dprintk(SAA716x_ERROR, 1, "found a %s PCI Express card", saa716x->config->model_name);
@@ -155,6 +155,18 @@ int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
 		ret = -ENODEV;
 		dprintk(SAA716x_ERROR, 1, "ERROR: PCI enable failed (%i)", err);
 		goto fail0;
+	}
+
+	if (!pci_set_dma_mask(pdev, DMA_64BIT_MASK)) {
+		use_dac = 1;
+		err = pci_set_consistent_dma_mask(pdev, DMA_64BIT_MASK);
+		if (err) {
+			dprintk(SAA716x_ERROR, 1, "Unable to obtain 64bit DMA");
+			goto fail1;
+		}
+	} else if ((err = pci_set_consistent_dma_mask(pdev, DMA_32BIT_MASK)) != 0) {
+		dprintk(SAA716x_ERROR, 1, "Unable to obtain 32bit DMA");
+		goto fail1;
 	}
 
 	pci_set_master(pdev);
@@ -225,6 +237,7 @@ fail2:
 	release_mem_region(saa716x->addr, saa716x->len);
 
 fail1:
+	dprintk(SAA716x_ERROR, 1, "Err: Disabling device");
 	pci_disable_device(pdev);
 
 fail0:
