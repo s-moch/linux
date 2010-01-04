@@ -1,0 +1,72 @@
+#include "saa716x_reg.h"
+#include "saa716x_priv.h"
+#include "saa716x_phi.h"
+
+
+
+u32 PHI_0_REGS[] = {
+	PHI_0_MODE,
+	PHI_0_0_CONFIG,
+	PHI_0_1_CONFIG,
+	PHI_0_2_CONFIG,
+	PHI_0_3_CONFIG
+};
+
+u32 PHI_1_REGS[] = {
+	PHI_1_MODE,
+	PHI_1_0_CONFIG,
+	PHI_1_1_CONFIG,
+	PHI_1_2_CONFIG,
+	PHI_1_3_CONFIG,
+	PHI_1_4_CONFIG,
+	PHI_1_5_CONFIG,
+	PHI_1_6_CONFIG,
+	PHI_1_7_CONFIG
+};
+
+#define PHI_BASE(__port)	((				\
+	(__port == PHI_1) ?					\
+		PHI_1_BASE :					\
+		PHI_0_BASE					\
+))
+
+#define PHI_APERTURE(_port)	((				\
+	(__port == PHI_1) ?					\
+		PHI_1_APERTURE:					\
+		PHI_0_APERTURE					\
+))
+
+#define PHI_REG(__port, __reg)	((				\
+	(__port == PHI_1) ?					\
+		PHI_1_REGS[__reg] :				\
+		PHI_0_REGS[__reg]				\
+))
+
+#define PHI_SLAVE(__port, __slave)	((			\
+	PHI_BASE(__port) + (__slave * (PHI_APERTURE(__port)))	\
+))
+
+/* // Read SAA716x registers
+ * SAA716x_EPRD(PHI_0, PHI_REG(__port, __reg))
+ * SAA716x_EPWR(PHI_1, PHI_REG(__port, __reg), __data)
+ *
+ * // Read slave registers
+ * SAA716x_EPRD(PHI_0, PHI_SLAVE(__port, __slave, __offset))
+ * SAA716x_EPWR(PHI_1, PHI_SLAVE(__port, __slave, _offset), __data)
+ */
+
+int saa716x_init_phi(struct saa716x_dev *saa716x, u32 port, u8 slave)
+{
+	int i;
+
+	/* Reset */
+	SAA716x_EPWR(PHI_0, PHI_SW_RST, 0x1);
+
+	for (i = 0; i < 20; i++) {
+		msleep(1);
+		if (!(SAA716x_EPRD(PHI_0, PHI_SW_RST)))
+			break;
+	}
+
+	return 0;
+}
