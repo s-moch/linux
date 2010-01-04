@@ -17,6 +17,7 @@
 #include "saa716x_reg.h"
 #include "saa716x_adap.h"
 #include "saa716x_i2c.h"
+#include "saa716x_msi.h"
 #include "saa716x_hybrid.h"
 
 #include "zl10353.h"
@@ -30,6 +31,45 @@ module_param(int_type, int, 0644);
 MODULE_PARM_DESC(int_type, "force Interrupt Handler type: 0=INT-A, 1=MSI, 2=MSI-X. default INT-A mode");
 
 #define DRIVER_NAME	"SAA716x Hybrid"
+
+static int read_eeprom_byte(struct saa716x_dev *saa716x, u8 *data, u8 len)
+{
+	struct saa716x_i2c *i2c = saa716x->i2c;
+	struct i2c_adapter *adapter = &i2c[1].i2c_adapter;
+
+	int err;
+
+	struct i2c_msg msg[] = {
+		{.addr = 0x50, .flags = 0,		.buf = data, .len = 1},
+		{.addr = 0x50, .flags = I2C_M_RD,	.buf = data, .len = len},
+	};
+
+	err = i2c_transfer(adapter, msg, 2);
+	if (err < 0) {
+		dprintk(SAA716x_ERROR, 1, "<err=%d, d0=0x%02x, d1=0x%02x>", err, data[0], data[1]);
+		return err;
+	}
+
+	return 0;
+}
+
+static int read_eeprom(struct saa716x_dev *saa716x)
+{
+	u8 buf[32];
+	int i, err = 0;
+
+	err = read_eeprom_byte(saa716x, buf, 32);
+	if (err < 0) {
+		dprintk(SAA716x_ERROR, 1, "EEPROM Read error");
+		return err;
+	}
+	dprintk(SAA716x_DEBUG, 0, "EEPROM=[");
+	for (i = 0; i < 32; i++)
+		dprintk(SAA716x_DEBUG, 0, " %02x", buf[i]);
+
+	dprintk(SAA716x_DEBUG, 0, " ]\n");
+	return 0;
+}
 
 static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
 {
@@ -95,6 +135,10 @@ static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct
 		goto fail4;
 	}
 
+	msleep(500);
+	/* Experiments */
+	read_eeprom(saa716x);
+
 	return 0;
 
 fail4:
@@ -123,14 +167,33 @@ static void __devexit saa716x_hybrid_pci_remove(struct pci_dev *pdev)
 static irqreturn_t saa716x_hybrid_pci_irq(int irq, void *dev_id)
 {
 	struct saa716x_dev *saa716x	= (struct saa716x_dev *) dev_id;
-	struct saa716x_i2c *i2c_a	= &saa716x->i2c[0];
-	struct saa716x_i2c *i2c_b	= &saa716x->i2c[1];
+
+	u32 stat_h, stat_l, mask_h, mask_l;
 
 	if (unlikely(saa716x == NULL)) {
 		printk("%s: saa716x=NULL", __func__);
 		return IRQ_NONE;
 	}
 
+	stat_l = SAA716x_EPRD(MSI, MSI_INT_STATUS_L);
+	stat_h = SAA716x_EPRD(MSI, MSI_INT_STATUS_H);
+	mask_l = SAA716x_EPRD(MSI, MSI_INT_ENA_L);
+	mask_h = SAA716x_EPRD(MSI, MSI_INT_ENA_H);
+
+	dprintk(SAA716x_DEBUG, 1, "MSI STAT L=<%02x> H=<%02x>, CTL L=<%02x> H=<%02x>",
+		stat_l, stat_h, mask_l, mask_h);
+
+	if (!((stat_l & mask_l) || (stat_h & mask_h)))
+		return IRQ_NONE;
+
+	if (stat_l)
+		SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_L, stat_l);
+
+	if (stat_h)
+		SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_H, stat_h);
+
+	saa716x_msi_event(saa716x, stat_l, stat_h);
+#if 0
 	dprintk(SAA716x_DEBUG, 1, "VI STAT 0=<%02x> 1=<%02x>, CTL 1=<%02x> 2=<%02x>",
 		SAA716x_EPRD(VI0, INT_STATUS),
 		SAA716x_EPRD(VI1, INT_STATUS),
@@ -155,12 +218,6 @@ static irqreturn_t saa716x_hybrid_pci_irq(int irq, void *dev_id)
 		SAA716x_EPRD(AI0, AI_CTL),
 		SAA716x_EPRD(AI1, AI_CTL));
 
-	dprintk(SAA716x_DEBUG, 1, "MSI STAT L=<%02x> H=<%02x>, CTL L=<%02x> H=<%02x>",
-		SAA716x_EPRD(MSI, MSI_INT_STATUS_L),
-		SAA716x_EPRD(MSI, MSI_INT_STATUS_H),
-		SAA716x_EPRD(MSI, MSI_INT_ENA_L),
-		SAA716x_EPRD(MSI, MSI_INT_ENA_H));
-
 	dprintk(SAA716x_DEBUG, 1, "I2C STAT 0=<%02x> 1=<%02x>, CTL 0=<%02x> 1=<%02x>",
 		SAA716x_EPRD(I2C_A, INT_STATUS),
 		SAA716x_EPRD(I2C_B, INT_STATUS),
@@ -170,6 +227,7 @@ static irqreturn_t saa716x_hybrid_pci_irq(int irq, void *dev_id)
 	dprintk(SAA716x_DEBUG, 1, "DCS STAT=<%02x>, CTL=<%02x>",
 		SAA716x_EPRD(DCS, DCSC_INT_STATUS),
 		SAA716x_EPRD(DCS, DCSC_INT_ENABLE));
+#endif
 
 	return IRQ_HANDLED;
 }
@@ -299,7 +357,7 @@ static struct zl10353_config saa716x_averhc82_zl10353_config = {
 static int saa716x_averhc82_frontend_attach(struct saa716x_adapter *adapter, int count)
 {
 	struct saa716x_dev *saa716x = adapter->saa716x;
-	struct saa716x_i2c *i2c = &saa716x->i2c[count];
+//	struct saa716x_i2c *i2c = &saa716x->i2c[count];
 
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
