@@ -26,7 +26,7 @@ int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
 	struct pci_dev *pdev = saa716x->pdev;
 	int err = 0, ret = -ENODEV, i;
 	u8 revision;
-
+  
 	dprintk(SAA716x_ERROR, 1, "found a %s PCI Express card", saa716x->config->model_name);
 
 	err = pci_enable_device(pdev);
@@ -73,6 +73,8 @@ int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
 	}
 
 	pci_read_config_byte(pdev, PCI_CLASS_REVISION, &revision);
+	
+	dprintk(SAA716x_ERROR, 0, "SAA716x Revision ID: 0x%02x", revision);
 
 	saa716x->revision	= revision;
 
