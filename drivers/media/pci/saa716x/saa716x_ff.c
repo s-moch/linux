@@ -211,9 +211,7 @@ static struct saa716x_config saa716x_s26400_config = {
 static struct pci_device_id saa716x_ff_pci_table[] = {
 
 	MAKE_ENTRY(TECHNOTREND, S2_6400_DUAL_S2_PREMIUM, SAA7160, &saa716x_s26400_config), /* S2 6400 Dual */
-	{
-		.vendor = 0,
-	}
+	{ }
 };
 MODULE_DEVICE_TABLE(pci, saa716x_ff_pci_table);
 
