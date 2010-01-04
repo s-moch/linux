@@ -10,6 +10,9 @@
 #include "saa716x_i2c.h"
 #include "saa716x_gpio.h"
 
+DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
+
+
 void saa716x_dma_start(struct saa716x_dev *saa716x)
 {
 	dprintk(SAA716x_DEBUG, 1, "SAA716x Start DMA engine");
@@ -101,8 +104,10 @@ int __devinit saa716x_dvb_init(struct saa716x_dev *saa716x)
 
 		dprintk(SAA716x_DEBUG, 1, "dvb_register_adapter");
 		if (dvb_register_adapter(&saa716x_adap->dvb_adapter,
-					 "SAA716x dvb adapter", THIS_MODULE,
-					 &saa716x->pdev->dev) < 0) {
+					 "SAA716x dvb adapter",
+					 THIS_MODULE,
+					 &saa716x->pdev->dev,
+					 adapter_nr) < 0) {
 
 			dprintk(SAA716x_ERROR, 1, "Error registering adapter");
 			return -ENODEV;
