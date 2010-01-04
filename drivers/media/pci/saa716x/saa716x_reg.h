@@ -954,9 +954,9 @@
 #define CGU_ESR_1_1			0x1d4
 #define CGU_ESR_2_0			0x1d8
 #define CGU_ESR_2_1			0x1dc
-#define CGU_ESR_2_2			0x1e0
-#define CGU_ESR_3_0			0x1e4
-#define CGU_ESR_3_1			0x1e8
+#define CGU_ESR_3_0			0x1e0
+#define CGU_ESR_3_1			0x1e4
+#define CGU_ESR_3_2			0x1e8
 #define CGU_ESR_4_0			0x1ec
 #define CGU_ESR_4_1			0x1f0
 #define CGU_ESR_5			0x1f4
