@@ -152,7 +152,7 @@ static struct saa716x_config saa716x_nemo_config = {
 };
 
 
-#define SAA716x_MODEL_AVERMEDIA_HC82	"Avermedia PCIe Expresscard HC82"
+#define SAA716x_MODEL_AVERMEDIA_HC82	"Avermedia HC82 Express-54"
 #define SAA716x_DEV_AVERMEDIA_HC82	"DVB-T + ATSC + Analog"
 
 static int load_config_averhc82(struct saa716x_dev *saa716x)
