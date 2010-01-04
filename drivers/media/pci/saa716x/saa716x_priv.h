@@ -73,6 +73,11 @@ struct saa716x_adapter;
 
 typedef int (*saa716x_load_config_t)(struct saa716x_dev *saa716x);
 
+struct saa716x_adap_config {
+	u32				power_ctl;
+	u32				reset_ctl;
+};
+
 struct saa716x_config {
 	char				*model_name;
 	char				*dev_type;
@@ -89,6 +94,8 @@ struct saa716x_config {
 
 	int (*frontend_attach)(struct saa716x_adapter *adapter, int count);
 	irqreturn_t (*irq_handler)(int irq, void *dev_id);
+
+	struct saa716x_adap_config	adap_config[2];
 };
 
 struct saa716x_adapter {
@@ -103,9 +110,6 @@ struct saa716x_adapter {
 	struct saa716x_dev		*saa716x;
 
 	u8				feeds;
-
-	u32				power_ctl;
-	u32				reset_ctl;
 };
 
 struct saa716x_dev {
