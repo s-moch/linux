@@ -45,3 +45,47 @@ void saa716x_gpio_bits(struct saa716x_dev *saa716x, u32 bits)
 
 	spin_unlock_irqrestore(&saa716x->gpio_lock, flags);
 }
+
+void saa716x_gpio_set_output(struct saa716x_dev *saa716x, int gpio)
+{
+	uint32_t value;
+
+	value = SAA716x_EPRD(GPIO, GPIO_OEN);
+	value &= ~(1 << gpio);
+	SAA716x_EPWR(GPIO, GPIO_OEN, value);
+}
+EXPORT_SYMBOL_GPL(saa716x_gpio_set_output);
+
+void saa716x_gpio_set_input(struct saa716x_dev *saa716x, int gpio)
+{
+	uint32_t value;
+
+	value = SAA716x_EPRD(GPIO, GPIO_OEN);
+	value |= 1 << gpio;
+	SAA716x_EPWR(GPIO, GPIO_OEN, value);
+}
+EXPORT_SYMBOL_GPL(saa716x_gpio_set_input);
+
+void saa716x_gpio_write(struct saa716x_dev *saa716x, int gpio, int set)
+{
+	uint32_t value;
+
+	value = SAA716x_EPRD(GPIO, GPIO_WR);
+	if (set)
+		value |= 1 << gpio;
+	else
+		value &= ~(1 << gpio);
+	SAA716x_EPWR(GPIO, GPIO_WR, value);
+}
+EXPORT_SYMBOL_GPL(saa716x_gpio_write);
+
+int saa716x_gpio_read(struct saa716x_dev *saa716x, int gpio)
+{
+	uint32_t value;
+
+	value = SAA716x_EPRD(GPIO, GPIO_RD);
+	if (value & (1 << gpio))
+		return 1;
+	return 0;
+}
+EXPORT_SYMBOL_GPL(saa716x_gpio_read);
