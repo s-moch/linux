@@ -86,7 +86,6 @@ struct saa716x_dev {
 
 	/* PCI */
 	void __iomem			*mmio;
-//	void __iomem			*mmbd;
 
 #define MODE_INTA	0
 #define MODE_MSI	1
