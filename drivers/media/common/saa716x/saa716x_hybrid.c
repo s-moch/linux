@@ -391,9 +391,7 @@ static struct pci_device_id saa716x_hybrid_pci_table[] = {
 	MAKE_ENTRY(NXP_REFERENCE_BOARD, PCI_ANY_ID, SAA7160, &saa716x_nemo_config),
 	MAKE_ENTRY(AVERMEDIA, AVERMEDIA_HC82, SAA7160, &saa716x_averhc82_config),
 	MAKE_ENTRY(AVERMEDIA, AVERMEDIA_H788, SAA7160, &saa716x_averh788_config),
-	{
-		.vendor = 0,
-	}
+	{ }
 };
 MODULE_DEVICE_TABLE(pci, saa716x_hybrid_pci_table);
 
