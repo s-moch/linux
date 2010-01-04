@@ -219,7 +219,7 @@ int saa716x_add_irqvector(struct saa716x_dev *saa716x,
 {
 	struct saa716x_msix_entry *msix_handler = NULL;
 
-	u32 config, mask_l, mask_h;
+	u32 config, mask_l, mask_h, ena_l, ena_h;
 
 	BUG_ON(saa716x == NULL);
 	BUG_ON(vector > SAA716x_MSI_VECTORS);
@@ -256,6 +256,10 @@ int saa716x_add_irqvector(struct saa716x_dev *saa716x,
 
 	SAA716x_EPWR(MSI, MSI_INT_ENA_SET_L, mask_l);
 	SAA716x_EPWR(MSI, MSI_INT_ENA_SET_H, mask_h);
+
+	ena_l = SAA716x_EPRD(MSI, MSI_INT_ENA_L);
+	ena_h = SAA716x_EPRD(MSI, MSI_INT_ENA_H);
+	dprintk(SAA716x_DEBUG, 1, "Interrupts ena_l <%02x> ena_h <%02x>", ena_l, ena_h);
 
 	return 0;
 }
