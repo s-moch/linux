@@ -99,12 +99,12 @@ static int __devinit saa716x_budget_pci_probe(struct pci_dev *pdev, const struct
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM dump failed");
 	}
-#if 0
+
 	err = saa716x_eeprom_data(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM read failed");
 	}
-#endif
+
 	err = saa716x_dvb_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x DVB initialization failed");
