@@ -132,12 +132,23 @@ static int load_config_vp6090(struct saa716x_dev *saa716x)
 	return ret;
 }
 
+static int saa716x_vp6090_frontend_attach(struct saa716x_adapter *adapter, int count)
+{
+	struct saa716x_dev *saa716x = adapter->saa716x;
+
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
+
+	return -ENODEV;
+}
+
 static struct saa716x_config saa716x_vp6090_config = {
 	.model_name		= SAA716x_MODEL_TWINHAN_VP6090,
 	.dev_type		= SAA716x_DEV_TWINHAN_VP6090,
 	.boot_mode		= SAA716x_EXT_BOOT,
 	.load_config		= &load_config_vp6090,
 	.adapters		= 2,
+	.frontend_attach	= saa716x_vp6090_frontend_attach,
 };
 
 
@@ -155,12 +166,23 @@ static int load_config_nemo(struct saa716x_dev *saa716x)
     return ret;
 }
 
+static int saa716x_nemo_frontend_attach(struct saa716x_adapter *adapter, int count)
+{
+	struct saa716x_dev *saa716x = adapter->saa716x;
+
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
+
+	return -ENODEV;
+}
+
 static struct saa716x_config saa716x_nemo_config = {
 	.model_name		= SAA716x_MODEL_NXP_NEMO,
 	.dev_type		= SAA716x_DEV_NXP_NEMO,
 	.boot_mode		= SAA716x_EXT_BOOT,
 	.load_config		= &load_config_nemo,
 	.adapters		= 1,
+	.frontend_attach	= saa716x_nemo_frontend_attach,
 };
 
 
@@ -173,6 +195,16 @@ static int load_config_averhc82(struct saa716x_dev *saa716x)
 	return ret;
 }
 
+static int saa716x_averhc82_frontend_attach(struct saa716x_adapter *adapter, int count)
+{
+	struct saa716x_dev *saa716x = adapter->saa716x;
+
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
+
+	return -ENODEV;
+}
+
 static struct saa716x_config saa716x_averhc82_config = {
 	.model_name		= SAA716x_MODEL_AVERMEDIA_HC82,
 	.dev_type		= SAA716x_DEV_AVERMEDIA_HC82,
@@ -182,6 +214,7 @@ static struct saa716x_config saa716x_averhc82_config = {
 	.demodulator_addr	= 0x1f,
 	.tuner_addr		= 0xc0,
 	.decoder_addr		= 0x42,
+	.frontend_attach	= saa716x_averhc82_frontend_attach,
 };
 
 #define SAA716x_MODEL_AVERMEDIA_H788	"Avermedia H788"
@@ -193,6 +226,16 @@ static int load_config_averh788(struct saa716x_dev *saa716x)
 	return ret;
 }
 
+static int saa716x_averh88_frontend_attach(struct saa716x_adapter *adapter, int count)
+{
+	struct saa716x_dev *saa716x = adapter->saa716x;
+
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
+	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
+
+	return -ENODEV;
+}
+
 static struct saa716x_config saa716x_averh788_config = {
 	.model_name		= SAA716x_MODEL_AVERMEDIA_H788,
 	.dev_type		= SAA716x_DEV_AVERMEDIA_H788,
@@ -202,6 +245,7 @@ static struct saa716x_config saa716x_averh788_config = {
 	.demodulator_addr	= 0x1f,
 	.tuner_addr		= 0xc0,
 	.decoder_addr		= 0x42,
+	.frontend_attach	= saa716x_averh88_frontend_attach,
 };
 
 static struct pci_device_id saa716x_hybrid_pci_table[] = {
