@@ -118,7 +118,7 @@ static int saa716x_enable_msi(struct saa716x_dev *saa716x)
 		return err;
 	}
 
-	return 0;
+	return err;
 }
 
 static int saa716x_enable_msix(struct saa716x_dev *saa716x)
