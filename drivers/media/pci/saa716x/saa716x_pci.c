@@ -146,8 +146,10 @@ int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
 {
 	struct pci_dev *pdev = saa716x->pdev;
 	int err = 0, ret = -ENODEV, i, use_dac;
+	u32 msi_cap;
 	u8 revision;
-  
+	const u8 msgs[] = { 1, 2, 4, 8, 16, 32 };
+
 	dprintk(SAA716x_ERROR, 1, "found a %s PCI Express card", saa716x->config->model_name);
 
 	err = pci_enable_device(pdev);
@@ -206,8 +208,7 @@ int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
 	}
 
 	pci_read_config_byte(pdev, PCI_CLASS_REVISION, &revision);
-	
-	dprintk(SAA716x_ERROR, 0, "SAA716x Revision ID: 0x%02x", revision);
+	pci_read_config_dword(pdev, 0x40, &msi_cap);
 
 	saa716x->revision	= revision;
 
@@ -222,6 +223,13 @@ int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
 		saa716x->pdev->irq,
 		saa716x->addr,
 		saa716x->mmio);
+
+	dprintk(SAA716x_ERROR, 0, "    SAA%02x %sBit, MSI %s, MSI-X=%d msgs",
+		saa716x->pdev->device,
+		(((msi_cap >> 23) & 0x01) == 1 ? "64":"32"),
+		(((msi_cap >> 16) & 0x01) == 1 ? "Enabled" : "Disabled"),
+		msgs[((msi_cap >> 17) & 0x07)]);
+
 
 	pci_set_drvdata(pdev, saa716x);
 
