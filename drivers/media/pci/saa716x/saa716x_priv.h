@@ -38,6 +38,7 @@
 
 #define NXP_SEMICONDUCTOR	0x1131
 #define SAA7160			0x7160
+#define SAA7161			0x7161
 #define SAA7162			0x7162
 
 #define MAKE_ENTRY(__subven, __subdev, __chip, __configptr) {		\
@@ -55,9 +56,22 @@ struct saa716x_dev;
 
 typedef int (*saa716x_load_config_t)(struct saa716x_dev *saa716x);
 
+enum saa716x_boot_mode {
+	SAA716x_EXT_BOOT = 1,
+	SAA716x_INT_BOOT,
+};
+
+enum saa716x_i2c_rate {
+	SAA716x_I2C_RATE_400 = 1,
+	SAA716x_I2C_RATE_100,
+};
+
 struct saa716x_config {
 	char				*model_name;
 	char				*dev_type;
+
+	enum saa716x_boot_mode		boot_mode;
+
 	char				*chips_desc;
 	saa716x_load_config_t		load_config;
 };
@@ -66,6 +80,8 @@ struct saa716x_i2c {
 	struct i2c_adapter		i2c_adapter;
 	struct mutex			i2c_lock;
 	struct saa716x_dev		*saa716x;
+
+	enum saa716x_i2c_rate		i2c_rate; /* run time */
 };
 
 struct saa716x_dev {
@@ -84,6 +100,7 @@ struct saa716x_dev {
 
 	/* I2C */
 	struct saa716x_i2c		i2c[2];
+	enum saa716x_i2c_rate		i2c_rate; /* init time */
 
 	/* DMA */
 };
@@ -115,5 +132,9 @@ extern void saa716x_dvb_exit(struct saa716x_dev *saa716x);
 /* AUDIO */
 extern int saa716x_audio_init(struct saa716x_dev *saa716x);
 extern void saa716x_audio_exit(struct saa716x_dev *saa716x);
+
+/* Boot */
+extern int saa716x_core_boot(struct saa716x_dev *saa716x);
+extern int saa716x_jetpack_init(struct saa716x_dev *saa716x);
 
 #endif /* __SAA716x_PRIV_H */

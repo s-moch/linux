@@ -38,9 +38,17 @@ static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct
 	saa716x->pdev		= pdev;
 	saa716x->config		= (struct saa716x_config *) pci_id->driver_data;
 
-	if ((err = saa716x_pci_init(saa716x)) != 0)
+	err = saa716x_pci_init(saa716x);
+	if (err) {
+		dprintk(SAA716x_ERROR, 1, "SAA716x PCI Initialization failed");
 		goto fail1;
+	}
 
+	err = saa716x_jetpack_init(saa716x);
+	if (err) {
+		dprintk(SAA716x_ERROR, 1, "SAA716x Jetpack core Initialization failed");
+		goto fail1;
+	}
 
 	return 0;
 
@@ -90,6 +98,7 @@ static struct saa716x_config saa716x_vp6090_config = {
 	.model_name		= SAA716x_MODEL_TWINHAN_VP6090,
 	.chips_desc            = SAA716x_CHIPS_TWINHAN_VP6090,
 	.dev_type		= SAA716x_DEV_TWINHAN_VP6090,
+	.boot_mode		= SAA716x_EXT_BOOT,
 	.load_config		= &load_config_vp6090,
 };
 
