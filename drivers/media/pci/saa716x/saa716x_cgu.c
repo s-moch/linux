@@ -1,6 +1,8 @@
 #include <linux/delay.h>
 
-#include "saa716x_reg.h"
+#include "saa716x_mod.h"
+
+#include "saa716x_cgu_reg.h"
 #include "saa716x_spi.h"
 #include "saa716x_priv.h"
 
