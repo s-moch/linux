@@ -103,6 +103,9 @@ struct saa716x_adapter {
 	struct saa716x_dev		*saa716x;
 
 	u8				feeds;
+
+	u32				power_ctl;
+	u32				reset_ctl;
 };
 
 struct saa716x_dev {
@@ -130,6 +133,7 @@ struct saa716x_dev {
 
 	struct saa716x_adapter		saa716x_adap[2];
 
+	spinlock_t			gpio_lock;
 	/* DMA */
 
 };
