@@ -25,6 +25,52 @@
 /* BAR = 20 bits */
 #define PHI_1				0x00020000
 
+#define VI_MODE				0x000
+#define VID_CFEN			(0x0003 << 30)
+#define VID_OSM				(0x0001 << 29)
+#define VID_FSEQ			(0x0001 << 28)
+#define AUX_CFEN			(0x0003 << 26)
+#define AUX_OSM				(0x0001 << 25)
+#define AUX_FSEQ			(0x0001 << 24)
+#define AUX_ANC_DATA			(0x0003 << 22)
+#define AUX_ANC_RAW			(0x0001 << 21)
+#define RST_ON_ERR			(0x0001 << 17)
+#define SOFT_RESET			(0x0001 << 16)
+#define IFF_CLAMP			(0x0001 << 14)
+#define IFF_MODE			(0x0003 << 12)
+#define DFF_CLAMP			(0x0001 << 10)
+#define DFF_MODE			(0x0003 <<  8)
+#define HSP_CLAMP			(0x0001 <<  3)
+#define HSP_RGB				(0x0001 <<  2)
+#define HSP_MODE			(0x0003 <<  0)
+
+#define ID_MASK0			0x020
+#define ID_MASK_0			(0x00ff <<  8)
+#define DATA_ID_0			(0x00ff <<  0)
+
+#define ID_MASK1			0x024
+#define ID_MASK_1			(0x00ff <<  8)
+#define DATA_ID_1			(0x00ff <<  0)
+
+#define VIP_LINE_THRESH			0x040
+#define LCTHR				(0x07ff <<  0)
+
+#define VIN_FORMAT			0x100
+#define VSRA				(0x0003 << 30)
+#define SYNCHD				(0x0001 << 25)
+#define DUAL_STREAM			(0x0001 << 24)
+#define NHDAUX				(0x0001 << 20)
+#define NPAR				(0x0001 << 19)
+#define VSEL				(0x0003 << 14)
+#define TWOS				(0x0001 << 13)
+#define TPG				(0x0001 << 12)
+#define FREF				(0x0001 << 10)
+#define FTGL				(0x0001 <<  9)
+#define SF				(0x0001 <<  3)
+#define FZERO				(0x0001 <<  2)
+#define REVS				(0x0001 <<  1)
+#define REHS				(0x0001 <<  0)
+
 #define GREG_SUBSYS_CONFIG		0x000
 #define GREG_SUBSYS_ID			(0xffff << 16)
 #define GREG_SUBSYS_VID			(0xffff <<  0)
