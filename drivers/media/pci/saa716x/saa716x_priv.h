@@ -10,6 +10,7 @@
 #include <linux/pci.h>
 #include <linux/ioport.h>
 #include <linux/i2c.h>
+#include "saa716x_i2c.h"
 
 #define SAA716x_ERROR		0
 #define SAA716x_NOTICE		1
@@ -62,11 +63,6 @@ enum saa716x_boot_mode {
 	SAA716x_CGU_BOOT,
 };
 
-enum saa716x_i2c_rate {
-	SAA716x_I2C_RATE_400 = 1,
-	SAA716x_I2C_RATE_100,
-};
-
 struct saa716x_config {
 	char				*model_name;
 	char				*dev_type;
@@ -74,17 +70,6 @@ struct saa716x_config {
 	enum saa716x_boot_mode		boot_mode;
 
 	saa716x_load_config_t		load_config;
-};
-
-struct saa716x_i2c {
-	struct i2c_adapter		i2c_adapter;
-	struct mutex			i2c_lock;
-	struct saa716x_dev		*saa716x;
-	u32				i2c_dev;
-
-	enum saa716x_i2c_rate		i2c_rate; /* run time */
-	wait_queue_head_t		i2c_wq;
-	u32				int_stat;
 };
 
 struct saa716x_dev {
@@ -103,7 +88,7 @@ struct saa716x_dev {
 
 	/* I2C */
 	struct saa716x_i2c		i2c[2];
-	enum saa716x_i2c_rate		i2c_rate; /* init time */
+	u32				i2c_rate; /* init time */
 
 	/* DMA */
 };
@@ -116,11 +101,6 @@ extern void saa716x_pci_exit(struct saa716x_dev *saa716x);
 extern int saa716x_msi_init(struct saa716x_dev *saa716x);
 extern void saa716x_msi_exit(struct saa716x_dev *saa716x);
 extern void saa716x_msiint_disable(struct saa716x_dev *saa716x);
-
-/* I2C */
-extern int saa716x_i2c_init(struct saa716x_dev *saa716x);
-extern int saa716x_i2c_exit(struct saa716x_dev *saa716x);
-extern void saa716x_i2cint_disable(struct saa716x_dev *saa716x);
 
 /* SPI */
 extern int saa716x_spi_init(struct saa716x_dev *saa716x);
