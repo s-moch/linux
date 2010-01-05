@@ -7,7 +7,6 @@
 #include <linux/device.h>
 #include <linux/delay.h>
 
-#include <asm/irq.h>
 #include <linux/signal.h>
 #include <linux/sched.h>
 #include <linux/interrupt.h>
