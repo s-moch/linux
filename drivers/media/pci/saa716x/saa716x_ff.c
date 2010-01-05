@@ -525,6 +525,11 @@ static int dvb_video_ioctl(struct inode *inode, struct file *file,
 		dvb_ringbuffer_flush_spinlock_wakeup(&sti7109->tsout);
 		break;
 	}
+	case VIDEO_GET_PTS:
+	{
+		*(u64 *)parg = sti7109->video_pts;
+		break;
+	}
 	default:
 		ret = -ENOIOCTLCMD;
 		break;
