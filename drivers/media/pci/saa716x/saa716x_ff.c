@@ -259,7 +259,7 @@ static int sti7109_raw_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
 
 	sti7109->cmd_ready = 0;
 	sti7109->result_avail = 0;
-	saa716x_phi_write(saa716x, 0x0000, cmd->cmd_data, cmd->cmd_len);
+	saa716x_phi_write(saa716x, ADDR_CMD_DATA, cmd->cmd_data, cmd->cmd_len);
 	SAA716x_EPWR(PHI_1, FPGA_ADDR_PHI_ISET, ISR_CMD_MASK);
 
 	if (cmd->result_len > 0) {
@@ -285,6 +285,61 @@ static int sti7109_raw_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
 			} else {
 				memcpy(cmd->result_data, sti7109->result_data, sti7109->result_len);
 				cmd->result_len = sti7109->result_len;
+			}
+		}
+	}
+
+	return 0;
+}
+
+static int sti7109_raw_osd_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
+{
+	struct saa716x_dev * saa716x = sti7109->dev;
+	unsigned long timeout;
+
+	timeout = 1 * HZ;
+	timeout = wait_event_interruptible_timeout(sti7109->osd_cmd_ready_wq,
+						   sti7109->osd_cmd_ready == 1,
+						   timeout);
+
+	if (timeout == -ERESTARTSYS || sti7109->osd_cmd_ready == 0) {
+		if (timeout == -ERESTARTSYS) {
+			/* a signal arrived */
+			dprintk(SAA716x_ERROR, 1, "osd cmd ERESTARTSYS");
+			return -ERESTARTSYS;
+		}
+		dprintk(SAA716x_ERROR, 1, "timed out waiting for osd command ready");
+		return -EIO;
+	}
+
+	sti7109->osd_cmd_ready = 0;
+	sti7109->osd_result_avail = 0;
+	saa716x_phi_write(saa716x, ADDR_OSD_CMD_DATA, cmd->cmd_data, cmd->cmd_len);
+	SAA716x_EPWR(PHI_1, FPGA_ADDR_PHI_ISET, ISR_OSD_CMD_MASK);
+
+	if (cmd->result_len > 0) {
+		timeout = 1 * HZ;
+		timeout = wait_event_interruptible_timeout(sti7109->osd_result_avail_wq,
+							   sti7109->osd_result_avail == 1,
+							   timeout);
+
+		if (timeout == -ERESTARTSYS || sti7109->osd_result_avail == 0) {
+			cmd->result_len = 0;
+			if (timeout == -ERESTARTSYS) {
+				/* a signal arrived */
+				dprintk(SAA716x_ERROR, 1, "osd result ERESTARTSYS");
+				return -ERESTARTSYS;
+			}
+			dprintk(SAA716x_ERROR, 1, "timed out waiting for osd command result");
+			return -EIO;
+		}
+
+		if (sti7109->osd_result_len > 0) {
+			if (sti7109->osd_result_len > cmd->result_len) {
+				memcpy(cmd->result_data, sti7109->osd_result_data, cmd->result_len);
+			} else {
+				memcpy(cmd->result_data, sti7109->osd_result_data, sti7109->osd_result_len);
+				cmd->result_len = sti7109->osd_result_len;
 			}
 		}
 	}
@@ -377,9 +432,18 @@ static int dvb_osd_ioctl(struct inode *inode, struct file *file,
 	int ret_val = -EINVAL;
 
 	if (cmd == OSD_RAW_CMD) {
-		mutex_lock(&sti7109->cmd_lock);
-		ret_val = sti7109_raw_cmd(sti7109, (osd_raw_cmd_t *) parg);
-		mutex_unlock(&sti7109->cmd_lock);
+		osd_raw_cmd_t * pcmd = (osd_raw_cmd_t *) parg;
+		u8 * pdata = (u8 *) pcmd->cmd_data;
+		if (pdata[3] == 4) {
+			mutex_lock(&sti7109->osd_cmd_lock);
+			ret_val = sti7109_raw_osd_cmd(sti7109, (osd_raw_cmd_t *) parg);
+			mutex_unlock(&sti7109->osd_cmd_lock);
+		}
+		else {
+			mutex_lock(&sti7109->cmd_lock);
+			ret_val = sti7109_raw_cmd(sti7109, (osd_raw_cmd_t *) parg);
+			mutex_unlock(&sti7109->cmd_lock);
+		}
 	}
 	else if (cmd == OSD_RAW_DATA) {
 		mutex_lock(&sti7109->data_lock);
@@ -718,6 +782,7 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 		goto fail4;
 
 	mutex_init(&sti7109->cmd_lock);
+	mutex_init(&sti7109->osd_cmd_lock);
 	mutex_init(&sti7109->data_lock);
 
 	init_waitqueue_head(&sti7109->boot_finish_wq);
@@ -728,6 +793,11 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 
 	init_waitqueue_head(&sti7109->result_avail_wq);
 	sti7109->result_avail = 0;
+
+	init_waitqueue_head(&sti7109->osd_cmd_ready_wq);
+	sti7109->osd_cmd_ready = 0;
+	init_waitqueue_head(&sti7109->osd_result_avail_wq);
+	sti7109->osd_result_avail = 0;
 
 	sti7109->data_handle = 0;
 	init_waitqueue_head(&sti7109->data_ready_wq);
@@ -1029,6 +1099,40 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_READY_MASK);
 		}
 
+		if (phiISR & ISR_OSD_CMD_MASK) {
+
+			u32 value;
+			u32 length;
+			/*dprintk(SAA716x_INFO, 1, "OSD CMD interrupt source");*/
+
+			value = SAA716x_EPRD(PHI_1, ADDR_OSD_CMD_DATA);
+			value = __cpu_to_be32(value);
+			length = (value >> 16) + 2;
+
+			/*dprintk(SAA716x_INFO, 1, "OSD CMD length: %d", length);*/
+
+			if (length > MAX_RESULT_LEN) {
+				dprintk(SAA716x_ERROR, 1, "OSD CMD length %d > %d", length, MAX_RESULT_LEN);
+				length = MAX_RESULT_LEN;
+			}
+
+			saa716x_phi_read(saa716x, ADDR_OSD_CMD_DATA, sti7109->osd_result_data, length);
+			sti7109->osd_result_len = length;
+			sti7109->osd_result_avail = 1;
+			wake_up(&sti7109->osd_result_avail_wq);
+
+			phiISR &= ~ISR_OSD_CMD_MASK;
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_OSD_CMD_MASK);
+		}
+
+		if (phiISR & ISR_OSD_READY_MASK) {
+			/*dprintk(SAA716x_INFO, 1, "OSD_READY interrupt source");*/
+			sti7109->osd_cmd_ready = 1;
+			wake_up(&sti7109->osd_cmd_ready_wq);
+			phiISR &= ~ISR_OSD_READY_MASK;
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_OSD_READY_MASK);
+		}
+
 		if (phiISR & ISR_BLOCK_MASK) {
 			/*dprintk(SAA716x_INFO, 1, "BLOCK interrupt source");*/
 			sti7109->block_done = 1;
@@ -1116,7 +1220,23 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 			dprintk(SAA716x_INFO, 1, "REMOTE EVENT: %u", sti7109->remote_event);
 		}
 
-		if (phiISR & ISR_FIFO_EMPTY_MASK) {
+		if (phiISR & ISR_DVO_FORMAT_MASK) {
+			u8 data[4];
+			u32 format;
+
+			saa716x_phi_read(saa716x, ADDR_DVO_FORMAT, data, 4);
+			format = (data[0] << 24)
+			       | (data[1] << 16)
+			       | (data[2] << 8)
+			       | (data[3]);
+
+			phiISR &= ~ISR_DVO_FORMAT_MASK;
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_DVO_FORMAT_MASK);
+
+			dprintk(SAA716x_INFO, 1, "DVO FORMAT CHANGE: %u", format);
+		}
+
+		if (phiISR & ISR_FIFO1_EMPTY_MASK) {
 			u32 fifoCtrl;
 			u32 fifoStat;
 			u16 fifoSize;
@@ -1149,7 +1269,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 				SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, fifoCtrl);
 			}
 			spin_unlock(&sti7109->tsout.lock);
-			phiISR &= ~ISR_FIFO_EMPTY_MASK;
+			phiISR &= ~ISR_FIFO1_EMPTY_MASK;
 		}
 
 		if (phiISR) {
