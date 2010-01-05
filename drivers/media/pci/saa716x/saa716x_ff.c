@@ -876,6 +876,7 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 			goto fail6;
 		}
 		dprintk(SAA716x_ERROR, 1, "timed out waiting for boot finish");
+		err = -1;
 		goto fail6;
 	}
 	dprintk(SAA716x_INFO, 1, "STi7109 finished booting");
