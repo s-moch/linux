@@ -113,6 +113,8 @@ static int saa716x_ff_fpga_init(struct saa716x_dev *saa716x)
 	fpgaDone = saa716x_gpio_read(saa716x, TT_PREMIUM_GPIO_FPGA_DONE);
 	dprintk(SAA716x_INFO, 1, "SAA716x FPGA DONE=%d", fpgaDone);
 
+	msleep(10);
+
 	release_firmware(fw);
 
 	if (!fpgaDone)
