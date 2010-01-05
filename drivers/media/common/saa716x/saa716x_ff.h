@@ -68,6 +68,7 @@ struct sti7109_dev {
 	struct saa716x_dev	*dev;
 	struct dvb_device	*osd_dev;
 	struct dvb_device	*video_dev;
+	struct dvb_device	*audio_dev;
 
 	void			*iobuf;	 /* memory for all buffers */
 	struct dvb_ringbuffer	tsout;   /* buffer for TS output */
