@@ -73,7 +73,6 @@ static int saa716x_dvb_stop_feed(struct dvb_demux_feed *dvbdmxfeed)
 
 static int saa716x_frontend_power(struct saa716x_dev *saa716x, u8 DEV, u8 control)
 {
-	struct saa716x_adapter *adapter		= &saa716x->saa716x_adap[DEV];
 	struct saa716x_config *config		= saa716x->config;
 	struct saa716x_adap_config *adap_cfg	= &config->adap_config[DEV];
 
@@ -88,7 +87,6 @@ static int saa716x_frontend_power(struct saa716x_dev *saa716x, u8 DEV, u8 contro
 
 static int saa716x_frontend_reset(struct saa716x_dev *saa716x, u8 DEV)
 {
-	struct saa716x_adapter *adapter		= &saa716x->saa716x_adap[DEV];
 	struct saa716x_config *config		= saa716x->config;
 	struct saa716x_adap_config *adap_cfg	= &config->adap_config[DEV];
 
