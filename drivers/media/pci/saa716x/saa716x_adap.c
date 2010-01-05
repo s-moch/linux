@@ -196,10 +196,10 @@ int __devinit saa716x_dvb_init(struct saa716x_dev *saa716x)
 		saa716x_adap++;
 	}
 
-	saa716x_fgpi_init(saa716x, 2);
-#if 1
-	{
+	for (i = 0; i < config->adapters; i++) {
 		struct fgpi_stream_params params;
+
+		saa716x_fgpi_init(saa716x, config->adap_config[i].ts_port);
 
 		params.bits = 8;
 		params.samples = 188;
@@ -209,9 +209,9 @@ int __devinit saa716x_dvb_init(struct saa716x_dev *saa716x)
 		params.page_tables = 0;
 		params.stream_type = FGPI_TRANSPORT_STREAM;
 		params.stream_flags = 0;
-		saa716x_fgpi_start(saa716x, 2, &params);
+		saa716x_fgpi_start(saa716x, config->adap_config[i].ts_port, &params);
 	}
-#endif
+
 	return 0;
 
 	/* Error conditions */
@@ -237,8 +237,10 @@ void __devexit saa716x_dvb_exit(struct saa716x_dev *saa716x)
 	struct saa716x_adapter *saa716x_adap = saa716x->saa716x_adap;
 	int i;
 
-	saa716x_fgpi_stop(saa716x, 2);
-	saa716x_fgpi_exit(saa716x, 2);
+	for (i = 0; i < saa716x->config->adapters; i++) {
+		saa716x_fgpi_stop(saa716x, saa716x->config->adap_config[i].ts_port);
+		saa716x_fgpi_exit(saa716x, saa716x->config->adap_config[i].ts_port);
+	}
 
 	for (i = 0; i < saa716x->config->adapters; i++) {
 
