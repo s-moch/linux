@@ -12,7 +12,6 @@
 #include <linux/init.h>
 #include <linux/device.h>
 
-#include <asm/irq.h>
 #include <linux/signal.h>
 #include <linux/sched.h>
 #include <linux/interrupt.h>
