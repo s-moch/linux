@@ -14,7 +14,6 @@
 #include <linux/device.h>
 #include <linux/firmware.h>
 
-#include <asm/irq.h>
 #include <linux/signal.h>
 #include <linux/sched.h>
 #include <linux/interrupt.h>
@@ -1042,7 +1041,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 			{
 				while (len >= TS_SIZE)
 				{
-					dvb_ringbuffer_read(&sti7109->tsout, sti7109->tsbuf, (size_t) TS_SIZE, 0);
+					dvb_ringbuffer_read(&sti7109->tsout, sti7109->tsbuf, (size_t) TS_SIZE);
 					saa716x_phi_write_fifo(saa716x, sti7109->tsbuf, TS_SIZE);
 					len -= TS_SIZE;
 				}
