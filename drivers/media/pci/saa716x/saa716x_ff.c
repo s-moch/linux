@@ -627,15 +627,15 @@ static int dvb_video_ioctl(struct inode *inode, struct file *file,
 
 		stream_source = (video_stream_source_t) parg;
 		if (stream_source == VIDEO_SOURCE_DEMUX) {
-			/* select TS input 1 for TS mux 1 */
-			SAA716x_EPWR(PHI_1, FPGA_ADDR_TSR_MUX1, 1);
+			/* select TS input 3 for TS mux 3 */
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_TSR_MUX3, 3);
 			/* stop and reset FIFO 1 */
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, 1);
 		}
 		else {
 			dvb_ringbuffer_flush_spinlock_wakeup(&sti7109->tsout);
-			/* select FIFO 1 for TS mux 1 */
-			SAA716x_EPWR(PHI_1, FPGA_ADDR_TSR_MUX1, 4);
+			/* select FIFO 1 for TS mux 3 */
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_TSR_MUX3, 4);
 			/* reset FIFO 1 */
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, 1);
 			/* start FIFO 1 */
