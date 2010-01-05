@@ -320,33 +320,22 @@ static int saa716x_i2c_send(struct saa716x_i2c *i2c, u32 I2C_DEV, u32 data)
 
 	/* Write to FIFO */
 	SAA716x_EPWR(I2C_DEV, TX_FIFO, data);
-//	msleep(50);
-	msleep(1);
-	reg = SAA716x_EPRD(I2C_DEV, I2C_STATUS);
-	i2c->stat_tx_done = reg;
 
 	/* Check for data write */
-	for (i = 0; i < 10; i++) {
+	for (i = 0; i < 1000; i++) {
 		/* TODO! check for hotplug devices */
-
-		if (!(reg & I2C_TRANSMIT_CLEAR)) {
-			msleep(10);
-			reg = SAA716x_EPRD(I2C_DEV, I2C_STATUS);
-		} else {
+		reg = SAA716x_EPRD(I2C_DEV, I2C_STATUS);
+		if (reg & I2C_TRANSMIT_CLEAR) {
 			break;
 		}
 	}
+	i2c->stat_tx_done = reg;
 
 	if (!(reg & I2C_TRANSMIT_CLEAR)) {
-		dprintk(SAA716x_ERROR, 1, "TXFIFO not empty after Timeout, tried %d loops, %d mS!", i, i * 10);
-		err = saa716x_i2c_hwinit(i2c, I2C_DEV);
-		if (err < 0) {
-			dprintk(SAA716x_ERROR, 1, "Error Reinit");
-			err = -EIO;
-			goto exit;
-		}
+		dprintk(SAA716x_ERROR, 1, "TXFIFO not empty after Timeout, tried %d loops!", i);
+		err = -EIO;
+		goto exit;
 	}
-
 
 	return err;
 
@@ -362,26 +351,16 @@ static int saa716x_i2c_recv(struct saa716x_i2c *i2c, u32 I2C_DEV, u32 *data)
 	u32 reg;
 
 	/* Check FIFO status before RX */
-	reg = SAA716x_EPRD(I2C_DEV, I2C_STATUS);
-	if (reg & SAA716x_I2C_RXBUSY) {
-
-		for (i = 0; i < 100; i++) {
-			msleep(10);
-			reg = SAA716x_EPRD(I2C_DEV, I2C_STATUS);
-
-			if (reg & SAA716x_I2C_RXBUSY) {
-				dprintk(SAA716x_INFO, 1, "FIFO empty");
-
-				err = saa716x_i2c_hwinit(i2c, I2C_DEV);
-				if (err < 0) {
-					dprintk(SAA716x_INFO, 1, "Error Reinit");
-					err = -EIO;
-					goto exit;
-				}
-			} else {
-				break;
-			}
+	for (i = 0; i < 1000; i++) {
+		reg = SAA716x_EPRD(I2C_DEV, I2C_STATUS);
+		if (!(reg & SAA716x_I2C_RXBUSY)) {
+			break;
 		}
+	}
+	if (reg & SAA716x_I2C_RXBUSY) {
+		dprintk(SAA716x_INFO, 1, "FIFO empty");
+		err = -EIO;
+		goto exit;
 	}
 
 	/* Read from FIFO */
@@ -399,133 +378,77 @@ static int saa716x_i2c_xfer(struct i2c_adapter *adapter, struct i2c_msg *msgs, i
 	struct saa716x_dev *saa716x	= i2c->saa716x;
 
 	u32 DEV = SAA716x_I2C_BUS(i2c->i2c_dev);
-	int i = 0, j, err = 0;
-	u32 rxd;
+	int i, j, err = 0;
+	int t;
+	u32 data;
 
 	dprintk(SAA716x_DEBUG, 0, "\n");
 	dprintk(SAA716x_DEBUG, 1, "Bus(%02x) I2C transfer", DEV);
 	mutex_lock(&i2c->i2c_lock);
 
-	while (i < num) {
-		if (((i + 1) < num) && (msgs[i + 1].flags & I2C_M_RD)) {
-			if (msgs[i].len) {
-				dprintk(SAA716x_DEBUG, 1, "length=%d Addr:0x%02x",
-					msgs[i].len, (msgs[i].addr << 1) | I2C_START_BIT);
-
-				err = saa716x_i2c_send(i2c, DEV, (msgs[i].addr << 1) | I2C_START_BIT);
-				if (err < 0) {
-					saa716x_i2c_hwinit(i2c, DEV);
-					err = saa716x_i2c_send(i2c, DEV, (msgs[i].addr << 1) | I2C_START_BIT);
-					if (err < 0) {
-						dprintk(SAA716x_ERROR, 1, "Transfer failed");
-						err = -EIO;
-						goto bail_out;
-					}
-				}
-
-				for (j = 0; j < msgs[i].len; j++) {
-					dprintk(SAA716x_DEBUG, 0, "    <W %04x> 0x%02x\n",
-						i, msgs[i].buf[j]);
-
-					err = saa716x_i2c_send(i2c, DEV, msgs[i].buf[j]);
-					if (err < 0) {
-						dprintk(SAA716x_ERROR, 1, "Transfer failed");
-						err = -EIO;
-						goto bail_out;
-					}
-
-				}
-			}
-			dprintk(SAA716x_DEBUG, 1, "Addr:0x%02x",
-				(msgs[i].addr << 1) | 0x1 | I2C_START_BIT);
-
-			err = saa716x_i2c_send(i2c, DEV, (msgs[i].addr << 1) | 0x1 | I2C_START_BIT);
+	for (t = 0; t < 3; t++) {
+		for (i = 0; i < num; i++) {
+			/* first write START width I2C address */
+			data = (msgs[i].addr << 1) | I2C_START_BIT;
+			if (msgs[i].flags & I2C_M_RD)
+				data |= 1;
+			dprintk(SAA716x_DEBUG, 1, "length=%d Addr:0x%02x",
+				msgs[i].len, data);
+			err = saa716x_i2c_send(i2c, DEV, data);
 			if (err < 0) {
-				dprintk(SAA716x_ERROR, 1, "Transfer failed");
+				dprintk(SAA716x_ERROR, 1, "Address write failed");
 				err = -EIO;
-				goto bail_out;
+				goto retry;
 			}
-
-			for (j = 0; j < msgs[i + 1].len; j++) {
-				if (j == msgs[i + 1].len - 1) {
-					err = saa716x_i2c_send(i2c, DEV, I2C_STOP_BIT); /* Dummy */
+			/* now read or write the data */
+			for (j = 0; j < msgs[i].len; j++) {
+				if (msgs[i].flags & I2C_M_RD)
+					data = 0x00; /* dummy write for reading */
+				else {
+					data = msgs[i].buf[j];
+					dprintk(SAA716x_DEBUG, 0, "    <W %04x> 0x%02x\n",
+						j, data);
+				}
+				if (i == (num - 1) && j == (msgs[i].len - 1))
+					data |= I2C_STOP_BIT;
+				err = saa716x_i2c_send(i2c, DEV, data);
+				if (err < 0) {
+					dprintk(SAA716x_ERROR, 1, "Data send failed");
+					err = -EIO;
+					goto retry;
+				}
+				if (msgs[i].flags & I2C_M_RD) {
+					err = saa716x_i2c_recv(i2c, DEV, &data);
 					if (err < 0) {
-						dprintk(SAA716x_ERROR, 1, "Transfer failed");
+						dprintk(SAA716x_ERROR, 1, "Data receive failed");
 						err = -EIO;
-						goto bail_out;
-					}
-
-					err = saa716x_i2c_recv(i2c, DEV, &rxd);
-					if (err < 0) {
-						dprintk(SAA716x_ERROR, 1, "Transfer failed");
-						err = -EIO;
-						goto bail_out;
+						goto retry;
 					}
 					dprintk(SAA716x_DEBUG, 0, "    <R %04x> 0x%02x\n\n",
-						j + 1, rxd);
-
-					msgs[i + 1].buf[j] = rxd;
-				} else {
-					err = saa716x_i2c_send(i2c, DEV, 0x00); /* Dummy */
-					if (err < 0) {
-						dprintk(SAA716x_ERROR, 1, "Transfer failed");
-						err = -EIO;
-						goto bail_out;
-					}
-
-					err = saa716x_i2c_recv(i2c, DEV, &rxd);
-					if (err < 0) {
-						dprintk(SAA716x_ERROR, 1, "Transfer failed");
-						err = -EIO;
-						goto bail_out;
-					}
-					msgs[i + 1].buf[j] = rxd;
-					dprintk(SAA716x_DEBUG, 0, "    <R %04x> 0x%02x\n",
-						j, rxd);
+						j, data);
+					msgs[i].buf[j] = data;
 				}
 			}
-			i += 2;
-
-		} else {
-			dprintk(SAA716x_DEBUG, 1, "length=%d Addr:0x%02x",
-				msgs[i].len, (msgs[i].addr << 1) | I2C_START_BIT);
-
-			err = saa716x_i2c_send(i2c, DEV, (msgs[i].addr << 1) | I2C_START_BIT);
-			if (err < 0) {
-				saa716x_i2c_hwinit(i2c, DEV);
-				err = saa716x_i2c_send(i2c, DEV, (msgs[i].addr << 1) | I2C_START_BIT);
-				if (err < 0) {
-					dprintk(SAA716x_ERROR, 1, "Transfer failed");
-					err = -EIO;
-					goto bail_out;
-				}
-			}
-
-			for (j = 0; j < msgs[i].len; j++) {
-				if (j == msgs[i].len - 1) {
-					err = saa716x_i2c_send(i2c, DEV, msgs[i].buf[j] | I2C_STOP_BIT);
-					if (err < 0) {
-						dprintk(SAA716x_ERROR, 1, "Transfer failed");
-						err = -EIO;
-						goto bail_out;
-					}
-				} else {
-					err = saa716x_i2c_send(i2c, DEV, msgs[i].buf[j]);
-					if (err < 0) {
-						dprintk(SAA716x_ERROR, 1, "Transfer failed");
-						err = -EIO;
-						goto bail_out;
-					}
-				}
-			}
-			i++;
 		}
-	}
-
-	if (err < 0) {
-		dprintk(SAA716x_ERROR, 1, "Transfer failed");
-		err = -EIO;
-		goto bail_out;
+		break;
+retry:
+		dprintk(SAA716x_INFO, 1, "Error in Transfer, try %d", t);
+		for (i = 0; i < num; i++) {
+			dprintk(SAA716x_INFO, 1, "msg %d, addr = 0x%02x, len=%d, flags=0x%x",
+				i, msgs[i].addr, msgs[i].len, msgs[i].flags);
+			if (!(msgs[i].flags & I2C_M_RD)) {
+				for (j = 0; j < msgs[i].len; j++) {
+					dprintk(SAA716x_INFO, 1, "    <W %04x> 0x%02x",
+						j, msgs[i].buf[j]);
+				}
+			}
+		}
+		err = saa716x_i2c_hwinit(i2c, DEV);
+		if (err < 0) {
+			dprintk(SAA716x_ERROR, 1, "Error Reinit");
+			err = -EIO;
+			goto bail_out;
+		}
 	}
 
 	mutex_unlock(&i2c->i2c_lock);
