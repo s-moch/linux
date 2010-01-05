@@ -1,4 +1,11 @@
-config DVB_SAA716X_CORE
+menuconfig SAA716X_SUPPORT
+	bool "Support for SAA716x family from NXP/Philips"
+	depends on PCI && I2C
+	help
+	  support for saa716x
+
+if SAA716X_SUPPORT
+config SAA716X_CORE
 	tristate "SAA7160/1/2 PCI Express bridge based devices"
 	depends on PCI && I2C
 
@@ -9,7 +16,7 @@ config DVB_SAA716X_CORE
 
 config DVB_SAA716X_BUDGET
 	tristate "SAA7160/1/2 based Budget PCIe cards (DVB only)"
-	depends on DVB_SAA716X_CORE && DVB_CORE && PCI && I2C
+	depends on SAA716X_CORE && DVB_CORE
 
 	help
 	  Support for the SAA7160/1/2 based Budget PCIe DVB cards
@@ -24,7 +31,7 @@ config DVB_SAA716X_BUDGET
 
 config DVB_SAA716X_HYBRID
 	tristate "SAA7160/1/2 based Hybrid PCIe cards (DVB + Analog)"
-	depends on DVB_SAA716X_CORE && DVB_CORE && PCI && I2C
+	depends on SAA716X_CORE && DVB_CORE
 
 	help
 	  Support for the SAA7160/1/2 based Hybrid PCIe DVB cards
@@ -40,7 +47,7 @@ config DVB_SAA716X_HYBRID
 
 config DVB_SAA716X_FF
 	tristate "SAA7160/1/2 based Full Fledged PCIe cards"
-	depends on DVB_SAA716X_CORE && DVB_CORE && PCI && I2C
+	depends on SAA716X_CORE && DVB_CORE
 
 	help
 	  Support for the SAA7160/1/2 based  Full fledged PCIe DVB cards
@@ -51,3 +58,5 @@ config DVB_SAA716X_FF
 	  * Technotrend S2 6400 Dual S2 HD (DVB-S/S2 x2)
 
 	  Say Y if you own such a device and want to use it.
+
+endif # SAA716X_SUPPORT
