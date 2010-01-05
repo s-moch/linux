@@ -154,14 +154,14 @@ int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
 		goto fail0;
 	}
 
-	if (!pci_set_dma_mask(pdev, DMA_64BIT_MASK)) {
+	if (!pci_set_dma_mask(pdev, DMA_BIT_MASK(64))) {
 		use_dac = 1;
-		err = pci_set_consistent_dma_mask(pdev, DMA_64BIT_MASK);
+		err = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(64));
 		if (err) {
 			dprintk(SAA716x_ERROR, 1, "Unable to obtain 64bit DMA");
 			goto fail1;
 		}
-	} else if ((err = pci_set_consistent_dma_mask(pdev, DMA_32BIT_MASK)) != 0) {
+	} else if ((err = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(32))) != 0) {
 		dprintk(SAA716x_ERROR, 1, "Unable to obtain 32bit DMA");
 		goto fail1;
 	}
