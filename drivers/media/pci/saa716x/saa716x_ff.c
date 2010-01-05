@@ -860,7 +860,6 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 	msiStatusH = SAA716x_EPRD(MSI, MSI_INT_STATUS_H);
 	SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_H, msiStatusH);
 
-#if 1
 	if (msiStatusL) {
 		if (msiStatusL & MSI_INT_TAGACK_FGPI_2) {
 			u32 fgpiStatus;
@@ -884,8 +883,29 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 				SAA716x_EPWR(FGPI2, INT_CLR_STATUS, fgpiStatus);
 			}
 		}
+		if (msiStatusL & MSI_INT_TAGACK_FGPI_3) {
+			u32 fgpiStatus;
+			u32 activeBuffer;
+
+			fgpiStatus = SAA716x_EPRD(FGPI3, INT_STATUS);
+			activeBuffer = (SAA716x_EPRD(BAM, BAM_FGPI3_DMA_BUF_MODE) >> 3) & 0x7;
+			dprintk(SAA716x_DEBUG, 1, "fgpiStatus = %04X, buffer = %d",
+				fgpiStatus, activeBuffer);
+			if (activeBuffer > 0)
+				activeBuffer -= 1;
+			else
+				activeBuffer = 7;
+			if (saa716x->fgpi[3].dma_buf[activeBuffer].mem_virt) {
+				u8 * data = (u8 *)saa716x->fgpi[3].dma_buf[activeBuffer].mem_virt;
+				dprintk(SAA716x_DEBUG, 1, "%02X%02X%02X%02X",
+					data[0], data[1], data[2], data[3]);
+				dvb_dmx_swfilter_packets(&saa716x->saa716x_adap[1].demux, data, 348);
+			}
+			if (fgpiStatus) {
+				SAA716x_EPWR(FGPI3, INT_CLR_STATUS, fgpiStatus);
+			}
+		}
 	}
-#endif
 	if (msiStatusH) {
 		//dprintk(SAA716x_INFO, 1, "msiStatusH: %08X", msiStatusH);
 	}
@@ -1151,8 +1171,10 @@ static struct saa716x_config saa716x_s26400_config = {
 	.adap_config		= {
 		{
 			/* Adapter 0 */
+			.ts_port = 2
 		},{
 			/* Adapter 1 */
+			.ts_port = 3
 		}
 	}
 };
