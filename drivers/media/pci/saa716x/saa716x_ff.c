@@ -41,6 +41,7 @@
 #include "saa716x_priv.h"
 
 #include <linux/dvb/video.h>
+#include <linux/dvb/audio.h>
 #include <linux/dvb/osd.h>
 
 #include "stv6110x.h"
@@ -427,6 +428,64 @@ static int saa716x_ff_osd_init(struct saa716x_dev *saa716x)
 	return 0;
 }
 
+static int dvb_audio_ioctl(struct inode *inode, struct file *file,
+			   unsigned int cmd, void *parg)
+{
+	struct dvb_device *dvbdev	= file->private_data;
+	struct sti7109_dev *sti7109	= dvbdev->priv;
+	//struct saa716x_dev *saa716x	= sti7109->dev;
+	int ret = 0;
+
+	switch (cmd) {
+	case AUDIO_GET_PTS:
+	{
+		*(u64 *)parg = sti7109->audio_pts;
+		break;
+	}
+	default:
+		ret = -ENOIOCTLCMD;
+		break;
+	}
+	return ret;
+}
+
+static struct file_operations dvb_audio_fops = {
+	.owner		= THIS_MODULE,
+	.ioctl		= dvb_generic_ioctl,
+	.open		= dvb_generic_open,
+	.release	= dvb_generic_release,
+};
+
+static struct dvb_device dvbdev_audio = {
+	.priv		= NULL,
+	.users		= 1,
+	.writers	= 1,
+	.fops		= &dvb_audio_fops,
+	.kernel_ioctl	= dvb_audio_ioctl,
+};
+
+static int saa716x_ff_audio_exit(struct saa716x_dev *saa716x)
+{
+	struct sti7109_dev *sti7109 = saa716x->priv;
+
+	dvb_unregister_device(sti7109->audio_dev);
+	return 0;
+}
+
+static int saa716x_ff_audio_init(struct saa716x_dev *saa716x)
+{
+	struct saa716x_adapter *saa716x_adap	= saa716x->saa716x_adap;
+	struct sti7109_dev *sti7109		= saa716x->priv;
+
+	dvb_register_device(&saa716x_adap->dvb_adapter,
+			    &sti7109->audio_dev,
+			    &dvbdev_audio,
+			    sti7109,
+			    DVB_DEVICE_AUDIO);
+
+	return 0;
+}
+
 #define FREE_COND_TS (dvb_ringbuffer_free(&sti7109->tsout) >= TS_SIZE)
 
 static ssize_t dvb_video_write(struct file *file, const char __user *buf,
@@ -757,16 +816,24 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 		goto fail7;
 	}
 
+	err = saa716x_ff_audio_init(saa716x);
+	if (err) {
+		dprintk(SAA716x_ERROR, 1, "SAA716x FF AUDIO initialization failed");
+		goto fail8;
+	}
+
 	err = saa716x_ff_osd_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x FF OSD initialization failed");
-		goto fail8;
+		goto fail9;
 	}
 
 	return 0;
 
-fail8:
+fail9:
 	saa716x_ff_osd_exit(saa716x);
+fail8:
+	saa716x_ff_audio_exit(saa716x);
 fail7:
 	saa716x_ff_video_exit(saa716x);
 fail6:
@@ -796,6 +863,8 @@ static void __devexit saa716x_ff_pci_remove(struct pci_dev *pdev)
 	struct sti7109_dev *sti7109 = saa716x->priv;
 
 	saa716x_ff_osd_exit(saa716x);
+
+	saa716x_ff_audio_exit(saa716x);
 
 	saa716x_ff_video_exit(saa716x);
 
