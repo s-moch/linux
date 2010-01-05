@@ -44,16 +44,27 @@
 #define ISR_VIDEO_PTS_MASK	0x0040 /* interrupt source for video PTS */
 #define ISR_CURRENT_STC_MASK	0x0080 /* interrupt source for current system clock */
 #define ISR_REMOTE_EVENT_MASK	0x0100 /* interrupt source for remote events */
-#define ISR_FIFO_EMPTY_MASK	0x8000 /* interrupt source for FIFO empty */
+#define ISR_DVO_FORMAT_MASK	0x0200 /* interrupt source for DVO format change */
+#define ISR_OSD_CMD_MASK	0x0400 /* interrupt source for OSD cmds */
+#define ISR_OSD_READY_MASK	0x0800 /* interrupt source for OSD command acknowledge */
+#define ISR_FE_CMD_MASK		0x1000 /* interrupt source for frontend cmds */
+#define ISR_FE_READY_MASK	0x2000 /* interrupt source for frontend command acknowledge */
+#define ISR_FIFO2_EMPTY_MASK	0x4000 /* interrupt source for FIFO2 empty */
+#define ISR_FIFO1_EMPTY_MASK	0x8000 /* interrupt source for FIFO1 empty */
 
 #define ADDR_CMD_DATA		0x0000 /* address for cmd data in fpga dpram */
-#define ADDR_BLOCK_DATA		0x0600 /* address for block data in fpga dpram */
+#define ADDR_OSD_CMD_DATA	0x01A0 /* address for OSD cmd data */
+#define ADDR_FE_CMD_DATA	0x05C0 /* address for frontend cmd data */
+#define ADDR_BLOCK_DATA		0x0600 /* address for block data */
 #define ADDR_AUDIO_PTS		0x3E00 /* address for audio PTS (64 Bits) */
 #define ADDR_VIDEO_PTS		0x3E08 /* address for video PTS (64 Bits) */
 #define ADDR_CURRENT_STC	0x3E10 /* address for system clock (64 Bits) */
+#define ADDR_DVO_FORMAT		0x3E18 /* address for DVO format 32 Bits) */
 #define ADDR_REMOTE_EVENT	0x3F00 /* address for remote events (32 Bits) */
 
-#define SIZE_CMD_DATA		0x0600 /* maximum size for command data (1,5 kB) */
+#define SIZE_CMD_DATA		0x01A0 /* maximum size for command data (416 Bytes) */
+#define SIZE_OSD_CMD_DATA	0x0420 /* maximum size for OSD command data (1056 Bytes) */
+#define SIZE_FE_CMD_DATA	0x0040 /* maximum size for frontend command data (64 Bytes) */
 #define SIZE_BLOCK_DATA		0x3800 /* maximum size for block data (14 kB) */
 
 #define SIZE_BLOCK_HEADER	8      /* block header size */
@@ -85,6 +96,14 @@ struct sti7109_dev {
 	u8			result_data[MAX_RESULT_LEN];
 	u32			result_len;
 
+	wait_queue_head_t	osd_cmd_ready_wq;
+	int			osd_cmd_ready;
+
+	wait_queue_head_t	osd_result_avail_wq;
+	int			osd_result_avail;
+	u8			osd_result_data[MAX_RESULT_LEN];
+	u32			osd_result_len;
+
 	u16			data_handle;
 	wait_queue_head_t	data_ready_wq;
 	int			data_ready;
@@ -92,6 +111,7 @@ struct sti7109_dev {
 	int			block_done;
 
 	struct mutex		cmd_lock;
+	struct mutex		osd_cmd_lock;
 	struct mutex		data_lock;
 
 	u64			audio_pts;
