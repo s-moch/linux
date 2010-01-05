@@ -43,8 +43,9 @@
 #include <linux/dvb/video.h>
 #include <linux/dvb/osd.h>
 
-#include "stv090x_reg.h"
+#include "stv6110x.h"
 #include "stv090x.h"
+#include "isl6423.h"
 
 unsigned int verbose;
 module_param(verbose, int, 0644);
@@ -1096,18 +1097,54 @@ static int load_config_s26400(struct saa716x_dev *saa716x)
 #define SAA716x_MODEL_S2_6400_DUAL	"Technotrend S2 6400 Dual S2 Premium"
 #define SAA716x_DEV_S2_6400_DUAL	"2x DVB-S/S2 + Hardware decode"
 
-static struct stv090x_config tt6400_config = {
-	.demod_mode	= STV090x_DUAL,
-	.clk_mode	= STV090x_CLK_EXT,
+static struct stv090x_config tt6400_stv090x_config = {
+	.device			= STV0900,
+	.demod_mode		= STV090x_DUAL,
+	.clk_mode		= STV090x_CLK_EXT,
 
-	.xtal		= 8000000,
-	.address	= 0x68,
+	.xtal			= 13500000,
+	.address		= 0x68,
 
-	.ref_clk	= 27000000,
+	.ts1_mode		= STV090x_TSMODE_SERIAL_CONTINUOUS,
+	.ts2_mode		= STV090x_TSMODE_SERIAL_CONTINUOUS,
+	.ts1_clk		= 90000000,
+	.ts2_clk		= 90000000,
 
-	.ts1_mode	= STV090x_TSMODE_SERIAL_CONTINUOUS,
-	.ts2_mode	= STV090x_TSMODE_SERIAL_CONTINUOUS,
+	.repeater_level		= STV090x_RPTLEVEL_16,
+
+	.tuner_init		= NULL,
+	.tuner_set_mode		= NULL,
+	.tuner_set_frequency	= NULL,
+	.tuner_get_frequency	= NULL,
+	.tuner_set_bandwidth	= NULL,
+	.tuner_get_bandwidth	= NULL,
+	.tuner_set_bbgain	= NULL,
+	.tuner_get_bbgain	= NULL,
+	.tuner_set_refclk	= NULL,
+	.tuner_get_status	= NULL,
 };
+
+static struct stv6110x_config tt6400_stv6110x_config = {
+	.addr			= 0x60,
+	.refclk			= 27000000,
+	.clk_div		= 2,
+};
+
+static struct isl6423_config tt6400_isl6423_config[2] = {
+	{
+		.current_max		= SEC_CURRENT_515m,
+		.curlim			= SEC_CURRENT_LIM_ON,
+		.mod_extern		= 1,
+		.addr			= 0x09,
+	},
+	{
+		.current_max		= SEC_CURRENT_515m,
+		.curlim			= SEC_CURRENT_LIM_ON,
+		.mod_extern		= 1,
+		.addr			= 0x08,
+	}
+};
+
 
 static int saa716x_s26400_frontend_attach(struct saa716x_adapter *adapter, int count)
 {
@@ -1118,31 +1155,39 @@ static int saa716x_s26400_frontend_attach(struct saa716x_adapter *adapter, int c
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
 
-	if (count == 0) {
-		adapter->fe = stv090x_attach(&tt6400_config,
-					     i2c_adapter,
-					     STV090x_DEMODULATOR_0);
+	if (count == 0 || count == 1) {
+		adapter->fe = dvb_attach(stv090x_attach,
+					 &tt6400_stv090x_config,
+					 i2c_adapter,
+					 STV090x_DEMODULATOR_0 + count);
 
-		if (adapter->fe == NULL) {
-			dprintk(SAA716x_ERROR, 1, "A frontend driver was not found for [%04x:%04x subsystem [%04x:%04x]\n",
-				saa716x->pdev->vendor,
-				saa716x->pdev->device,
-				saa716x->pdev->subsystem_vendor,
-				saa716x->pdev->subsystem_device);
+		if (adapter->fe) {
+			struct stv6110x_devctl *ctl;
+			ctl = dvb_attach(stv6110x_attach,
+					 adapter->fe,
+					 &tt6400_stv6110x_config,
+					 i2c_adapter);
+
+			tt6400_stv090x_config.tuner_init	  = ctl->tuner_init;
+			tt6400_stv090x_config.tuner_set_mode	  = ctl->tuner_set_mode;
+			tt6400_stv090x_config.tuner_set_frequency = ctl->tuner_set_frequency;
+			tt6400_stv090x_config.tuner_get_frequency = ctl->tuner_get_frequency;
+			tt6400_stv090x_config.tuner_set_bandwidth = ctl->tuner_set_bandwidth;
+			tt6400_stv090x_config.tuner_get_bandwidth = ctl->tuner_get_bandwidth;
+			tt6400_stv090x_config.tuner_set_bbgain	  = ctl->tuner_set_bbgain;
+			tt6400_stv090x_config.tuner_get_bbgain	  = ctl->tuner_get_bbgain;
+			tt6400_stv090x_config.tuner_set_refclk	  = ctl->tuner_set_refclk;
+			tt6400_stv090x_config.tuner_get_status	  = ctl->tuner_get_status;
+
+			dvb_attach(isl6423_attach,
+				   adapter->fe,
+				   i2c_adapter,
+				   &tt6400_isl6423_config[count]);
 
 		} else {
-			if (dvb_register_frontend(&adapter->dvb_adapter, adapter->fe)) {
-				dprintk(SAA716x_ERROR, 1, "Frontend registration failed!\n");
-				dvb_frontend_detach(adapter->fe);
-				adapter->fe = NULL;
-			}
+			dvb_frontend_detach(adapter->fe);
+			adapter->fe = NULL;
 		}
-
-	} else if (count == 1) {
-		adapter->fe = stv090x_attach(&tt6400_config,
-					     i2c_adapter,
-					     STV090x_DEMODULATOR_1);
-
 		if (adapter->fe == NULL) {
 			dprintk(SAA716x_ERROR, 1, "A frontend driver was not found for [%04x:%04x subsystem [%04x:%04x]\n",
 				saa716x->pdev->vendor,
@@ -1158,7 +1203,6 @@ static int saa716x_s26400_frontend_attach(struct saa716x_adapter *adapter, int c
 			}
 		}
 	}
-
 	return 0;
 }
 
