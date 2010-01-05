@@ -220,6 +220,10 @@ static int saa716x_ff_st7109_init(struct saa716x_dev *saa716x)
 		}
 	}
 
+	/* disable frontend support through ST firmware */
+	SAA716x_EPWR(PHI_1, 0x3ff4, 1);
+
+	/* indicate end of transfer */
 	writtenBlock++;
 	writtenBlock |= 0x80000000;
 	SAA716x_EPWR(PHI_1, 0x3ff8, writtenBlock);
