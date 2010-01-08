@@ -160,7 +160,7 @@ static void saa716x_dmabuf_sgpagefill(struct saa716x_dmabuf *dmabuf, struct scat
 	struct scatterlist *sg_cur;
 
 	u32 *page;
-	int i, j, k;
+	int i, j, k = 0;
 	dma_addr_t addr = 0;
 
 	BUG_ON(dmabuf == NULL);
