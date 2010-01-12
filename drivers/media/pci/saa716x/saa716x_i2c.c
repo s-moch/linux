@@ -148,6 +148,15 @@ static void saa716x_term_xfer(struct saa716x_i2c *i2c, u32 I2C_DEV)
 	return;
 }
 
+static void saa716x_i2c_hwdeinit(struct saa716x_i2c *i2c, u32 I2C_DEV)
+{
+	struct saa716x_dev *saa716x = i2c->saa716x;
+
+	/* Disable all interrupts and clear status */
+	SAA716x_EPWR(I2C_DEV, INT_CLR_ENABLE, 0x1fff);
+	SAA716x_EPWR(I2C_DEV, INT_CLR_STATUS, 0x1fff);
+}
+
 static int saa716x_i2c_hwinit(struct saa716x_i2c *i2c, u32 I2C_DEV)
 {
 	struct saa716x_dev *saa716x = i2c->saa716x;
@@ -563,6 +572,7 @@ int __devexit saa716x_i2c_exit(struct saa716x_dev *saa716x)
 #if 0
 		saa716x_remove_irqvector(saa716x, i2c_vec[i].vector);
 #endif
+		saa716x_i2c_hwdeinit(i2c, SAA716x_I2C_BUS(i));
 		dprintk(SAA716x_DEBUG, 1, "Removing adapter (%d) %s", i, adapter->name);
 
 		err = i2c_del_adapter(adapter);
