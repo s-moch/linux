@@ -10,7 +10,9 @@
 #include "saa716x_dma_reg.h"
 #include "saa716x_gpio_reg.h"
 #include "saa716x_fgpi_reg.h"
+#include "saa716x_dcs_reg.h"
 
+#include "saa716x_boot.h"
 #include "saa716x_spi.h"
 #include "saa716x_priv.h"
 
@@ -222,6 +224,12 @@ EXPORT_SYMBOL_GPL(saa716x_core_boot);
 
 int saa716x_jetpack_init(struct saa716x_dev *saa716x)
 {
+	/*
+	 * create time out for blocks that have no clock
+	 * helps with lower bitrates on FGPI
+	 */
+	SAA716x_EPWR(DCS, DCSC_CTRL, ENABLE_TIMEOUT);
+
 	/* Reset all blocks */
 	SAA716x_EPWR(MSI, MSI_SW_RST, MSI_SW_RESET);
 	SAA716x_EPWR(MMU, MMU_SW_RST, MMU_SW_RESET);
