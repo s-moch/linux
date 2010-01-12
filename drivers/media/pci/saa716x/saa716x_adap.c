@@ -16,14 +16,29 @@
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
 
-void saa716x_dma_start(struct saa716x_dev *saa716x)
+void saa716x_dma_start(struct saa716x_dev *saa716x, u8 adapter)
 {
-	dprintk(SAA716x_DEBUG, 1, "SAA716x Start DMA engine");
+	struct fgpi_stream_params params;
+
+	dprintk(SAA716x_DEBUG, 1, "SAA716x Start DMA engine for Adapter:%d", adapter);
+
+	params.bits		= 8;
+	params.samples		= 188;
+	params.lines		= 348;
+	params.pitch		= 188;
+	params.offset		= 0;
+	params.page_tables	= 0;
+	params.stream_type	= FGPI_TRANSPORT_STREAM;
+	params.stream_flags	= 0;
+
+	saa716x_fgpi_start(saa716x, saa716x->config->adap_config[adapter].ts_port, &params);
 }
 
-void saa716x_dma_stop(struct saa716x_dev *saa716x)
+void saa716x_dma_stop(struct saa716x_dev *saa716x, u8 adapter)
 {
-	dprintk(SAA716x_DEBUG, 1, "SAA716x Stop DMA engine");
+	dprintk(SAA716x_DEBUG, 1, "SAA716x Stop DMA engine for Adapter:%d", adapter);
+
+	saa716x_fgpi_stop(saa716x, saa716x->config->adap_config[adapter].ts_port);
 }
 
 static int saa716x_dvb_start_feed(struct dvb_demux_feed *dvbdmxfeed)
@@ -44,7 +59,7 @@ static int saa716x_dvb_start_feed(struct dvb_demux_feed *dvbdmxfeed)
 	if (saa716x_adap->feeds == 1) {
 		dprintk(SAA716x_DEBUG, 1, "SAA716x start feed & dma");
 		printk("saa716x start feed & dma\n");
-		saa716x_dma_start(saa716x);
+		saa716x_dma_start(saa716x, saa716x_adap->count);
 	}
 
 	return saa716x_adap->feeds;
@@ -65,7 +80,7 @@ static int saa716x_dvb_stop_feed(struct dvb_demux_feed *dvbdmxfeed)
 	if (saa716x_adap->feeds == 0) {
 		dprintk(SAA716x_DEBUG, 1, "saa716x stop feed and dma");
 		printk("saa716x stop feed and dma\n");
-		saa716x_dma_stop(saa716x);
+		saa716x_dma_stop(saa716x, saa716x_adap->count);
 	}
 
 	return 0;
@@ -117,6 +132,9 @@ int __devinit saa716x_dvb_init(struct saa716x_dev *saa716x)
 			dprintk(SAA716x_ERROR, 1, "Error registering adapter");
 			return -ENODEV;
 		}
+
+		saa716x_adap->count			= i;
+
 		saa716x_adap->dvb_adapter.priv		= saa716x_adap;
 		saa716x_adap->demux.dmx.capabilities	= DMX_TS_FILTERING	|
 							  DMX_SECTION_FILTERING	|
@@ -209,24 +227,11 @@ int __devinit saa716x_dvb_init(struct saa716x_dev *saa716x)
 			dprintk(SAA716x_ERROR, 1, "Frontend attach = NULL");
 		}
 
+		saa716x_fgpi_init(saa716x, config->adap_config[i].ts_port);
+
 		saa716x_adap++;
 	}
 
-	for (i = 0; i < config->adapters; i++) {
-		struct fgpi_stream_params params;
-
-		saa716x_fgpi_init(saa716x, config->adap_config[i].ts_port);
-
-		params.bits = 8;
-		params.samples = 188;
-		params.lines = 348;
-		params.pitch = 188;
-		params.offset = 0;
-		params.page_tables = 0;
-		params.stream_type = FGPI_TRANSPORT_STREAM;
-		params.stream_flags = 0;
-		saa716x_fgpi_start(saa716x, config->adap_config[i].ts_port, &params);
-	}
 
 	return 0;
 
@@ -256,11 +261,8 @@ void __devexit saa716x_dvb_exit(struct saa716x_dev *saa716x)
 	int i;
 
 	for (i = 0; i < saa716x->config->adapters; i++) {
-		saa716x_fgpi_stop(saa716x, saa716x->config->adap_config[i].ts_port);
-		saa716x_fgpi_exit(saa716x, saa716x->config->adap_config[i].ts_port);
-	}
 
-	for (i = 0; i < saa716x->config->adapters; i++) {
+		saa716x_fgpi_exit(saa716x, saa716x->config->adap_config[i].ts_port);
 
 		if (saa716x_adap->fe) {
 			dvb_unregister_frontend(saa716x_adap->fe);
