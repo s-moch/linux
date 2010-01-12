@@ -300,25 +300,14 @@ static int saa716x_vp6090_frontend_attach(struct saa716x_adapter *adapter, int c
 #endif
 	adapter->fe = tda10046_attach(&tda1004x_vp6090_config, &i2c->i2c_adapter);
 	if (adapter->fe == NULL) {
-		dprintk(SAA716x_ERROR, 1, "A frontend driver was not found for [%04x:%04x subsystem [%04x:%04x]\n",
-			saa716x->pdev->vendor,
-			saa716x->pdev->device,
-			saa716x->pdev->subsystem_vendor,
-			saa716x->pdev->subsystem_device);
+		dprintk(SAA716x_ERROR, 1, "Frontend attach failed");
+		return -ENODEV;
 	} else {
-		if (dvb_register_frontend(&adapter->dvb_adapter, adapter->fe)) {
-			dprintk(SAA716x_ERROR, 1, "Frontend registration failed!\n");
-			dvb_frontend_detach(adapter->fe);
-			adapter->fe = NULL;
-			goto exit;
-		}
+		dprintk(SAA716x_ERROR, 1, "Done!");
+		return 0;
 	}
 
-	dprintk(SAA716x_ERROR, 1, "Done!");
 	return 0;
-exit:
-	dprintk(SAA716x_ERROR, 1, "Frontend attach failed");
-	return -ENODEV;
 }
 
 static struct saa716x_config saa716x_vp6090_config = {
@@ -370,28 +359,24 @@ static int saa716x_atlantis_frontend_attach(struct saa716x_adapter *adapter, int
 	struct saa716x_dev *saa716x = adapter->saa716x;
 	struct saa716x_i2c *i2c = &saa716x->i2c[count];
 
-	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
-	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
-	dprintk(SAA716x_ERROR, 1, "Adapter (%d) Power ON", count);
-	saa716x_gpio_write(saa716x, GPIO_14, 1);
-	msleep(100);
+	if (count  == 0) {
+		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
+		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
+		dprintk(SAA716x_ERROR, 1, "Adapter (%d) Power ON", count);
+		saa716x_gpio_write(saa716x, GPIO_14, 1);
+		msleep(100);
 
-	adapter->fe = tda10046_attach(&tda1004x_atlantis_config, &i2c->i2c_adapter);
-	if (adapter->fe == NULL) {
-		dprintk(SAA716x_ERROR, 1, "A frontend driver was not found for [%04x:%04x subsystem [%04x:%04x]\n",
-			saa716x->pdev->vendor,
-			saa716x->pdev->device,
-			saa716x->pdev->subsystem_vendor,
-			saa716x->pdev->subsystem_device);
-	} else {
-		if (dvb_register_frontend(&adapter->dvb_adapter, adapter->fe)) {
-			dprintk(SAA716x_ERROR, 1, "Frontend registration failed!\n");
-			dvb_frontend_detach(adapter->fe);
-			adapter->fe = NULL;
+		adapter->fe = tda10046_attach(&tda1004x_atlantis_config, &i2c->i2c_adapter);
+		if (adapter->fe == NULL) {
+			dprintk(SAA716x_ERROR, 1, "Frontend attach failed");
+			return -ENODEV;
+		} else {
+			dprintk(SAA716x_ERROR, 1, "Done!");
+			return 0;
 		}
 	}
 
-	return -ENODEV;
+	return 0;
 }
 
 static struct saa716x_config saa716x_atlantis_config = {
@@ -446,22 +431,11 @@ static int saa716x_nemo_frontend_attach(struct saa716x_adapter *adapter, int cou
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
 
-	dprintk(SAA716x_ERROR, 1, "Adapter (%d) Power ON", count);
-	saa716x_gpio_write(saa716x, GPIO_14, 1);
-	msleep(100);
-	adapter->fe = tda10046_attach(&tda1004x_nemo_config, &i2c->i2c_adapter);
-	if (adapter->fe == NULL) {
-		dprintk(SAA716x_ERROR, 1, "A frontend driver was not found for [%04x:%04x subsystem [%04x:%04x]\n",
-			saa716x->pdev->vendor,
-			saa716x->pdev->device,
-			saa716x->pdev->subsystem_vendor,
-			saa716x->pdev->subsystem_device);
-	} else {
-		if (dvb_register_frontend(&adapter->dvb_adapter, adapter->fe)) {
-			dprintk(SAA716x_ERROR, 1, "Frontend registration failed!\n");
-			dvb_frontend_detach(adapter->fe);
-			adapter->fe = NULL;
-		}
+	if (count  == 0) {
+		dprintk(SAA716x_ERROR, 1, "Adapter (%d) Power ON", count);
+		saa716x_gpio_write(saa716x, GPIO_14, 1);
+		msleep(100);
+		adapter->fe = tda10046_attach(&tda1004x_nemo_config, &i2c->i2c_adapter);
 	}
 
 	return 0;
@@ -501,27 +475,12 @@ static struct zl10353_config saa716x_averhc82_zl10353_config = {
 static int saa716x_averhc82_frontend_attach(struct saa716x_adapter *adapter, int count)
 {
 	struct saa716x_dev *saa716x = adapter->saa716x;
-//	struct saa716x_i2c *i2c = &saa716x->i2c[count];
 
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
 
 //	adapter->fe = zl10353_attach(&saa716x_averhc82_zl10353_config, &i2c->i2c_adapter);
-	if (adapter->fe == NULL) {
-		dprintk(SAA716x_ERROR, 1, "No Frontend found");
-		return -ENODEV;
-	} else {
-		dprintk(SAA716x_ERROR, 1, "Adapter (%d) ZL10353 demodulator succesfully attached", count);
-		if (dvb_register_frontend(&adapter->dvb_adapter, adapter->fe)) {
-			dprintk(SAA716x_ERROR, 1, "ERROR: Frontend registration failed");
 
-			if (adapter->fe->ops.release)
-				adapter->fe->ops.release(adapter->fe);
-
-			adapter->fe = NULL;
-			return -ENODEV;
-		}
-	}
 
 	return 0;
 }
