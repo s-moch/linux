@@ -1381,23 +1381,6 @@ static int saa716x_s26400_frontend_attach(struct saa716x_adapter *adapter, int c
 				   i2c_adapter,
 				   &tt6400_isl6423_config[count]);
 
-		} else {
-			dvb_frontend_detach(adapter->fe);
-			adapter->fe = NULL;
-		}
-		if (adapter->fe == NULL) {
-			dprintk(SAA716x_ERROR, 1, "A frontend driver was not found for [%04x:%04x subsystem [%04x:%04x]\n",
-				saa716x->pdev->vendor,
-				saa716x->pdev->device,
-				saa716x->pdev->subsystem_vendor,
-				saa716x->pdev->subsystem_device);
-
-		} else {
-			if (dvb_register_frontend(&adapter->dvb_adapter, adapter->fe)) {
-				dprintk(SAA716x_ERROR, 1, "Frontend registration failed!\n");
-				dvb_frontend_detach(adapter->fe);
-				adapter->fe = NULL;
-			}
 		}
 	}
 	return 0;
