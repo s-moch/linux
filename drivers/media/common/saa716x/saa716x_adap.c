@@ -186,10 +186,28 @@ int __devinit saa716x_dvb_init(struct saa716x_dev *saa716x)
 			goto err5;
 		}
 
-		if (config->frontend_attach)
-			config->frontend_attach(saa716x_adap, i);
-		else
+		if (config->frontend_attach) {
+			result = config->frontend_attach(saa716x_adap, i);
+			if (result < 0)
+				dprintk(SAA716x_ERROR, 1, "SAA716x frontend attach failed");
+
+			if (saa716x_adap->fe == NULL) {
+				dprintk(SAA716x_ERROR, 1, "A frontend driver was not found for [%04x:%04x] subsystem [%04x:%04x]\n",
+					saa716x->pdev->vendor,
+					saa716x->pdev->device,
+					saa716x->pdev->subsystem_vendor,
+					saa716x->pdev->subsystem_device);
+			} else {
+				result = dvb_register_frontend(&saa716x_adap->dvb_adapter, saa716x_adap->fe);
+				if (result < 0) {
+					dprintk(SAA716x_ERROR, 1, "SAA716x register frontend failed");
+					goto err6;
+				}
+			}
+
+		} else {
 			dprintk(SAA716x_ERROR, 1, "Frontend attach = NULL");
+		}
 
 		saa716x_adap++;
 	}
@@ -213,6 +231,8 @@ int __devinit saa716x_dvb_init(struct saa716x_dev *saa716x)
 	return 0;
 
 	/* Error conditions */
+err6:
+	dvb_frontend_detach(saa716x_adap->fe);
 err5:
 	saa716x_frontend_power(saa716x, i, 0);
 err4:
@@ -241,6 +261,11 @@ void __devexit saa716x_dvb_exit(struct saa716x_dev *saa716x)
 	}
 
 	for (i = 0; i < saa716x->config->adapters; i++) {
+
+		if (saa716x_adap->fe) {
+			dvb_unregister_frontend(saa716x_adap->fe);
+			dvb_frontend_detach(saa716x_adap->fe);
+		}
 
 //		tasklet_kill(&saa716x->tasklet);
 		dvb_net_release(&saa716x_adap->dvb_net);
