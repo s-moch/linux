@@ -122,6 +122,7 @@ struct saa716x_adapter {
 	struct saa716x_dev		*saa716x;
 
 	u8				feeds;
+	u8				count;
 };
 
 struct saa716x_dev {
