@@ -292,21 +292,31 @@ static int saa716x_vp1028_frontend_attach(struct saa716x_adapter *adapter, int c
 	struct saa716x_i2c *i2c = &saa716x->i2c[0];
 
 	if (count == 0) {
-		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
-		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
 
-		dprintk(SAA716x_ERROR, 1, "Adapter (%d) Power ON", count);
-		saa716x_gpio_write(saa716x, GPIO_10, 1);
+		mutex_lock(&saa716x->adap_lock);
+
+		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Power ON", count);
+		saa716x_gpio_set_output(saa716x, 10);
+		msleep(1);
+
+		/* VP-1028 has inverted power supply control */
+		saa716x_gpio_write(saa716x, 10, 1); /* set to standby */
+		saa716x_gpio_write(saa716x, 10, 0); /* switch it on */
 		msleep(100);
 
-		saa716x_gpio_write(saa716x, GPIO_12, 1);
+		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Reset", count);
+		saa716x_gpio_set_output(saa716x, 12);
+		msleep(1);
+
+		/* reset demodulator (Active LOW) */
+		saa716x_gpio_write(saa716x, 12, 1);
 		msleep(100);
-		saa716x_gpio_write(saa716x, GPIO_12, 0);
+		saa716x_gpio_write(saa716x, 12, 0);
 		msleep(100);
-		saa716x_gpio_write(saa716x, GPIO_12, 1);
+		saa716x_gpio_write(saa716x, 12, 1);
 		msleep(100);
-		saa716x_gpio_write(saa716x, GPIO_12, 0);
-		msleep(100);
+
+		mutex_unlock(&saa716x->adap_lock);
 
 		dprintk(SAA716x_ERROR, 1, "Probing for MB86A16 (DVB-S/DSS)");
 		adapter->fe = mb86a16_attach(&vp1028_mb86a16_config, &i2c->i2c_adapter);
