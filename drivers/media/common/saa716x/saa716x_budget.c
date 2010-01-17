@@ -296,7 +296,7 @@ static int saa716x_vp1028_frontend_attach(struct saa716x_adapter *adapter, int c
 		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
 
 		dprintk(SAA716x_ERROR, 1, "Adapter (%d) Power ON", count);
-		saa716x_gpio_write(saa716x, GPIO_10, 0);
+		saa716x_gpio_write(saa716x, GPIO_10, 1);
 		msleep(100);
 
 		saa716x_gpio_write(saa716x, GPIO_12, 1);
