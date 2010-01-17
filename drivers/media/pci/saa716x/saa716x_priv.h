@@ -155,6 +155,7 @@ struct saa716x_dev {
 	struct saa716x_spi_config	spi_config;
 
 	struct saa716x_adapter		saa716x_adap[2];
+	struct mutex			adap_lock;
 	struct saa716x_cgu		cgu;
 
 	spinlock_t			gpio_lock;
