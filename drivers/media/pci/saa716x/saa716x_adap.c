@@ -86,41 +86,13 @@ static int saa716x_dvb_stop_feed(struct dvb_demux_feed *dvbdmxfeed)
 	return 0;
 }
 
-static int saa716x_frontend_power(struct saa716x_dev *saa716x, u8 DEV, u8 control)
-{
-	struct saa716x_config *config		= saa716x->config;
-	struct saa716x_adap_config *adap_cfg	= &config->adap_config[DEV];
-
-	if (adap_cfg->power_ctl != 0) {
-		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Power ON", DEV);
-		/* configure GPIO as output */
-		saa716x_gpio_ctl(saa716x, ~adap_cfg->power_ctl, 0);
-		saa716x_gpio_bits(saa716x, adap_cfg->power_ctl);
-	}
-
-	return 0;
-}
-
-static int saa716x_frontend_reset(struct saa716x_dev *saa716x, u8 DEV)
-{
-	struct saa716x_config *config		= saa716x->config;
-	struct saa716x_adap_config *adap_cfg	= &config->adap_config[DEV];
-
-	if (adap_cfg->reset_ctl != 0) {
-		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) RESET", DEV);
-		/* configure GPIO as output */
-		saa716x_gpio_ctl(saa716x, ~adap_cfg->reset_ctl, 0);
-		saa716x_gpio_bits(saa716x, adap_cfg->reset_ctl);
-	}
-
-	return 0;
-}
-
 int __devinit saa716x_dvb_init(struct saa716x_dev *saa716x)
 {
 	struct saa716x_adapter *saa716x_adap = saa716x->saa716x_adap;
 	struct saa716x_config *config = saa716x->config;
 	int result, i;
+
+	mutex_init(&saa716x->adap_lock);
 
 	for (i = 0; i < config->adapters; i++) {
 
@@ -196,16 +168,6 @@ int __devinit saa716x_dvb_init(struct saa716x_dev *saa716x)
 		dprintk(SAA716x_DEBUG, 1, "Frontend Init");
 		saa716x_adap->saa716x = saa716x;
 
-		if ((result = saa716x_frontend_power(saa716x, i, 1)) < 0) {
-			dprintk(SAA716x_ERROR, 1, "SAA716x frontend powerup failed");
-			goto err5;
-		}
-
-		if ((result = saa716x_frontend_reset(saa716x, i)) < 0) {
-			dprintk(SAA716x_ERROR, 1, "SAA716x frontend reset failed");
-			goto err5;
-		}
-
 		if (config->frontend_attach) {
 			result = config->frontend_attach(saa716x_adap, i);
 			if (result < 0)
@@ -240,8 +202,6 @@ int __devinit saa716x_dvb_init(struct saa716x_dev *saa716x)
 	/* Error conditions */
 err6:
 	dvb_frontend_detach(saa716x_adap->fe);
-err5:
-	saa716x_frontend_power(saa716x, i, 0);
 err4:
 	saa716x_adap->demux.dmx.remove_frontend(&saa716x_adap->demux.dmx, &saa716x_adap->fe_mem);
 err3:
