@@ -93,7 +93,8 @@ static int saa716x_frontend_power(struct saa716x_dev *saa716x, u8 DEV, u8 contro
 
 	if (adap_cfg->power_ctl != 0) {
 		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Power ON", DEV);
-		saa716x_gpio_ctl(saa716x, 0, adap_cfg->power_ctl); /* TODO! check mask */
+		/* configure GPIO as output */
+		saa716x_gpio_ctl(saa716x, ~adap_cfg->power_ctl, 0);
 		saa716x_gpio_bits(saa716x, adap_cfg->power_ctl);
 	}
 
@@ -107,7 +108,8 @@ static int saa716x_frontend_reset(struct saa716x_dev *saa716x, u8 DEV)
 
 	if (adap_cfg->reset_ctl != 0) {
 		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) RESET", DEV);
-		saa716x_gpio_ctl(saa716x, 0, adap_cfg->reset_ctl); /* TODO! check mask */
+		/* configure GPIO as output */
+		saa716x_gpio_ctl(saa716x, ~adap_cfg->reset_ctl, 0);
 		saa716x_gpio_bits(saa716x, adap_cfg->reset_ctl);
 	}
 
