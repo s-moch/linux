@@ -55,8 +55,8 @@ void saa716x_gpio_ctl(struct saa716x_dev *saa716x, u32 mask, u32 bits)
 	spin_lock_irqsave(&saa716x->gpio_lock, flags);
 
 	reg  = SAA716x_EPRD(GPIO, GPIO_OEN);
-	reg &= ~mask;
-	reg |= (bits & mask);
+	reg &= mask;
+	reg |= bits;
 	SAA716x_EPWR(GPIO, GPIO_OEN, reg);
 
 	spin_unlock_irqrestore(&saa716x->gpio_lock, flags);
