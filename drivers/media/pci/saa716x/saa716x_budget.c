@@ -289,7 +289,7 @@ struct mb86a16_config vp1028_mb86a16_config = {
 static int saa716x_vp1028_frontend_attach(struct saa716x_adapter *adapter, int count)
 {
 	struct saa716x_dev *saa716x = adapter->saa716x;
-	struct saa716x_i2c *i2c = &saa716x->i2c[0];
+	struct saa716x_i2c *i2c = &saa716x->i2c[1];
 
 	if (count == 0) {
 
