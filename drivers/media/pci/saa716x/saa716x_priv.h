@@ -84,8 +84,6 @@ struct saa716x_spi_config;
 typedef int (*saa716x_load_config_t)(struct saa716x_dev *saa716x);
 
 struct saa716x_adap_config {
-	u32				power_ctl;
-	u32				reset_ctl;
 	u32				ts_port;
 };
 
