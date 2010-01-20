@@ -428,17 +428,31 @@ static int saa716x_nemo_frontend_attach(struct saa716x_adapter *adapter, int cou
 	struct saa716x_dev *saa716x = adapter->saa716x;
 	struct saa716x_i2c *i2c = &saa716x->i2c[1];
 
-	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
-	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
 
 	if (count  == 0) {
+		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
+		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
 		dprintk(SAA716x_ERROR, 1, "Adapter (%d) Power ON", count);
-		saa716x_gpio_write(saa716x, GPIO_14, 1);
+
+		saa716x_gpio_set_output(saa716x, 14);
+		saa716x_gpio_write(saa716x, 14, 1);
 		msleep(100);
+
 		adapter->fe = tda10046_attach(&tda1004x_nemo_config, &i2c->i2c_adapter);
+		if (adapter->fe) {
+			dprintk(SAA716x_ERROR, 1, "found TDA10046 DVB-T frontend @0x%02x",
+				tda1004x_nemo_config.demod_address);
+
+		} else {
+			goto exit;
+		}
+		dprintk(SAA716x_ERROR, 1, "Done!");
 	}
 
 	return 0;
+exit:
+	dprintk(SAA716x_ERROR, 1, "Frontend attach failed");
+	return -ENODEV;
 }
 
 static struct saa716x_config saa716x_nemo_config = {
