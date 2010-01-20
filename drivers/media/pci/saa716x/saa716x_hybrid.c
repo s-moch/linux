@@ -491,19 +491,9 @@ static struct saa716x_config saa716x_averhc82_config = {
 	.boot_mode		= SAA716x_EXT_BOOT,
 	.load_config		= &load_config_averhc82,
 	.adapters		= 1,
-	.demodulator_addr	= 0x1f,
-	.tuner_addr		= 0xc0,
-	.decoder_addr		= 0x42,
 	.frontend_attach	= saa716x_averhc82_frontend_attach,
 	.irq_handler		= saa716x_hybrid_pci_irq,
 	.i2c_rate		= SAA716x_I2C_RATE_100,
-
-	.adap_config		= {
-		{ /* Adapter 0 */
-			.power_ctl	= GPIO_06 | GPIO_15,
-			.reset_ctl	= GPIO_05,
-		}
-	}
 };
 
 #define SAA716x_MODEL_AVERMEDIA_H788	"Avermedia H788"
@@ -531,20 +521,9 @@ static struct saa716x_config saa716x_averh788_config = {
 	.boot_mode		= SAA716x_EXT_BOOT,
 	.load_config		= &load_config_averh788,
 	.adapters		= 1,
-	.demodulator_addr	= 0x1f,
-	.tuner_addr		= 0xc0,
-	.decoder_addr		= 0x42,
 	.frontend_attach	= saa716x_averh88_frontend_attach,
 	.irq_handler		= saa716x_hybrid_pci_irq,
 	.i2c_rate		= SAA716x_I2C_RATE_100,
-
-	.adap_config		= {
-		{ /* Adapter 0 */
-			.power_ctl	= GPIO_14,
-			.reset_ctl	= GPIO_15,
-		}
-	}
-
 };
 
 static struct pci_device_id saa716x_hybrid_pci_table[] = {
