@@ -222,8 +222,31 @@ int saa716x_core_boot(struct saa716x_dev *saa716x)
 }
 EXPORT_SYMBOL_GPL(saa716x_core_boot);
 
+static void saa716x_bus_report(struct pci_dev *pdev, int enable)
+{
+	u32 reg;
+
+	pci_read_config_dword(pdev, 0x04, &reg);
+	if (enable)
+		reg |= 0x00000100; /* enable SERR */
+	else
+		reg &= 0xfffffeff; /* disable SERR */
+	pci_write_config_dword(pdev, 0x04, reg);
+
+	pci_read_config_dword(pdev, 0x58, &reg);
+	reg &= 0xfffffffd;
+	pci_write_config_dword(pdev, 0x58, reg);
+}
+
 int saa716x_jetpack_init(struct saa716x_dev *saa716x)
 {
+	/*
+	 * configure PHY through config space not to report
+	 * non-fatal error messages to avoid problems with
+	 * quirky BIOS'es
+	 */
+	saa716x_bus_report(saa716x->pdev, 0);
+
 	/*
 	 * create time out for blocks that have no clock
 	 * helps with lower bitrates on FGPI
