@@ -199,7 +199,7 @@ int saa716x_set_clk_internal(struct saa716x_dev *saa716x, u32 port)
 
 	/* wait for PLL */
 	if (delay)
-		msleep(1000);
+		msleep(1);
 
 	return 0;
 }
@@ -309,7 +309,7 @@ int saa716x_set_clk_external(struct saa716x_dev *saa716x, u32 port)
 	}
 
 	if (delay)
-		msleep(1000);
+		msleep(1);
 
 	return 0;
 }
