@@ -238,11 +238,6 @@ void __devexit saa716x_dvb_exit(struct saa716x_dev *saa716x)
 		dvb_dmxdev_release(&saa716x_adap->dmxdev);
 		dvb_dmx_release(&saa716x_adap->demux);
 
-		if (saa716x_adap->fe) {
-			dvb_unregister_frontend(saa716x_adap->fe);
-			dvb_frontend_detach(saa716x_adap->fe);
-		}
-
 		dprintk(SAA716x_DEBUG, 1, "dvb_unregister_adapter");
 		dvb_unregister_adapter(&saa716x_adap->dvb_adapter);
 
