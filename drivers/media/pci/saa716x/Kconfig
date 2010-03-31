@@ -48,6 +48,7 @@ config DVB_SAA716X_HYBRID
 config DVB_SAA716X_FF
 	tristate "SAA7160/1/2 based Full Fledged PCIe cards"
 	depends on SAA716X_CORE && DVB_CORE
+	depends on INPUT # IR
 
 	help
 	  Support for the SAA7160/1/2 based  Full fledged PCIe DVB cards
