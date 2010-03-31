@@ -901,6 +901,10 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 		goto fail9;
 	}
 
+	err = saa716x_ir_init(saa716x);
+	if (err)
+		goto fail9;
+
 	return 0;
 
 fail9:
@@ -934,6 +938,8 @@ static void __devexit saa716x_ff_pci_remove(struct pci_dev *pdev)
 {
 	struct saa716x_dev *saa716x = pci_get_drvdata(pdev);
 	struct sti7109_dev *sti7109 = saa716x->priv;
+
+	saa716x_ir_exit(saa716x);
 
 	saa716x_ff_osd_exit(saa716x);
 
@@ -1212,15 +1218,16 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 			u8 data[4];
 
 			saa716x_phi_read(saa716x, ADDR_REMOTE_EVENT, data, 4);
-			sti7109->remote_event = (data[0] << 24)
-					      | (data[1] << 16)
-					      | (data[2] << 8)
-					      | (data[3]);
+			sti7109->remote_event = (data[3] << 24)
+					      | (data[2] << 16)
+					      | (data[1] << 8)
+					      | (data[0]);
 
 			phiISR &= ~ISR_REMOTE_EVENT_MASK;
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_REMOTE_EVENT_MASK);
 
 			dprintk(SAA716x_INFO, 1, "REMOTE EVENT: %u", sti7109->remote_event);
+			saa716x_ir_handler(saa716x, sti7109->remote_event);
 		}
 
 		if (phiISR & ISR_DVO_FORMAT_MASK) {
