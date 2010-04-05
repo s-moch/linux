@@ -1373,6 +1373,7 @@ static int saa716x_s26400_frontend_attach(struct saa716x_adapter *adapter, int c
 					 i2c_adapter);
 
 			tt6400_stv090x_config.tuner_init	  = ctl->tuner_init;
+			tt6400_stv090x_config.tuner_sleep	  = ctl->tuner_sleep;
 			tt6400_stv090x_config.tuner_set_mode	  = ctl->tuner_set_mode;
 			tt6400_stv090x_config.tuner_set_frequency = ctl->tuner_set_frequency;
 			tt6400_stv090x_config.tuner_get_frequency = ctl->tuner_get_frequency;
@@ -1382,6 +1383,16 @@ static int saa716x_s26400_frontend_attach(struct saa716x_adapter *adapter, int c
 			tt6400_stv090x_config.tuner_get_bbgain	  = ctl->tuner_get_bbgain;
 			tt6400_stv090x_config.tuner_set_refclk	  = ctl->tuner_set_refclk;
 			tt6400_stv090x_config.tuner_get_status	  = ctl->tuner_get_status;
+
+			if (count == 1) {
+				/* call the init function once to initialize
+				   tuner's clock output divider and demod's
+				   master clock */
+				/* The second tuner drives the STV0900 so
+				   call it only for adapter 1 */
+				if (adapter->fe->ops.init)
+					adapter->fe->ops.init(adapter->fe);
+			}
 
 			dvb_attach(isl6423_attach,
 				   adapter->fe,
