@@ -99,8 +99,8 @@ int saa716x_phi_init(struct saa716x_dev *saa716x)
 	value = 0;
 	value |= 0x01; /* chip select 0 */
 	value |= 0x00 << 8; /* ready mask */
-	value |= 0x04 << 12; /* strobe time */
-	value |= 0x08 << 20; /* cycle time */
+	value |= 0x03 << 12; /* strobe time */
+	value |= 0x05 << 20; /* cycle time */
 	SAA716x_EPWR(PHI_0, PHI_1_0_CONFIG, value);
 
 	value = 0;
