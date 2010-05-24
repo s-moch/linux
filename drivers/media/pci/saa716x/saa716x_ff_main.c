@@ -359,6 +359,7 @@ static int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 	u16 blockIndex;
 	u8 blockHeader[SIZE_BLOCK_HEADER];
 	u8 * blockPtr;
+	int activeBlock;
 
 	timeout = 1 * HZ;
 	timeout = wait_event_interruptible_timeout(sti7109->data_ready_wq,
@@ -383,7 +384,7 @@ static int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 	 * 16 bit - current block data size
 	 * 16 bit - block handle. This is used to reference the data in the command that uses it.
 	 */
-	blockSize = SIZE_BLOCK_DATA - SIZE_BLOCK_HEADER;
+	blockSize = (SIZE_BLOCK_DATA / 2) - SIZE_BLOCK_HEADER;
 	numBlocks = data->data_length / blockSize;
 	lastBlockSize = data->data_length % blockSize;
 	if (lastBlockSize > 0)
@@ -394,6 +395,7 @@ static int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 	blockHeader[6] = (u8) (sti7109->data_handle >> 8);
 	blockHeader[7] = (u8) sti7109->data_handle;
 	blockPtr = (u8 *) data->data_buffer;
+	activeBlock = 0;
 	for (blockIndex = 0; blockIndex < numBlocks; blockIndex++) {
 
 		if (lastBlockSize && (blockIndex == (numBlocks - 1)))
@@ -405,20 +407,31 @@ static int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 		blockHeader[5] = (uint8_t) blockSize;
 
 		sti7109->block_done = 0;
-		saa716x_phi_write(saa716x, ADDR_BLOCK_DATA, blockHeader, SIZE_BLOCK_HEADER);
-		saa716x_phi_write(saa716x, ADDR_BLOCK_DATA + SIZE_BLOCK_HEADER, blockPtr, blockSize);
-		SAA716x_EPWR(PHI_1, FPGA_ADDR_PHI_ISET, ISR_BLOCK_MASK);
+		saa716x_phi_write(saa716x, ADDR_BLOCK_DATA + activeBlock * (SIZE_BLOCK_DATA / 2), blockHeader, SIZE_BLOCK_HEADER);
+		saa716x_phi_write(saa716x, ADDR_BLOCK_DATA + activeBlock * (SIZE_BLOCK_DATA / 2) + SIZE_BLOCK_HEADER, blockPtr, blockSize);
+		activeBlock = (activeBlock + 1) & 1;
+		if (blockIndex > 0) {
+			timeout = 1 * HZ;
+			timeout = wait_event_timeout(sti7109->block_done_wq,
+						     sti7109->block_done == 1,
+						     timeout);
 
-		timeout = 1 * HZ;
-		timeout = wait_event_timeout(sti7109->block_done_wq,
-					     sti7109->block_done == 1,
-					     timeout);
-
-		if (sti7109->block_done == 0) {
-			dprintk(SAA716x_ERROR, 1, "timed out waiting for block done");
-			return -EIO;
+			if (sti7109->block_done == 0) {
+				dprintk(SAA716x_ERROR, 1, "timed out waiting for block done");
+				return -EIO;
+			}
 		}
+		SAA716x_EPWR(PHI_1, FPGA_ADDR_PHI_ISET, ISR_BLOCK_MASK);
 		blockPtr += blockSize;
+	}
+	timeout = 1 * HZ;
+	timeout = wait_event_timeout(sti7109->block_done_wq,
+				     sti7109->block_done == 1,
+				     timeout);
+
+	if (sti7109->block_done == 0) {
+		dprintk(SAA716x_ERROR, 1, "timed out waiting for block done");
+		return -EIO;
 	}
 
 	data->data_handle = sti7109->data_handle;
