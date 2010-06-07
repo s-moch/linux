@@ -406,7 +406,6 @@ static int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 		blockHeader[4] = (uint8_t) (blockSize >> 8);
 		blockHeader[5] = (uint8_t) blockSize;
 
-		sti7109->block_done = 0;
 		saa716x_phi_write(saa716x, ADDR_BLOCK_DATA + activeBlock * (SIZE_BLOCK_DATA / 2), blockHeader, SIZE_BLOCK_HEADER);
 		saa716x_phi_write(saa716x, ADDR_BLOCK_DATA + activeBlock * (SIZE_BLOCK_DATA / 2) + SIZE_BLOCK_HEADER, blockPtr, blockSize);
 		activeBlock = (activeBlock + 1) & 1;
@@ -421,6 +420,7 @@ static int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 				return -EIO;
 			}
 		}
+		sti7109->block_done = 0;
 		SAA716x_EPWR(PHI_1, FPGA_ADDR_PHI_ISET, ISR_BLOCK_MASK);
 		blockPtr += blockSize;
 	}
@@ -433,6 +433,7 @@ static int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 		dprintk(SAA716x_ERROR, 1, "timed out waiting for block done");
 		return -EIO;
 	}
+	sti7109->block_done = 0;
 
 	data->data_handle = sti7109->data_handle;
 	sti7109->data_handle++;
