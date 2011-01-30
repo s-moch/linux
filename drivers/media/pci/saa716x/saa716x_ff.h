@@ -35,6 +35,8 @@
 #define FPGA_ADDR_FIFO_CTRL	0x8300 /* FIFO control register */
 #define FPGA_ADDR_FIFO_STAT	0x8310 /* FIFO status register */
 
+#define FPGA_ADDR_VERSION	0x80F0 /* FPGA bitstream version register */
+
 #define ISR_CMD_MASK		0x0001 /* interrupt source for normal cmds (osd, fre, av, ...) */
 #define ISR_READY_MASK		0x0002 /* interrupt source for command acknowledge */
 #define ISR_BLOCK_MASK		0x0004 /* interrupt source for single block transfers and acknowledge */
