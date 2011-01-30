@@ -49,7 +49,7 @@
 #define ISR_OSD_READY_MASK	0x0800 /* interrupt source for OSD command acknowledge */
 #define ISR_FE_CMD_MASK		0x1000 /* interrupt source for frontend cmds */
 #define ISR_FE_READY_MASK	0x2000 /* interrupt source for frontend command acknowledge */
-#define ISR_FIFO2_EMPTY_MASK	0x4000 /* interrupt source for FIFO2 empty */
+#define ISR_LOG_MESSAGE_MASK	0x4000 /* interrupt source for log messages */
 #define ISR_FIFO1_EMPTY_MASK	0x8000 /* interrupt source for FIFO1 empty */
 
 #define ADDR_CMD_DATA		0x0000 /* address for cmd data in fpga dpram */
@@ -61,11 +61,13 @@
 #define ADDR_CURRENT_STC	0x3E10 /* address for system clock (64 Bits) */
 #define ADDR_DVO_FORMAT		0x3E18 /* address for DVO format 32 Bits) */
 #define ADDR_REMOTE_EVENT	0x3F00 /* address for remote events (32 Bits) */
+#define ADDR_LOG_MESSAGE	0x3F80 /* address for log messages */
 
 #define SIZE_CMD_DATA		0x01A0 /* maximum size for command data (416 Bytes) */
 #define SIZE_OSD_CMD_DATA	0x0420 /* maximum size for OSD command data (1056 Bytes) */
 #define SIZE_FE_CMD_DATA	0x0040 /* maximum size for frontend command data (64 Bytes) */
 #define SIZE_BLOCK_DATA		0x3800 /* maximum size for block data (14 kB) */
+#define SIZE_LOG_MESSAGE_DATA	0x0080 /* maximum size for log message data (128 Bytes) */
 
 #define SIZE_BLOCK_HEADER	8      /* block header size */
 
