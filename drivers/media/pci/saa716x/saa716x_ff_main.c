@@ -65,6 +65,7 @@ static int saa716x_ff_fpga_init(struct saa716x_dev *saa716x)
 	int rounds;
 	int ret;
 	const struct firmware *fw;
+	u32 fpgaVersion;
 
 	/* request the FPGA firmware, this will block until someone uploads it */
 	ret = request_firmware(&fw, "dvb-ttpremium-fpga-01.fw", &saa716x->pdev->dev);
@@ -119,6 +120,9 @@ static int saa716x_ff_fpga_init(struct saa716x_dev *saa716x)
 
 	if (!fpgaDone)
 		return -EINVAL;
+
+	fpgaVersion = SAA716x_EPRD(PHI_1, FPGA_ADDR_VERSION);
+	dprintk(SAA716x_INFO, 1, "SAA716x FPGA version=%X", fpgaVersion);
 
 	return 0;
 }
