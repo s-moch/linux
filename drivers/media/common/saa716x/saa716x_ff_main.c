@@ -1260,6 +1260,19 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 			dprintk(SAA716x_INFO, 1, "DVO FORMAT CHANGE: %u", format);
 		}
 
+		if (phiISR & ISR_LOG_MESSAGE_MASK) {
+			char message[SIZE_LOG_MESSAGE_DATA];
+
+			saa716x_phi_read(saa716x, ADDR_LOG_MESSAGE, message,
+					 SIZE_LOG_MESSAGE_DATA);
+
+			phiISR &= ~ISR_LOG_MESSAGE_MASK;
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_LOG_MESSAGE_MASK);
+
+			dprintk(SAA716x_INFO, 1, "LOG MESSAGE: %.*s",
+				SIZE_LOG_MESSAGE_DATA, message);
+		}
+
 		if (phiISR & ISR_FIFO1_EMPTY_MASK) {
 			u32 fifoCtrl;
 			u32 fifoStat;
