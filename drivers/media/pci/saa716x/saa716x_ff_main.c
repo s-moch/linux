@@ -1188,43 +1188,43 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 			u8 data[8];
 
 			saa716x_phi_read(saa716x, ADDR_AUDIO_PTS, data, 8);
-			sti7109->audio_pts = ((u64) (data[3] & 0x01) << 32)
-					    | (u64) (data[4] << 24)
-					    | (u64) (data[5] << 16)
-					    | (u64) (data[6] << 8)
-					    | (u64) (data[7]);
+			sti7109->audio_pts = (((u64) data[3] & 0x01) << 32)
+					    | ((u64) data[4] << 24)
+					    | ((u64) data[5] << 16)
+					    | ((u64) data[6] << 8)
+					    | ((u64) data[7]);
 
 			phiISR &= ~ISR_AUDIO_PTS_MASK;
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_AUDIO_PTS_MASK);
 
-			/*dprintk(SAA716x_INFO, 1, "AUDIO PTS: %llu", sti7109->audio_pts);*/
+			/*dprintk(SAA716x_INFO, 1, "AUDIO PTS: %llX", sti7109->audio_pts);*/
 		}
 
 		if (phiISR & ISR_VIDEO_PTS_MASK) {
 			u8 data[8];
 
 			saa716x_phi_read(saa716x, ADDR_VIDEO_PTS, data, 8);
-			sti7109->video_pts = ((u64) (data[3] & 0x01) << 32)
-					    | (u64) (data[4] << 24)
-					    | (u64) (data[5] << 16)
-					    | (u64) (data[6] << 8)
-					    | (u64) (data[7]);
+			sti7109->video_pts = (((u64) data[3] & 0x01) << 32)
+					    | ((u64) data[4] << 24)
+					    | ((u64) data[5] << 16)
+					    | ((u64) data[6] << 8)
+					    | ((u64) data[7]);
 
 			phiISR &= ~ISR_VIDEO_PTS_MASK;
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_VIDEO_PTS_MASK);
 
-			/*dprintk(SAA716x_INFO, 1, "VIDEO PTS: %llu", sti7109->video_pts);*/
+			/*dprintk(SAA716x_INFO, 1, "VIDEO PTS: %llX", sti7109->video_pts);*/
 		}
 
 		if (phiISR & ISR_CURRENT_STC_MASK) {
 			u8 data[8];
 
 			saa716x_phi_read(saa716x, ADDR_CURRENT_STC, data, 8);
-			sti7109->current_stc = ((u64) (data[3] & 0x01) << 32)
-					      | (u64) (data[4] << 24)
-					      | (u64) (data[5] << 16)
-					      | (u64) (data[6] << 8)
-					      | (u64) (data[7]);
+			sti7109->current_stc = (((u64) data[3] & 0x01) << 32)
+					      | ((u64) data[4] << 24)
+					      | ((u64) data[5] << 16)
+					      | ((u64) data[6] << 8)
+					      | ((u64) data[7]);
 
 			phiISR &= ~ISR_CURRENT_STC_MASK;
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_CURRENT_STC_MASK);
