@@ -99,7 +99,8 @@ static int saa716x_ff_fpga_init(struct saa716x_dev *saa716x)
 		fpgaInit = saa716x_gpio_read(saa716x, TT_PREMIUM_GPIO_FPGA_INITN);
 		rounds++;
 	}
-	dprintk(SAA716x_INFO, 1, "SAA716x FPGA INITN=%d, rounds=%d", fpgaInit, rounds);
+	dprintk(SAA716x_INFO, 1, "SAA716x FF FPGA INITN=%d, rounds=%d",
+		fpgaInit, rounds);
 
 	SAA716x_EPWR(SPI, SPI_CLOCK_COUNTER, 0x08);
 	SAA716x_EPWR(SPI, SPI_CONTROL_REG, SPI_MODE_SELECT);
@@ -107,12 +108,12 @@ static int saa716x_ff_fpga_init(struct saa716x_dev *saa716x)
 	msleep(10);
 
 	fpgaDone = saa716x_gpio_read(saa716x, TT_PREMIUM_GPIO_FPGA_DONE);
-	dprintk(SAA716x_INFO, 1, "SAA716x FPGA DONE=%d", fpgaDone);
-	dprintk(SAA716x_INFO, 1, "SAA716x FPGA write bitstream");
+	dprintk(SAA716x_INFO, 1, "SAA716x FF FPGA DONE=%d", fpgaDone);
+	dprintk(SAA716x_INFO, 1, "SAA716x FF FPGA write bitstream");
 	saa716x_spi_write(saa716x, fw->data, fw->size);
-	dprintk(SAA716x_INFO, 1, "SAA716x FPGA write bitstream done");
+	dprintk(SAA716x_INFO, 1, "SAA716x FF FPGA write bitstream done");
 	fpgaDone = saa716x_gpio_read(saa716x, TT_PREMIUM_GPIO_FPGA_DONE);
-	dprintk(SAA716x_INFO, 1, "SAA716x FPGA DONE=%d", fpgaDone);
+	dprintk(SAA716x_INFO, 1, "SAA716x FF FPGA DONE=%d", fpgaDone);
 
 	msleep(10);
 
@@ -122,7 +123,8 @@ static int saa716x_ff_fpga_init(struct saa716x_dev *saa716x)
 		return -EINVAL;
 
 	fpgaVersion = SAA716x_EPRD(PHI_1, FPGA_ADDR_VERSION);
-	dprintk(SAA716x_INFO, 1, "SAA716x FPGA version=%X", fpgaVersion);
+	printk(KERN_INFO "SAA716x FF FPGA version %X.%02X\n",
+		fpgaVersion >> 8, fpgaVersion & 0xFF);
 
 	return 0;
 }
@@ -141,6 +143,7 @@ static int saa716x_ff_st7109_init(struct saa716x_dev *saa716x)
 	u64 waitTime;
 	int ret;
 	const struct firmware *fw;
+	u32 loaderVersion;
 
 	/* request the st7109 loader, this will block until someone uploads it */
 	ret = request_firmware(&fw, "dvb-ttpremium-loader-01.fw", &saa716x->pdev->dev);
@@ -155,6 +158,9 @@ static int saa716x_ff_st7109_init(struct saa716x_dev *saa716x)
 			       " (error %i)\n", ret);
 		return -EINVAL;
 	}
+	loaderVersion = (fw->data[0x1385] << 8) | fw->data[0x1384];
+	printk(KERN_INFO "SAA716x FF loader version %X.%02X\n",
+		loaderVersion >> 8, loaderVersion & 0xFF);
 
 	saa716x_phi_write(saa716x, 0, fw->data, fw->size);
 	msleep(10);
@@ -195,7 +201,7 @@ static int saa716x_ff_st7109_init(struct saa716x_dev *saa716x)
 		return -EINVAL;
 	}
 
-	dprintk(SAA716x_INFO, 1, "SAA716x download ST7109 firmware");
+	dprintk(SAA716x_INFO, 1, "SAA716x FF download ST7109 firmware");
 	writtenBlock = 0;
 	blockSize = 0x3c00;
 	length = fw->size;
@@ -236,7 +242,7 @@ static int saa716x_ff_st7109_init(struct saa716x_dev *saa716x)
 	writtenBlock |= 0x80000000;
 	SAA716x_EPWR(PHI_1, 0x3ff8, writtenBlock);
 
-	dprintk(SAA716x_INFO, 1, "SAA716x download ST7109 firmware done");
+	dprintk(SAA716x_INFO, 1, "SAA716x FF download ST7109 firmware done");
 
 	release_firmware(fw);
 
@@ -442,6 +448,37 @@ static int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 	data->data_handle = sti7109->data_handle;
 	sti7109->data_handle++;
 	return 0;
+}
+
+static int sti7109_get_fw_version(struct sti7109_dev *sti7109, u32 *fw_version)
+{
+	osd_raw_cmd_t cmd;
+	u8 cmd_data[6];
+	u8 result_data[MAX_RESULT_LEN];
+	int ret_val = -EINVAL;
+
+	cmd_data[0] = 0x00;
+	cmd_data[1] = 0x04;
+	cmd_data[2] = 0x00;
+	cmd_data[3] = 0x00;
+	cmd_data[4] = 0x00;
+	cmd_data[5] = 0x00;
+	cmd.cmd_data = cmd_data;
+	cmd.cmd_len = sizeof(cmd_data);
+	cmd.result_data = result_data;
+	cmd.result_len = sizeof(result_data);
+
+	mutex_lock(&sti7109->cmd_lock);
+	ret_val = sti7109_raw_cmd(sti7109, &cmd);
+	mutex_unlock(&sti7109->cmd_lock);
+
+	if (ret_val == 0) {
+		*fw_version = (result_data[6] << 16)
+			    | (result_data[7] << 8)
+			    | result_data[8];
+	}
+
+	return ret_val;
 }
 
 static int dvb_osd_ioctl(struct inode *inode, struct file *file,
@@ -729,6 +766,7 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 	int err = 0;
 	u32 value;
 	unsigned long timeout;
+	u32 fw_version;
 
 	saa716x = kzalloc(sizeof (struct saa716x_dev), GFP_KERNEL);
 	if (saa716x == NULL) {
@@ -917,6 +955,13 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x FF OSD initialization failed");
 		goto fail9;
+	}
+
+	err = sti7109_get_fw_version(sti7109, &fw_version);
+	if (!err) {
+		printk(KERN_INFO "SAA716x FF firmware version %X.%X.%X\n",
+			(fw_version >> 16) & 0xFF, (fw_version >> 8) & 0xFF,
+			fw_version & 0xFF);
 	}
 
 	err = saa716x_ir_init(saa716x);
