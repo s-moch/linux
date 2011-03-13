@@ -58,7 +58,6 @@ static int saa716x_dvb_start_feed(struct dvb_demux_feed *dvbdmxfeed)
 
 	if (saa716x_adap->feeds == 1) {
 		dprintk(SAA716x_DEBUG, 1, "SAA716x start feed & dma");
-		printk("saa716x start feed & dma\n");
 		saa716x_dma_start(saa716x, saa716x_adap->count);
 	}
 
@@ -79,7 +78,6 @@ static int saa716x_dvb_stop_feed(struct dvb_demux_feed *dvbdmxfeed)
 	saa716x_adap->feeds--;
 	if (saa716x_adap->feeds == 0) {
 		dprintk(SAA716x_DEBUG, 1, "saa716x stop feed and dma");
-		printk("saa716x stop feed and dma\n");
 		saa716x_dma_stop(saa716x, saa716x_adap->count);
 	}
 
