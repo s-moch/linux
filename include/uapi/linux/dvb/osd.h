@@ -179,14 +179,14 @@ typedef struct osd_cap_s {
 #define OSD_GET_CAPABILITY      _IOR('o', 161, osd_cap_t)
 
 typedef struct osd_raw_cmd_s {
-	void __user *cmd_data;
+	const void __user *cmd_data;
 	int cmd_len;
 	void __user *result_data;
 	int result_len;
 } osd_raw_cmd_t;
 
 typedef struct osd_raw_data_s {
-	void __user *data_buffer;
+	const void __user *data_buffer;
 	int data_length;
 	int data_handle;
 } osd_raw_data_t;
