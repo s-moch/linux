@@ -481,6 +481,40 @@ static int sti7109_get_fw_version(struct sti7109_dev *sti7109, u32 *fw_version)
 	return ret_val;
 }
 
+static int sti7109_get_video_format(struct sti7109_dev *sti7109, video_size_t *vs)
+{
+	osd_raw_cmd_t cmd;
+	u8 cmd_data[7];
+	u8 result_data[MAX_RESULT_LEN];
+	int ret_val = -EINVAL;
+
+	cmd_data[0] = 0x00;
+	cmd_data[1] = 0x05; /* command length */
+	cmd_data[2] = 0x00;
+	cmd_data[3] = 0x01; /* A/V decoder command group */
+	cmd_data[4] = 0x00;
+	cmd_data[5] = 0x10; /* get video format info command */
+	cmd_data[6] = 0x00; /* decoder index 0 */
+	cmd.cmd_data = cmd_data;
+	cmd.cmd_len = sizeof(cmd_data);
+	cmd.result_data = result_data;
+	cmd.result_len = sizeof(result_data);
+
+	mutex_lock(&sti7109->cmd_lock);
+	ret_val = sti7109_raw_cmd(sti7109, &cmd);
+	mutex_unlock(&sti7109->cmd_lock);
+
+	if (ret_val == 0) {
+		vs->w = (result_data[7] << 8)
+		      | result_data[8];
+		vs->h = (result_data[9] << 8)
+		      | result_data[10];
+		vs->aspect_ratio = result_data[11] >> 4;
+	}
+
+	return ret_val;
+}
+
 static int dvb_osd_ioctl(struct inode *inode, struct file *file,
 			 unsigned int cmd, void *parg)
 {
@@ -708,6 +742,11 @@ static int dvb_video_ioctl(struct inode *inode, struct file *file,
 	case VIDEO_GET_PTS:
 	{
 		*(u64 *)parg = sti7109->video_pts;
+		break;
+	}
+	case VIDEO_GET_SIZE:
+	{
+		ret = sti7109_get_video_format(sti7109, (video_size_t *) parg);
 		break;
 	}
 	default:
