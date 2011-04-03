@@ -1137,6 +1137,18 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 				u8 * data = (u8 *)saa716x->fgpi[2].dma_buf[activeBuffer].mem_virt;
 				dprintk(SAA716x_DEBUG, 1, "%02X%02X%02X%02X",
 					data[0], data[1], data[2], data[3]);
+				if (data[0] != 0x47) {
+					u32 val = SAA716x_EPRD(FGPI2, FGPI_CONTROL);
+					val &= ~0x3000;
+					SAA716x_EPWR(FGPI2, FGPI_CONTROL, val);
+					val |= 0x3000;
+					SAA716x_EPWR(FGPI2, FGPI_CONTROL, val);
+
+					dprintk(SAA716x_ERROR, 1,
+						"TS 0: %02X%02X%02X%02X%02X%02X%02X%02X",
+						data[0], data[1], data[2], data[3],
+						data[4], data[5], data[6], data[7]);
+				}
 				dvb_dmx_swfilter_packets(&saa716x->saa716x_adap[0].demux, data, 348);
 			}
 			if (fgpiStatus) {
@@ -1159,6 +1171,18 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 				u8 * data = (u8 *)saa716x->fgpi[3].dma_buf[activeBuffer].mem_virt;
 				dprintk(SAA716x_DEBUG, 1, "%02X%02X%02X%02X",
 					data[0], data[1], data[2], data[3]);
+				if (data[0] != 0x47) {
+					u32 val = SAA716x_EPRD(FGPI3, FGPI_CONTROL);
+					val &= ~0x3000;
+					SAA716x_EPWR(FGPI3, FGPI_CONTROL, val);
+					val |= 0x3000;
+					SAA716x_EPWR(FGPI3, FGPI_CONTROL, val);
+
+					dprintk(SAA716x_ERROR, 1,
+						"TS 1: %02X%02X%02X%02X%02X%02X%02X%02X",
+						data[0], data[1], data[2], data[3],
+						data[4], data[5], data[6], data[7]);
+				}
 				dvb_dmx_swfilter_packets(&saa716x->saa716x_adap[1].demux, data, 348);
 			}
 			if (fgpiStatus) {
