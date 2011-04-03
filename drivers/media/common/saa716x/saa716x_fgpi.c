@@ -287,8 +287,6 @@ int saa716x_fgpi_start(struct saa716x_dev *saa716x, int port,
 	SAA716x_EPWR(fgpi_port, FGPI_CONTROL, val);
 
 	SAA716x_EPWR(MSI, MSI_INT_ENA_SET_L, msi_int_tagack[port]);
-	SAA716x_EPWR(MSI, MSI_INT_ENA_SET_L, msi_int_ovrflw[port]);
-	SAA716x_EPWR(MSI, MSI_INT_ENA_SET_L, msi_int_avint[port]);
 
 	return 0;
 }
@@ -301,8 +299,6 @@ int saa716x_fgpi_stop(struct saa716x_dev *saa716x, int port)
 	fgpi_port = fgpi_ch[port];
 
 	SAA716x_EPWR(MSI, MSI_INT_ENA_CLR_L, msi_int_tagack[port]);
-	SAA716x_EPWR(MSI, MSI_INT_ENA_CLR_L, msi_int_ovrflw[port]);
-	SAA716x_EPWR(MSI, MSI_INT_ENA_CLR_L, msi_int_avint[port]);
 
 	val = SAA716x_EPRD(fgpi_port, FGPI_CONTROL);
 	val &= ~0x3000;
