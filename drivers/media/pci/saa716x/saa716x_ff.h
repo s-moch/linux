@@ -26,6 +26,7 @@
 #define FPGA_ADDR_EMI_ISET	0x8120 /* EMI Interrupt Set Register */
 #define FPGA_ADDR_EMI_ICLR	0x8130 /* EMI Interrupt Clear Register */
 
+/* fpga TS router register addresses */
 #define FPGA_ADDR_TSR_CTRL	0x8200 /* TS router control register */
 #define FPGA_ADDR_TSR_MUX1	0x8210 /* TS multiplexer 1 selection register */
 #define FPGA_ADDR_TSR_MUX2	0x8220 /* TS multiplexer 2 selection register */
@@ -33,6 +34,14 @@
 #define FPGA_ADDR_TSR_MUXCI1	0x8240 /* TS multiplexer CI 1 selection register */
 #define FPGA_ADDR_TSR_MUXCI2	0x8250 /* TS multiplexer CI 2 selection register */
 
+#define FPGA_ADDR_TSR_BRFE1	0x8280 /* bit rate for TS coming from frontend 1 */
+#define FPGA_ADDR_TSR_BRFE2	0x8284 /* bit rate for TS coming from frontend 2 */
+#define FPGA_ADDR_TSR_BRFF1	0x828C /* bit rate for TS coming from FIFO 1 */
+#define FPGA_ADDR_TSR_BRO1	0x8294 /* bit rate for TS going to output 1 */
+#define FPGA_ADDR_TSR_BRO2	0x8298 /* bit rate for TS going to output 2 */
+#define FPGA_ADDR_TSR_BRO3	0x829C /* bit rate for TS going to output 3 */
+
+/* fpga TS FIFO register addresses */
 #define FPGA_ADDR_FIFO_CTRL	0x8300 /* FIFO control register */
 #define FPGA_ADDR_FIFO_STAT	0x8310 /* FIFO status register */
 
