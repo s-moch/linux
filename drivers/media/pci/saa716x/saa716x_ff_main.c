@@ -1151,9 +1151,6 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 				}
 				dvb_dmx_swfilter_packets(&saa716x->saa716x_adap[0].demux, data, 348);
 			}
-			if (fgpiStatus) {
-				SAA716x_EPWR(FGPI2, INT_CLR_STATUS, fgpiStatus);
-			}
 		}
 		if (msiStatusL & MSI_INT_TAGACK_FGPI_3) {
 			u32 fgpiStatus;
@@ -1184,9 +1181,6 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 						data[4], data[5], data[6], data[7]);
 				}
 				dvb_dmx_swfilter_packets(&saa716x->saa716x_adap[1].demux, data, 348);
-			}
-			if (fgpiStatus) {
-				SAA716x_EPWR(FGPI3, INT_CLR_STATUS, fgpiStatus);
 			}
 		}
 	}
