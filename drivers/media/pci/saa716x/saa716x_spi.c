@@ -11,6 +11,7 @@
 #include "saa716x_spi.h"
 #include "saa716x_priv.h"
 
+#if 0 // not needed atm
 int saa716x_spi_irqevent(struct saa716x_dev *saa716x)
 {
 	u32 stat, mask;
@@ -37,7 +38,7 @@ int saa716x_spi_irqevent(struct saa716x_dev *saa716x)
 
 	return 0;
 }
-
+#endif
 
 void saa716x_spi_write(struct saa716x_dev *saa716x, const u8 *data, int length)
 {
@@ -58,6 +59,7 @@ void saa716x_spi_write(struct saa716x_dev *saa716x, const u8 *data, int length)
 }
 EXPORT_SYMBOL_GPL(saa716x_spi_write);
 
+#if 0 // not needed atm
 static int saa716x_spi_status(struct saa716x_dev *saa716x, u32 *status)
 {
 	u32 stat;
@@ -307,3 +309,5 @@ void __devexit saa716x_spi_exit(struct saa716x_dev *saa716x)
 	dprintk(SAA716x_DEBUG, 1, "SAA%02x SPI succesfully removed", saa716x->pdev->device);
 }
 EXPORT_SYMBOL(saa716x_spi_exit);
+#endif
+
