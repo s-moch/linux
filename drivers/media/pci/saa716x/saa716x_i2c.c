@@ -525,7 +525,6 @@ int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 			strcpy(adapter->name, SAA716x_I2C_ADAPTER(i));
 
 			adapter->owner		= THIS_MODULE;
-			adapter->class		= I2C_CLASS_TV_DIGITAL;
 			adapter->algo		= &saa716x_algo;
 			adapter->algo_data 	= NULL;
 			adapter->id		= I2C_HW_B_SAA716x;
