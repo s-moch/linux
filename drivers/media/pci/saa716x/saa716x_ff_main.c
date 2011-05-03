@@ -515,7 +515,11 @@ static int sti7109_get_video_format(struct sti7109_dev *sti7109, video_size_t *v
 	return ret_val;
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
 static int dvb_osd_ioctl(struct inode *inode, struct file *file,
+#else
+static int dvb_osd_ioctl(struct file *file,
+#endif
 			 unsigned int cmd, void *parg)
 {
 	struct dvb_device *dvbdev	= file->private_data;
@@ -548,7 +552,11 @@ static int dvb_osd_ioctl(struct inode *inode, struct file *file,
 
 static struct file_operations dvb_osd_fops = {
 	.owner		= THIS_MODULE,
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
 	.ioctl		= dvb_generic_ioctl,
+#else
+	.unlocked_ioctl	= dvb_generic_ioctl,
+#endif
 	.open		= dvb_generic_open,
 	.release	= dvb_generic_release,
 };
@@ -583,7 +591,11 @@ static int saa716x_ff_osd_init(struct saa716x_dev *saa716x)
 	return 0;
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
 static int dvb_audio_ioctl(struct inode *inode, struct file *file,
+#else
+static int dvb_audio_ioctl(struct file *file,
+#endif
 			   unsigned int cmd, void *parg)
 {
 	struct dvb_device *dvbdev	= file->private_data;
@@ -606,7 +618,11 @@ static int dvb_audio_ioctl(struct inode *inode, struct file *file,
 
 static struct file_operations dvb_audio_fops = {
 	.owner		= THIS_MODULE,
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
 	.ioctl		= dvb_generic_ioctl,
+#else
+	.unlocked_ioctl	= dvb_generic_ioctl,
+#endif
 	.open		= dvb_generic_open,
 	.release	= dvb_generic_release,
 };
@@ -703,7 +719,11 @@ static unsigned int dvb_video_poll(struct file *file, poll_table *wait)
 	return mask;
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
 static int dvb_video_ioctl(struct inode *inode, struct file *file,
+#else
+static int dvb_video_ioctl(struct file *file,
+#endif
 			   unsigned int cmd, void *parg)
 {
 	struct dvb_device *dvbdev	= file->private_data;
@@ -759,7 +779,11 @@ static int dvb_video_ioctl(struct inode *inode, struct file *file,
 static struct file_operations dvb_video_fops = {
 	.owner		= THIS_MODULE,
 	.write		= dvb_video_write,
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
 	.ioctl		= dvb_generic_ioctl,
+#else
+	.unlocked_ioctl	= dvb_generic_ioctl,
+#endif
 	.open		= dvb_generic_open,
 	.release	= dvb_generic_release,
 	.poll		= dvb_video_poll,
