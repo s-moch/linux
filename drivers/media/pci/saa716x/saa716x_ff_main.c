@@ -657,6 +657,41 @@ static int saa716x_ff_audio_init(struct saa716x_dev *saa716x)
 	return 0;
 }
 
+static void fifo_worker(unsigned long data)
+{
+	struct saa716x_dev *saa716x = (struct saa716x_dev *) data;
+	struct sti7109_dev *sti7109 = saa716x->priv;
+	u32 fifoCtrl;
+	u32 fifoStat;
+	u16 fifoSize;
+	u16 fifoUsage;
+	u16 fifoFree;
+	int len;
+
+	fifoCtrl = SAA716x_EPRD(PHI_1, FPGA_ADDR_FIFO_CTRL);
+	fifoStat = SAA716x_EPRD(PHI_1, FPGA_ADDR_FIFO_STAT);
+	fifoSize = (u16) (fifoStat >> 16);
+	fifoUsage = (u16) fifoStat;
+	fifoFree = fifoSize - fifoUsage;
+	spin_lock(&sti7109->tsout.lock);
+	len = dvb_ringbuffer_avail(&sti7109->tsout);
+	if (len > fifoFree)
+		len = fifoFree;
+	if (len >= TS_SIZE)
+	{
+		while (len >= TS_SIZE)
+		{
+			dvb_ringbuffer_read(&sti7109->tsout, sti7109->tsbuf, (size_t) TS_SIZE);
+			saa716x_phi_write_fifo(saa716x, sti7109->tsbuf, TS_SIZE);
+			len -= TS_SIZE;
+		}
+		wake_up(&sti7109->tsout.queue);
+		fifoCtrl |= 0x4;
+		SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, fifoCtrl);
+	}
+	spin_unlock(&sti7109->tsout.lock);
+}
+
 #define FREE_COND_TS (dvb_ringbuffer_free(&sti7109->tsout) >= TS_SIZE)
 
 static ssize_t dvb_video_write(struct file *file, const char __user *buf,
@@ -801,6 +836,7 @@ static int saa716x_ff_video_exit(struct saa716x_dev *saa716x)
 {
 	struct sti7109_dev *sti7109 = saa716x->priv;
 
+	tasklet_kill(&sti7109->fifo_tasklet);
 	dvb_unregister_device(sti7109->video_dev);
 	return 0;
 }
@@ -818,6 +854,9 @@ static int saa716x_ff_video_init(struct saa716x_dev *saa716x)
 			    &dvbdev_video,
 			    sti7109,
 			    DVB_DEVICE_VIDEO);
+
+	tasklet_init(&sti7109->fifo_tasklet, fifo_worker,
+		     (unsigned long)saa716x);
 
 	return 0;
 }
@@ -1411,37 +1450,12 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 
 		if (phiISR & ISR_FIFO1_EMPTY_MASK) {
 			u32 fifoCtrl;
-			u32 fifoStat;
-			u16 fifoSize;
-			u16 fifoUsage;
-			u16 fifoFree;
-			int len;
 
 			/*dprintk(SAA716x_INFO, 1, "FIFO EMPTY interrupt source");*/
 			fifoCtrl = SAA716x_EPRD(PHI_1, FPGA_ADDR_FIFO_CTRL);
 			fifoCtrl &= ~0x4;
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, fifoCtrl);
-			fifoStat = SAA716x_EPRD(PHI_1, FPGA_ADDR_FIFO_STAT);
-			fifoSize = (u16) (fifoStat >> 16);
-			fifoUsage = (u16) fifoStat;
-			fifoFree = fifoSize - fifoUsage;
-			spin_lock(&sti7109->tsout.lock);
-			len = dvb_ringbuffer_avail(&sti7109->tsout);
-			if (len > fifoFree)
-				len = fifoFree;
-			if (len >= TS_SIZE)
-			{
-				while (len >= TS_SIZE)
-				{
-					dvb_ringbuffer_read(&sti7109->tsout, sti7109->tsbuf, (size_t) TS_SIZE);
-					saa716x_phi_write_fifo(saa716x, sti7109->tsbuf, TS_SIZE);
-					len -= TS_SIZE;
-				}
-				wake_up(&sti7109->tsout.queue);
-				fifoCtrl |= 0x4;
-				SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, fifoCtrl);
-			}
-			spin_unlock(&sti7109->tsout.lock);
+			tasklet_schedule(&sti7109->fifo_tasklet);
 			phiISR &= ~ISR_FIFO1_EMPTY_MASK;
 		}
 
