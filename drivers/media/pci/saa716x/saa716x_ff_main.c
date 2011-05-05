@@ -1087,6 +1087,70 @@ static void __devexit saa716x_ff_pci_remove(struct pci_dev *pdev)
 	kfree(saa716x);
 }
 
+static void demux_worker(unsigned long data)
+{
+	struct saa716x_fgpi_stream_port *fgpi_entry = (struct saa716x_fgpi_stream_port *)data;
+	struct saa716x_dev *saa716x = fgpi_entry->saa716x;
+	struct dvb_demux *demux;
+	u32 fgpi;
+	u32 write_index;
+	u32 fgpiStatus;
+
+	switch (fgpi_entry->dma_channel - 6) {
+	case 2:	/* FGPI_2 */
+		demux = &saa716x->saa716x_adap[0].demux;
+		fgpi = FGPI2;
+		write_index = (SAA716x_EPRD(BAM, BAM_FGPI2_DMA_BUF_MODE) >> 3) & 0x7;
+		break;
+
+	case 3: /* FGPI_3 */
+		demux = &saa716x->saa716x_adap[1].demux;
+		fgpi = FGPI3;
+		write_index = (SAA716x_EPRD(BAM, BAM_FGPI3_DMA_BUF_MODE) >> 3) & 0x7;
+		break;
+
+	default:
+		printk(KERN_ERR "%s: unexpected channel %u\n",
+		       __func__, fgpi_entry->dma_channel);
+		return;
+	}
+
+	fgpiStatus = SAA716x_EPRD(fgpi, INT_STATUS);
+	dprintk(SAA716x_DEBUG, 1, "fgpiStatus = %04X, buffer = %d",
+		fgpiStatus, write_index);
+
+	if (write_index == fgpi_entry->read_index) {
+		printk(KERN_ERR "%s: called but nothing to do\n", __func__);
+		return;
+	}
+
+	do {
+		u8 *data = (u8 *)fgpi_entry->dma_buf[fgpi_entry->read_index].mem_virt;
+
+		pci_dma_sync_sg_for_cpu(saa716x->pdev,
+			fgpi_entry->dma_buf[fgpi_entry->read_index].sg_list,
+			fgpi_entry->dma_buf[fgpi_entry->read_index].list_len,
+			PCI_DMA_FROMDEVICE);
+
+		if (data[0] != 0x47) {
+			u32 val = SAA716x_EPRD(fgpi, FGPI_CONTROL);
+			val &= ~0x3000;
+			SAA716x_EPWR(fgpi, FGPI_CONTROL, val);
+			val |= 0x3000;
+			SAA716x_EPWR(fgpi, FGPI_CONTROL, val);
+
+			printk(KERN_WARNING "%s %u TS: %02X %02X %02X %02X %02X %02X %02X %02X",
+				__func__, fgpi_entry->dma_channel - 6,
+				data[0], data[1], data[2], data[3],
+				data[4], data[5], data[6], data[7]);
+		}
+
+		dvb_dmx_swfilter_packets(demux, data, 348);
+
+		fgpi_entry->read_index = (fgpi_entry->read_index + 1) & 7;
+	} while (write_index != fgpi_entry->read_index);
+}
+
 static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 {
 	struct saa716x_dev *saa716x	= (struct saa716x_dev *) dev_id;
@@ -1145,68 +1209,10 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 	SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_H, msiStatusH);
 
 	if (msiStatusL) {
-		if (msiStatusL & MSI_INT_TAGACK_FGPI_2) {
-			u32 fgpiStatus;
-			u32 activeBuffer;
-
-			fgpiStatus = SAA716x_EPRD(FGPI2, INT_STATUS);
-			activeBuffer = (SAA716x_EPRD(BAM, BAM_FGPI2_DMA_BUF_MODE) >> 3) & 0x7;
-			dprintk(SAA716x_DEBUG, 1, "fgpiStatus = %04X, buffer = %d",
-				fgpiStatus, activeBuffer);
-			if (activeBuffer > 0)
-				activeBuffer -= 1;
-			else
-				activeBuffer = 7;
-			if (saa716x->fgpi[2].dma_buf[activeBuffer].mem_virt) {
-				u8 * data = (u8 *)saa716x->fgpi[2].dma_buf[activeBuffer].mem_virt;
-				dprintk(SAA716x_DEBUG, 1, "%02X%02X%02X%02X",
-					data[0], data[1], data[2], data[3]);
-				if (data[0] != 0x47) {
-					u32 val = SAA716x_EPRD(FGPI2, FGPI_CONTROL);
-					val &= ~0x3000;
-					SAA716x_EPWR(FGPI2, FGPI_CONTROL, val);
-					val |= 0x3000;
-					SAA716x_EPWR(FGPI2, FGPI_CONTROL, val);
-
-					dprintk(SAA716x_ERROR, 1,
-						"TS 0: %02X%02X%02X%02X%02X%02X%02X%02X",
-						data[0], data[1], data[2], data[3],
-						data[4], data[5], data[6], data[7]);
-				}
-				dvb_dmx_swfilter_packets(&saa716x->saa716x_adap[0].demux, data, 348);
-			}
-		}
-		if (msiStatusL & MSI_INT_TAGACK_FGPI_3) {
-			u32 fgpiStatus;
-			u32 activeBuffer;
-
-			fgpiStatus = SAA716x_EPRD(FGPI3, INT_STATUS);
-			activeBuffer = (SAA716x_EPRD(BAM, BAM_FGPI3_DMA_BUF_MODE) >> 3) & 0x7;
-			dprintk(SAA716x_DEBUG, 1, "fgpiStatus = %04X, buffer = %d",
-				fgpiStatus, activeBuffer);
-			if (activeBuffer > 0)
-				activeBuffer -= 1;
-			else
-				activeBuffer = 7;
-			if (saa716x->fgpi[3].dma_buf[activeBuffer].mem_virt) {
-				u8 * data = (u8 *)saa716x->fgpi[3].dma_buf[activeBuffer].mem_virt;
-				dprintk(SAA716x_DEBUG, 1, "%02X%02X%02X%02X",
-					data[0], data[1], data[2], data[3]);
-				if (data[0] != 0x47) {
-					u32 val = SAA716x_EPRD(FGPI3, FGPI_CONTROL);
-					val &= ~0x3000;
-					SAA716x_EPWR(FGPI3, FGPI_CONTROL, val);
-					val |= 0x3000;
-					SAA716x_EPWR(FGPI3, FGPI_CONTROL, val);
-
-					dprintk(SAA716x_ERROR, 1,
-						"TS 1: %02X%02X%02X%02X%02X%02X%02X%02X",
-						data[0], data[1], data[2], data[3],
-						data[4], data[5], data[6], data[7]);
-				}
-				dvb_dmx_swfilter_packets(&saa716x->saa716x_adap[1].demux, data, 348);
-			}
-		}
+		if (msiStatusL & MSI_INT_TAGACK_FGPI_2)
+			tasklet_schedule(&saa716x->fgpi[2].tasklet);
+		if (msiStatusL & MSI_INT_TAGACK_FGPI_3)
+			tasklet_schedule(&saa716x->fgpi[3].tasklet);
 	}
 	if (msiStatusH) {
 		//dprintk(SAA716x_INFO, 1, "msiStatusH: %08X", msiStatusH);
@@ -1574,10 +1580,12 @@ static struct saa716x_config saa716x_s26400_config = {
 	.adap_config		= {
 		{
 			/* Adapter 0 */
-			.ts_port = 2
+			.ts_port = 2,
+			.worker = demux_worker
 		},{
 			/* Adapter 1 */
-			.ts_port = 3
+			.ts_port = 3,
+			.worker = demux_worker
 		}
 	}
 };
