@@ -85,6 +85,7 @@ typedef int (*saa716x_load_config_t)(struct saa716x_dev *saa716x);
 
 struct saa716x_adap_config {
 	u32				ts_port;
+	void				(*worker)(unsigned long);
 };
 
 struct saa716x_config {
