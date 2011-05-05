@@ -309,7 +309,8 @@ int saa716x_fgpi_stop(struct saa716x_dev *saa716x, int port)
 	return 0;
 }
 
-int saa716x_fgpi_init(struct saa716x_dev *saa716x, int port)
+int saa716x_fgpi_init(struct saa716x_dev *saa716x, int port,
+		      void (*worker)(unsigned long))
 {
 	int i;
 	int ret;
@@ -323,6 +324,10 @@ int saa716x_fgpi_init(struct saa716x_dev *saa716x, int port)
 			return ret;
 		}
 	}
+	saa716x->fgpi[port].saa716x = saa716x;
+	tasklet_init(&saa716x->fgpi[port].tasklet, worker,
+		     (unsigned long)&saa716x->fgpi[port]);
+	saa716x->fgpi[port].read_index = 0;
 
 	return 0;
 }
@@ -331,6 +336,7 @@ int saa716x_fgpi_exit(struct saa716x_dev *saa716x, int port)
 {
 	int i;
 
+	tasklet_kill(&saa716x->fgpi[port].tasklet);
 	for (i = 0; i < FGPI_BUFFERS; i++)
 	{
 		saa716x_dmabuf_free(saa716x, &saa716x->fgpi[port].dma_buf[i]);
