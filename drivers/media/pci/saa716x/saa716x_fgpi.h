@@ -1,6 +1,8 @@
 #ifndef __SAA716x_FGPI_H
 #define __SAA716x_FGPI_H
 
+#include <linux/interrupt.h>
+
 #define FGPI_BUFFERS		8
 #define PTA_LSB(__mem)		((u32 ) (__mem))
 #define PTA_MSB(__mem)		((u32 ) ((u64)(__mem) >> 32))
@@ -91,6 +93,9 @@ struct saa716x_dmabuf;
 struct saa716x_fgpi_stream_port {
 	u8			dma_channel;
 	struct saa716x_dmabuf	dma_buf[FGPI_BUFFERS];
+	struct saa716x_dev	*saa716x;
+	struct tasklet_struct	tasklet;
+	u8			read_index;
 };
 
 extern void saa716x_fgpiint_disable(struct saa716x_dmabuf *dmabuf, int channel);
@@ -98,7 +103,8 @@ extern int saa716x_fgpi_start(struct saa716x_dev *saa716x, int port,
 			      struct fgpi_stream_params *stream_params);
 extern int saa716x_fgpi_stop(struct saa716x_dev *saa716x, int port);
 
-extern int saa716x_fgpi_init(struct saa716x_dev *saa716x, int port);
+extern int saa716x_fgpi_init(struct saa716x_dev *saa716x, int port,
+			     void (*worker)(unsigned long));
 extern int saa716x_fgpi_exit(struct saa716x_dev *saa716x, int port);
 
 #endif /* __SAA716x_FGPI_H */
