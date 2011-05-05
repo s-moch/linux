@@ -99,6 +99,8 @@ struct sti7109_dev {
 	struct dvb_ringbuffer	tsout;   /* buffer for TS output */
 	u8			*tsbuf;  /* temp ts buffer */
 
+	struct tasklet_struct	fifo_tasklet;
+
 	wait_queue_head_t	boot_finish_wq;
 	int			boot_finished;
 
