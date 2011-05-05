@@ -515,7 +515,7 @@ static int sti7109_get_video_format(struct sti7109_dev *sti7109, video_size_t *v
 	return ret_val;
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
 static int dvb_osd_ioctl(struct inode *inode, struct file *file,
 #else
 static int dvb_osd_ioctl(struct file *file,
@@ -552,7 +552,7 @@ static int dvb_osd_ioctl(struct file *file,
 
 static struct file_operations dvb_osd_fops = {
 	.owner		= THIS_MODULE,
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
 	.ioctl		= dvb_generic_ioctl,
 #else
 	.unlocked_ioctl	= dvb_generic_ioctl,
@@ -591,7 +591,7 @@ static int saa716x_ff_osd_init(struct saa716x_dev *saa716x)
 	return 0;
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
 static int dvb_audio_ioctl(struct inode *inode, struct file *file,
 #else
 static int dvb_audio_ioctl(struct file *file,
@@ -618,7 +618,7 @@ static int dvb_audio_ioctl(struct file *file,
 
 static struct file_operations dvb_audio_fops = {
 	.owner		= THIS_MODULE,
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
 	.ioctl		= dvb_generic_ioctl,
 #else
 	.unlocked_ioctl	= dvb_generic_ioctl,
@@ -719,7 +719,7 @@ static unsigned int dvb_video_poll(struct file *file, poll_table *wait)
 	return mask;
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
 static int dvb_video_ioctl(struct inode *inode, struct file *file,
 #else
 static int dvb_video_ioctl(struct file *file,
@@ -779,7 +779,7 @@ static int dvb_video_ioctl(struct file *file,
 static struct file_operations dvb_video_fops = {
 	.owner		= THIS_MODULE,
 	.write		= dvb_video_write,
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
 	.ioctl		= dvb_generic_ioctl,
 #else
 	.unlocked_ioctl	= dvb_generic_ioctl,
