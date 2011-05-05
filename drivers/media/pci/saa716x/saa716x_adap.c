@@ -189,7 +189,8 @@ int __devinit saa716x_dvb_init(struct saa716x_dev *saa716x)
 			dprintk(SAA716x_ERROR, 1, "Frontend attach = NULL");
 		}
 
-		saa716x_fgpi_init(saa716x, config->adap_config[i].ts_port);
+		saa716x_fgpi_init(saa716x, config->adap_config[i].ts_port,
+				  config->adap_config[i].worker);
 
 		saa716x_adap++;
 	}
