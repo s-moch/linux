@@ -74,7 +74,7 @@ static int saa716x_request_irq(struct saa716x_dev *saa716x)
 
 	if (saa716x->int_type == MODE_MSI) {
 		ret = request_irq(pdev->irq,
-				  saa716x_msi_handler,
+				  config->irq_handler,
 				  IRQF_SHARED,
 				  DRIVER_NAME,
 				  saa716x);
