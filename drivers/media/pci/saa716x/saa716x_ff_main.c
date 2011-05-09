@@ -997,6 +997,12 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 	SAA716x_EPWR(MSI, MSI_CONFIG33, value);
 	SAA716x_EPWR(MSI, MSI_INT_ENA_SET_H, MSI_INT_EXTINT_0);
 
+	/* enable tuner reset */
+	SAA716x_EPWR(PHI_1, FPGA_ADDR_PIO_CTRL, 0);
+	msleep(50);
+	/* disable tuner reset */
+	SAA716x_EPWR(PHI_1, FPGA_ADDR_PIO_CTRL, 1);
+
 	err = saa716x_ff_st7109_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x FF STi7109 initialization failed");
