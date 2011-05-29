@@ -188,12 +188,11 @@ int saa716x_set_clk_internal(struct saa716x_dev *saa716x, u32 port)
 		cgu->clk_int_port[PORT_FGPI3] = 1;
 		cgu->clk_int_port[PORT_AI0] = 1;
 		cgu->clk_int_port[PORT_AI1] = 1;
-
-		delay = 0;
 		break;
 
 	default:
 		dprintk(SAA716x_ERROR, 1, "Unknown port <%02x>", port);
+		delay = 0;
 		break;
 	}
 
