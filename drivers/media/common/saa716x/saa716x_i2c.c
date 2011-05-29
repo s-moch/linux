@@ -479,8 +479,6 @@ static const struct i2c_algorithm saa716x_algo = {
 	.functionality	= saa716x_i2c_func,
 };
 
-#define I2C_HW_B_SAA716x		0x12
-
 struct saa716x_i2cvec {
 	u32			vector;
 	enum saa716x_edge	edge;
@@ -527,7 +525,6 @@ int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 			adapter->owner		= THIS_MODULE;
 			adapter->algo		= &saa716x_algo;
 			adapter->algo_data 	= NULL;
-			adapter->id		= I2C_HW_B_SAA716x;
 			adapter->timeout	= 500; /* FIXME ! */
 			adapter->retries	= 3; /* FIXME ! */
 			adapter->dev.parent	= &pdev->dev;
