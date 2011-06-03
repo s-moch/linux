@@ -1176,7 +1176,7 @@ static void demux_worker(unsigned long data)
 		fgpiStatus, write_index);
 
 	if (write_index == fgpi_entry->read_index) {
-		printk(KERN_ERR "%s: called but nothing to do\n", __func__);
+		printk(KERN_DEBUG "%s: called but nothing to do\n", __func__);
 		return;
 	}
 
@@ -1188,20 +1188,7 @@ static void demux_worker(unsigned long data)
 			fgpi_entry->dma_buf[fgpi_entry->read_index].list_len,
 			PCI_DMA_FROMDEVICE);
 
-		if (data[0] != 0x47) {
-			u32 val = SAA716x_EPRD(fgpi, FGPI_CONTROL);
-			val &= ~0x3000;
-			SAA716x_EPWR(fgpi, FGPI_CONTROL, val);
-			val |= 0x3000;
-			SAA716x_EPWR(fgpi, FGPI_CONTROL, val);
-
-			printk(KERN_WARNING "%s %u TS: %02X %02X %02X %02X %02X %02X %02X %02X",
-				__func__, fgpi_entry->dma_channel - 6,
-				data[0], data[1], data[2], data[3],
-				data[4], data[5], data[6], data[7]);
-		}
-
-		dvb_dmx_swfilter_packets(demux, data, 348);
+		dvb_dmx_swfilter(demux, data, 348 * 188);
 
 		fgpi_entry->read_index = (fgpi_entry->read_index + 1) & 7;
 	} while (write_index != fgpi_entry->read_index);
