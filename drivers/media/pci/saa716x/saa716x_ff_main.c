@@ -1426,18 +1426,25 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 
 		if (phiISR & ISR_REMOTE_EVENT_MASK) {
 			u8 data[4];
+			u32 remote_event;
 
 			saa716x_phi_read(saa716x, ADDR_REMOTE_EVENT, data, 4);
-			sti7109->remote_event = (data[3] << 24)
-					      | (data[2] << 16)
-					      | (data[1] << 8)
-					      | (data[0]);
+			remote_event = (data[3] << 24)
+				     | (data[2] << 16)
+				     | (data[1] << 8)
+				     | (data[0]);
+			memset(data, 0, sizeof(data));
+			saa716x_phi_write(saa716x, ADDR_REMOTE_EVENT, data, 4);
 
 			phiISR &= ~ISR_REMOTE_EVENT_MASK;
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_REMOTE_EVENT_MASK);
 
-			dprintk(SAA716x_INFO, 1, "REMOTE EVENT: %u", sti7109->remote_event);
-			saa716x_ir_handler(saa716x, sti7109->remote_event);
+			if (remote_event == 0) {
+				dprintk(SAA716x_ERROR, 1, "REMOTE EVENT: %u ignored", remote_event);
+			} else {
+				dprintk(SAA716x_INFO, 1, "REMOTE EVENT: %u", remote_event);
+				saa716x_ir_handler(saa716x, remote_event);
+			}
 		}
 
 		if (phiISR & ISR_DVO_FORMAT_MASK) {
