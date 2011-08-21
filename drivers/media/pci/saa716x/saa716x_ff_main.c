@@ -1540,8 +1540,8 @@ static struct stv090x_config tt6400_stv090x_config = {
 
 	.ts1_mode		= STV090x_TSMODE_SERIAL_CONTINUOUS,
 	.ts2_mode		= STV090x_TSMODE_SERIAL_CONTINUOUS,
-	.ts1_clk		= 90000000,
-	.ts2_clk		= 90000000,
+	.ts1_clk		= 135000000,
+	.ts2_clk		= 135000000,
 
 	.repeater_level		= STV090x_RPTLEVEL_16,
 
