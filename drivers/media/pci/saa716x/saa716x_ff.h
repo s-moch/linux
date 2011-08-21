@@ -135,7 +135,6 @@ struct sti7109_dev {
 	u64			audio_pts;
 	u64			video_pts;
 	u64			current_stc;
-	u32			remote_event;
 
 	u32			int_count_enable;
 	u32			total_int_count;
