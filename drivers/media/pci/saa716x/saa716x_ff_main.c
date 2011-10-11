@@ -938,8 +938,7 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 		goto fail3;
 	}
 
-	sti7109->dev	= saa716x;
-	saa716x->priv	= sti7109;
+	sti7109->dev = saa716x;
 
 	sti7109->iobuf = vmalloc(TSOUT_LEN + TSBUF_LEN);
 	if (!sti7109->iobuf)
@@ -975,6 +974,8 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 	sti7109->ext_int_total_count = 0;
 	memset(sti7109->ext_int_source_count, 0, sizeof(sti7109->ext_int_source_count));
 	sti7109->last_int_ticks = jiffies;
+
+	saa716x->priv = sti7109;
 
 	saa716x_gpio_set_output(saa716x, TT_PREMIUM_GPIO_POWER_ENABLE);
 	saa716x_gpio_set_output(saa716x, TT_PREMIUM_GPIO_RESET_BACKEND);
@@ -1136,6 +1137,7 @@ static void __devexit saa716x_ff_pci_remove(struct pci_dev *pdev)
 	/* disable board power */
 	saa716x_gpio_write(saa716x, TT_PREMIUM_GPIO_POWER_ENABLE, 0);
 
+	saa716x->priv = NULL;
 	kfree(sti7109);
 
 	saa716x_i2c_exit(saa716x);
@@ -1207,6 +1209,10 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 		return IRQ_NONE;
 	}
 	sti7109 = saa716x->priv;
+	if (unlikely(sti7109 == NULL)) {
+		printk("%s: sti7109=NULL", __func__);
+		return IRQ_NONE;
+	}
 	if (sti7109->int_count_enable)
 		sti7109->total_int_count++;
 #if 0
