@@ -303,8 +303,8 @@ static struct file_operations dvb_osd_fops = {
 
 static struct dvb_device dvbdev_osd = {
 	.priv		= NULL,
-	.users		= 1,
-	.writers	= 1,
+	.users		= 2,
+	.writers	= 2,
 	.fops		= &dvb_osd_fops,
 	.kernel_ioctl	= dvb_osd_ioctl,
 };
