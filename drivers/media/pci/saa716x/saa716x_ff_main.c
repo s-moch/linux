@@ -66,12 +66,12 @@ MODULE_PARM_DESC(int_count_enable, "enable counting of interrupts");
 
 static int saa716x_ff_fpga_init(struct saa716x_dev *saa716x)
 {
+	struct sti7109_dev *sti7109 = saa716x->priv;
 	int fpgaInit;
 	int fpgaDone;
 	int rounds;
 	int ret;
 	const struct firmware *fw;
-	u32 fpgaVersion;
 
 	/* request the FPGA firmware, this will block until someone uploads it */
 	ret = request_firmware(&fw, "dvb-ttpremium-fpga-01.fw", &saa716x->pdev->dev);
@@ -128,9 +128,9 @@ static int saa716x_ff_fpga_init(struct saa716x_dev *saa716x)
 	if (!fpgaDone)
 		return -EINVAL;
 
-	fpgaVersion = SAA716x_EPRD(PHI_1, FPGA_ADDR_VERSION);
+	sti7109->fpga_version = SAA716x_EPRD(PHI_1, FPGA_ADDR_VERSION);
 	printk(KERN_INFO "SAA716x FF FPGA version %X.%02X\n",
-		fpgaVersion >> 8, fpgaVersion & 0xFF);
+		sti7109->fpga_version >> 8, sti7109->fpga_version & 0xFF);
 
 	return 0;
 }
@@ -513,15 +513,11 @@ static int dvb_video_ioctl(struct file *file,
 
 		stream_source = (video_stream_source_t) parg;
 		if (stream_source == VIDEO_SOURCE_DEMUX) {
-			/* select TS input 3 for TS mux 3 */
-			SAA716x_EPWR(PHI_1, FPGA_ADDR_TSR_MUX3, 3);
 			/* stop and reset FIFO 1 */
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, 1);
 		}
 		else {
 			dvb_ringbuffer_flush_spinlock_wakeup(&sti7109->tsout);
-			/* select FIFO 1 for TS mux 3 */
-			SAA716x_EPWR(PHI_1, FPGA_ADDR_TSR_MUX3, 4);
 			/* reset FIFO 1 */
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, 1);
 			/* start FIFO 1 */
@@ -712,6 +708,15 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x FF FPGA Initialization failed");
 		goto fail5;
+	}
+
+	/* configure TS muxer */
+	if (sti7109->fpga_version < 0x110) {
+		/* select FIFO 1 for TS mux 3 */
+		SAA716x_EPWR(PHI_1, FPGA_ADDR_TSR_MUX3, 4);
+	} else {
+		/* select FIFO 1 for TS mux 3 */
+		SAA716x_EPWR(PHI_1, FPGA_ADDR_TSR_MUX3, 1);
 	}
 
 	/* enable interrupts from ST7109 -> PC */
