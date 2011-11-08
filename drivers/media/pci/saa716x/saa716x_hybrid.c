@@ -103,6 +103,8 @@ static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct
 		goto fail3;
 	}
 
+	saa716x_gpio_init(saa716x);
+
 	err = saa716x_dump_eeprom(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM dump failed");
@@ -284,8 +286,10 @@ static int saa716x_vp6090_frontend_attach(struct saa716x_adapter *adapter, int c
 
 	dprintk(SAA716x_ERROR, 1, "Adapter (%d) Power ON", count);
 
-	saa716x_gpio_write(saa716x, GPIO_11, 1);
-	saa716x_gpio_write(saa716x, GPIO_10, 1);
+	saa716x_gpio_set_output(saa716x, 11);
+	saa716x_gpio_set_output(saa716x, 10);
+	saa716x_gpio_write(saa716x, 11, 1);
+	saa716x_gpio_write(saa716x, 10, 1);
 	msleep(100);
 #if 0
 	dprintk(SAA716x_ERROR, 1, "Probing for MB86A16 (DVB-S/DSS)");
@@ -363,7 +367,9 @@ static int saa716x_atlantis_frontend_attach(struct saa716x_adapter *adapter, int
 		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
 		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
 		dprintk(SAA716x_ERROR, 1, "Adapter (%d) Power ON", count);
-		saa716x_gpio_write(saa716x, GPIO_14, 1);
+
+		saa716x_gpio_set_output(saa716x, 14);
+		saa716x_gpio_write(saa716x, 14, 1);
 		msleep(100);
 
 		adapter->fe = tda10046_attach(&tda1004x_atlantis_config, &i2c->i2c_adapter);
