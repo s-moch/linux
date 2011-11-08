@@ -99,6 +99,8 @@ static int __devinit saa716x_budget_pci_probe(struct pci_dev *pdev, const struct
 		goto fail3;
 	}
 
+	saa716x_gpio_init(saa716x);
+
 	err = saa716x_dump_eeprom(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM dump failed");
