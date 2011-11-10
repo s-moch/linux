@@ -35,6 +35,7 @@
 #include "zl10353.h"
 #include "mb86a16.h"
 #include "tda1004x.h"
+#include "tda827x.h"
 
 unsigned int verbose;
 module_param(verbose, int, 0644);
@@ -417,10 +418,19 @@ static struct tda1004x_config tda1004x_nemo_config = {
 	.demod_address		= 0x8,
 	.invert			= 0,
 	.invert_oclk		= 0,
-	.xtal_freq		= TDA10046_XTAL_4M,
-	.agc_config		= TDA10046_AGC_DEFAULT,
-	.if_freq		= TDA10046_FREQ_3617,
+	.xtal_freq		= TDA10046_XTAL_16M,
+	.agc_config		= TDA10046_AGC_TDA827X,
+	.if_freq		= TDA10046_FREQ_045,
 	.request_firmware	= tda1004x_nemo_request_firmware,
+	.tuner_address          = 0x60,
+};
+
+static struct tda827x_config tda827x_nemo_config = {
+	.init		= NULL,
+	.sleep		= NULL,
+	.config		= 0,
+	.switch_addr	= 0,
+	.agcf		= NULL,
 };
 
 static int load_config_nemo(struct saa716x_dev *saa716x)
@@ -432,7 +442,8 @@ static int load_config_nemo(struct saa716x_dev *saa716x)
 static int saa716x_nemo_frontend_attach(struct saa716x_adapter *adapter, int count)
 {
 	struct saa716x_dev *saa716x = adapter->saa716x;
-	struct saa716x_i2c *i2c = &saa716x->i2c[1];
+	struct saa716x_i2c *demod_i2c = &saa716x->i2c[SAA716x_I2C_BUS_B];
+	struct saa716x_i2c *tuner_i2c = &saa716x->i2c[SAA716x_I2C_BUS_A];
 
 
 	if (count  == 0) {
@@ -441,14 +452,29 @@ static int saa716x_nemo_frontend_attach(struct saa716x_adapter *adapter, int cou
 		dprintk(SAA716x_ERROR, 1, "Adapter (%d) Power ON", count);
 
 		saa716x_gpio_set_output(saa716x, 14);
-		saa716x_gpio_write(saa716x, 14, 1);
-		msleep(100);
 
-		adapter->fe = tda10046_attach(&tda1004x_nemo_config, &i2c->i2c_adapter);
+		/* Reset the demodulator */
+		saa716x_gpio_write(saa716x, 14, 1);
+		msleep(10);
+		saa716x_gpio_write(saa716x, 14, 0);
+		msleep(10);
+		saa716x_gpio_write(saa716x, 14, 1);
+		msleep(10);
+
+		adapter->fe = tda10046_attach(&tda1004x_nemo_config,
+					      &demod_i2c->i2c_adapter);
 		if (adapter->fe) {
 			dprintk(SAA716x_ERROR, 1, "found TDA10046 DVB-T frontend @0x%02x",
 				tda1004x_nemo_config.demod_address);
 
+		} else {
+			goto exit;
+		}
+		if (dvb_attach(tda827x_attach, adapter->fe,
+			       tda1004x_nemo_config.tuner_address,
+			       &tuner_i2c->i2c_adapter, &tda827x_nemo_config)) {
+			dprintk(SAA716x_ERROR, 1, "found TDA8275 tuner @0x%02x",
+				tda1004x_nemo_config.tuner_address);
 		} else {
 			goto exit;
 		}
