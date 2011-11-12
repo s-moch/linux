@@ -20,8 +20,11 @@
 
 #include "saa716x_mod.h"
 
-#include "saa716x_msi_reg.h"
+#include "saa716x_dma_reg.h"
+#include "saa716x_fgpi_reg.h"
 #include "saa716x_gpio_reg.h"
+#include "saa716x_greg_reg.h"
+#include "saa716x_msi_reg.h"
 
 #include "saa716x_adap.h"
 #include "saa716x_i2c.h"
@@ -115,6 +118,11 @@ static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM dump failed");
 	}
+
+	/* set default port mapping */
+	SAA716x_EPWR(GREG, GREG_VI_CTRL, 0x2C688F44);
+	/* enable FGPI3 and FGPI0 for TS input from Port 3 and 6 */
+	SAA716x_EPWR(GREG, GREG_FGPI_CTRL, 0x894);
 
 	err = saa716x_dvb_init(saa716x);
 	if (err) {
@@ -212,9 +220,66 @@ static irqreturn_t saa716x_hybrid_pci_irq(int irq, void *dev_id)
 		SAA716x_EPRD(DCS, DCSC_INT_ENABLE));
 #endif
 
+	if (stat_l) {
+		if (stat_l & MSI_INT_TAGACK_FGPI_3) {
+			tasklet_schedule(&saa716x->fgpi[3].tasklet);
+		}
+	}
+
 	return IRQ_HANDLED;
 }
 
+static void demux_worker(unsigned long data)
+{
+	struct saa716x_fgpi_stream_port *fgpi_entry = (struct saa716x_fgpi_stream_port *)data;
+	struct saa716x_dev *saa716x = fgpi_entry->saa716x;
+	struct dvb_demux *demux;
+	u32 fgpi;
+	u32 buf_mode;
+	u32 write_index;
+	u32 fgpiStatus;
+
+	switch (fgpi_entry->dma_channel - 6) {
+	case 3: /* FGPI_3 */
+		demux = &saa716x->saa716x_adap[0].demux;
+		fgpi = FGPI3;
+		buf_mode = SAA716x_EPRD(BAM, BAM_FGPI3_DMA_BUF_MODE);
+		if (saa716x->revision < 2) {
+			/* restore buffer numbers on BAM for revision 1 */
+			SAA716x_EPWR(fgpi, INT_CLR_STATUS, 0x7F);
+			SAA716x_EPWR(BAM, BAM_FGPI3_DMA_BUF_MODE, buf_mode | 7);
+		}
+		write_index = (buf_mode >> 3) & 0x7;
+		break;
+
+	default:
+		printk(KERN_ERR "%s: unexpected channel %u\n",
+		       __func__, fgpi_entry->dma_channel);
+		return;
+	}
+
+	fgpiStatus = SAA716x_EPRD(fgpi, INT_STATUS);
+	dprintk(SAA716x_DEBUG, 1, "fgpiStatus = %04X, buffer = %d",
+		fgpiStatus, write_index);
+
+	if (write_index == fgpi_entry->read_index) {
+		printk(KERN_DEBUG "%s: called but nothing to do\n", __func__);
+		return;
+	}
+
+	do {
+		u8 *data = (u8 *)fgpi_entry->dma_buf[fgpi_entry->read_index].mem_virt;
+
+		pci_dma_sync_sg_for_cpu(saa716x->pdev,
+			fgpi_entry->dma_buf[fgpi_entry->read_index].sg_list,
+			fgpi_entry->dma_buf[fgpi_entry->read_index].list_len,
+			PCI_DMA_FROMDEVICE);
+
+		dvb_dmx_swfilter(demux, data, 348 * 188);
+
+		fgpi_entry->read_index = (fgpi_entry->read_index + 1) & 7;
+	} while (write_index != fgpi_entry->read_index);
+}
 
 /*
  * Twinhan/Azurewave VP-6090
@@ -451,6 +516,10 @@ static int saa716x_nemo_frontend_attach(struct saa716x_adapter *adapter, int cou
 		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
 		dprintk(SAA716x_ERROR, 1, "Adapter (%d) Power ON", count);
 
+		/* GPIO 26 controls a +15dB gain */
+		saa716x_gpio_set_output(saa716x, 26);
+		saa716x_gpio_write(saa716x, 26, 0);
+
 		saa716x_gpio_set_output(saa716x, 14);
 
 		/* Reset the demodulator */
@@ -496,6 +565,14 @@ static struct saa716x_config saa716x_nemo_config = {
 	.frontend_attach	= saa716x_nemo_frontend_attach,
 	.irq_handler		= saa716x_hybrid_pci_irq,
 	.i2c_rate		= SAA716x_I2C_RATE_100,
+
+	.adap_config		= {
+		{
+			/* Adapter 0 */
+			.ts_port = 3, /* using FGPI 3 */
+			.worker = demux_worker
+		}
+	}
 };
 
 
