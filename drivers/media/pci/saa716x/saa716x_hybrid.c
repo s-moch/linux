@@ -221,6 +221,15 @@ static irqreturn_t saa716x_hybrid_pci_irq(int irq, void *dev_id)
 #endif
 
 	if (stat_l) {
+		if (stat_l & MSI_INT_TAGACK_FGPI_0) {
+			tasklet_schedule(&saa716x->fgpi[0].tasklet);
+		}
+		if (stat_l & MSI_INT_TAGACK_FGPI_1) {
+			tasklet_schedule(&saa716x->fgpi[1].tasklet);
+		}
+		if (stat_l & MSI_INT_TAGACK_FGPI_2) {
+			tasklet_schedule(&saa716x->fgpi[2].tasklet);
+		}
 		if (stat_l & MSI_INT_TAGACK_FGPI_3) {
 			tasklet_schedule(&saa716x->fgpi[3].tasklet);
 		}
@@ -234,22 +243,47 @@ static void demux_worker(unsigned long data)
 	struct saa716x_fgpi_stream_port *fgpi_entry = (struct saa716x_fgpi_stream_port *)data;
 	struct saa716x_dev *saa716x = fgpi_entry->saa716x;
 	struct dvb_demux *demux;
-	u32 fgpi;
+	u32 fgpi_index;
+	u32 i;
+	u32 fgpi_base;
+	u32 buf_mode_reg;
 	u32 buf_mode;
 	u32 write_index;
 	u32 fgpiStatus;
 
-	switch (fgpi_entry->dma_channel - 6) {
-	case 3: /* FGPI_3 */
-		demux = &saa716x->saa716x_adap[0].demux;
-		fgpi = FGPI3;
-		buf_mode = SAA716x_EPRD(BAM, BAM_FGPI3_DMA_BUF_MODE);
-		if (saa716x->revision < 2) {
-			/* restore buffer numbers on BAM for revision 1 */
-			SAA716x_EPWR(fgpi, INT_CLR_STATUS, 0x7F);
-			SAA716x_EPWR(BAM, BAM_FGPI3_DMA_BUF_MODE, buf_mode | 7);
+	fgpi_index = fgpi_entry->dma_channel - 6;
+	demux = NULL;
+	for (i = 0; i < saa716x->config->adapters; i++) {
+		if (saa716x->config->adap_config[i].ts_port == fgpi_index) {
+			demux = &saa716x->saa716x_adap[i].demux;
+			break;
 		}
-		write_index = (buf_mode >> 3) & 0x7;
+	}
+	if (demux == NULL) {
+		printk(KERN_ERR "%s: unexpected channel %u\n",
+		       __func__, fgpi_entry->dma_channel);
+		return;
+	}
+
+	switch (fgpi_index) {
+	case 0: /* FGPI_0 */
+		fgpi_base = FGPI0;
+		buf_mode_reg = BAM_FGPI0_DMA_BUF_MODE;
+		break;
+
+	case 1: /* FGPI_1 */
+		fgpi_base = FGPI1;
+		buf_mode_reg = BAM_FGPI1_DMA_BUF_MODE;
+		break;
+
+	case 2: /* FGPI_2 */
+		fgpi_base = FGPI2;
+		buf_mode_reg = BAM_FGPI2_DMA_BUF_MODE;
+		break;
+
+	case 3: /* FGPI_3 */
+		fgpi_base = FGPI3;
+		buf_mode_reg = BAM_FGPI3_DMA_BUF_MODE;
 		break;
 
 	default:
@@ -258,7 +292,15 @@ static void demux_worker(unsigned long data)
 		return;
 	}
 
-	fgpiStatus = SAA716x_EPRD(fgpi, INT_STATUS);
+	buf_mode = SAA716x_EPRD(BAM, buf_mode_reg);
+	if (saa716x->revision < 2) {
+		/* restore buffer numbers on BAM for revision 1 */
+		SAA716x_EPWR(fgpi_base, INT_CLR_STATUS, 0x7F);
+		SAA716x_EPWR(BAM, buf_mode_reg, buf_mode | 7);
+	}
+	write_index = (buf_mode >> 3) & 0x7;
+
+	fgpiStatus = SAA716x_EPRD(fgpi_base, INT_STATUS);
 	dprintk(SAA716x_DEBUG, 1, "fgpiStatus = %04X, buffer = %d",
 		fgpiStatus, write_index);
 
