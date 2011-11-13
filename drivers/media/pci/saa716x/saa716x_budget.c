@@ -20,14 +20,14 @@
 
 #include "saa716x_mod.h"
 
-#include "saa716x_msi_reg.h"
 #include "saa716x_gpio_reg.h"
+#include "saa716x_greg_reg.h"
+#include "saa716x_msi_reg.h"
 
-#include "saa716x_vip.h"
-#include "saa716x_aip.h"
+#include "saa716x_adap.h"
+#include "saa716x_i2c.h"
 #include "saa716x_msi.h"
 #include "saa716x_budget.h"
-#include "saa716x_adap.h"
 #include "saa716x_gpio.h"
 #include "saa716x_rom.h"
 #include "saa716x_spi.h"
@@ -110,6 +110,11 @@ static int __devinit saa716x_budget_pci_probe(struct pci_dev *pdev, const struct
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM read failed");
 	}
+
+	/* set default port mapping */
+	SAA716x_EPWR(GREG, GREG_VI_CTRL, 0x2C688F44);
+	/* enable FGPI3 and FGPI0 for TS input from Port 3 and 6 */
+	SAA716x_EPWR(GREG, GREG_FGPI_CTRL, 0x894);
 
 	err = saa716x_dvb_init(saa716x);
 	if (err) {
@@ -206,7 +211,70 @@ static irqreturn_t saa716x_budget_pci_irq(int irq, void *dev_id)
 		SAA716x_EPRD(DCS, DCSC_INT_ENABLE));
 #endif
 
+	if (stat_l) {
+		if (stat_l & MSI_INT_TAGACK_FGPI_0) {
+			tasklet_schedule(&saa716x->fgpi[0].tasklet);
+		}
+		if (stat_l & MSI_INT_TAGACK_FGPI_1) {
+			tasklet_schedule(&saa716x->fgpi[1].tasklet);
+		}
+		if (stat_l & MSI_INT_TAGACK_FGPI_2) {
+			tasklet_schedule(&saa716x->fgpi[2].tasklet);
+		}
+		if (stat_l & MSI_INT_TAGACK_FGPI_3) {
+			tasklet_schedule(&saa716x->fgpi[3].tasklet);
+		}
+	}
+
 	return IRQ_HANDLED;
+}
+
+static void demux_worker(unsigned long data)
+{
+	struct saa716x_fgpi_stream_port *fgpi_entry = (struct saa716x_fgpi_stream_port *)data;
+	struct saa716x_dev *saa716x = fgpi_entry->saa716x;
+	struct dvb_demux *demux;
+	u32 fgpi_index;
+	u32 i;
+	u32 write_index;
+
+	fgpi_index = fgpi_entry->dma_channel - 6;
+	demux = NULL;
+	for (i = 0; i < saa716x->config->adapters; i++) {
+		if (saa716x->config->adap_config[i].ts_port == fgpi_index) {
+			demux = &saa716x->saa716x_adap[i].demux;
+			break;
+		}
+	}
+	if (demux == NULL) {
+		printk(KERN_ERR "%s: unexpected channel %u\n",
+		       __func__, fgpi_entry->dma_channel);
+		return;
+	}
+
+	write_index = saa716x_fgpi_get_write_index(saa716x, fgpi_index);
+	if (write_index < 0)
+		return;
+
+	dprintk(SAA716x_DEBUG, 1, "dma buffer = %d", write_index);
+
+	if (write_index == fgpi_entry->read_index) {
+		printk(KERN_DEBUG "%s: called but nothing to do\n", __func__);
+		return;
+	}
+
+	do {
+		u8 *data = (u8 *)fgpi_entry->dma_buf[fgpi_entry->read_index].mem_virt;
+
+		pci_dma_sync_sg_for_cpu(saa716x->pdev,
+			fgpi_entry->dma_buf[fgpi_entry->read_index].sg_list,
+			fgpi_entry->dma_buf[fgpi_entry->read_index].list_len,
+			PCI_DMA_FROMDEVICE);
+
+		dvb_dmx_swfilter(demux, data, 348 * 188);
+
+		fgpi_entry->read_index = (fgpi_entry->read_index + 1) & 7;
+	} while (write_index != fgpi_entry->read_index);
 }
 
 static int load_config_vp3071(struct saa716x_dev *saa716x)
