@@ -869,32 +869,29 @@ static void demux_worker(unsigned long data)
 	struct saa716x_fgpi_stream_port *fgpi_entry = (struct saa716x_fgpi_stream_port *)data;
 	struct saa716x_dev *saa716x = fgpi_entry->saa716x;
 	struct dvb_demux *demux;
-	u32 fgpi;
+	u32 fgpi_index;
+	u32 i;
 	u32 write_index;
-	u32 fgpiStatus;
 
-	switch (fgpi_entry->dma_channel - 6) {
-	case 2:	/* FGPI_2 */
-		demux = &saa716x->saa716x_adap[0].demux;
-		fgpi = FGPI2;
-		write_index = (SAA716x_EPRD(BAM, BAM_FGPI2_DMA_BUF_MODE) >> 3) & 0x7;
-		break;
-
-	case 3: /* FGPI_3 */
-		demux = &saa716x->saa716x_adap[1].demux;
-		fgpi = FGPI3;
-		write_index = (SAA716x_EPRD(BAM, BAM_FGPI3_DMA_BUF_MODE) >> 3) & 0x7;
-		break;
-
-	default:
+	fgpi_index = fgpi_entry->dma_channel - 6;
+	demux = NULL;
+	for (i = 0; i < saa716x->config->adapters; i++) {
+		if (saa716x->config->adap_config[i].ts_port == fgpi_index) {
+			demux = &saa716x->saa716x_adap[i].demux;
+			break;
+		}
+	}
+	if (demux == NULL) {
 		printk(KERN_ERR "%s: unexpected channel %u\n",
 		       __func__, fgpi_entry->dma_channel);
 		return;
 	}
 
-	fgpiStatus = SAA716x_EPRD(fgpi, INT_STATUS);
-	dprintk(SAA716x_DEBUG, 1, "fgpiStatus = %04X, buffer = %d",
-		fgpiStatus, write_index);
+	write_index = saa716x_fgpi_get_write_index(saa716x, fgpi_index);
+	if (write_index < 0)
+		return;
+
+	dprintk(SAA716x_DEBUG, 1, "dma buffer = %d", write_index);
 
 	if (write_index == fgpi_entry->read_index) {
 		printk(KERN_DEBUG "%s: called but nothing to do\n", __func__);
