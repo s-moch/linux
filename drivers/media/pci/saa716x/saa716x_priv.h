@@ -29,6 +29,7 @@
 
 #define SAA716x_DEV		(saa716x)->num
 #define SAA716x_VERBOSE		(saa716x)->verbose
+#define SAA716x_MAX_ADAPTERS	4
 
 #define dprintk(__x, __y, __fmt, __arg...) do {								\
 	if (__y) {											\
@@ -102,7 +103,7 @@ struct saa716x_config {
 	int (*frontend_attach)(struct saa716x_adapter *adapter, int count);
 	irqreturn_t (*irq_handler)(int irq, void *dev_id);
 
-	struct saa716x_adap_config	adap_config[2];
+	struct saa716x_adap_config	adap_config[SAA716x_MAX_ADAPTERS];
 	enum saa716x_i2c_rate		i2c_rate;
 };
 
@@ -150,7 +151,7 @@ struct saa716x_dev {
 	struct saa716x_spi_state	*saa716x_spi;
 	struct saa716x_spi_config	spi_config;
 
-	struct saa716x_adapter		saa716x_adap[2];
+	struct saa716x_adapter		saa716x_adap[SAA716x_MAX_ADAPTERS];
 	struct mutex			adap_lock;
 	struct saa716x_cgu		cgu;
 
