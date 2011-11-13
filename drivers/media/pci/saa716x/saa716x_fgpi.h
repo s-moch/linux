@@ -99,6 +99,8 @@ struct saa716x_fgpi_stream_port {
 };
 
 extern void saa716x_fgpiint_disable(struct saa716x_dmabuf *dmabuf, int channel);
+extern int saa716x_fgpi_get_write_index(struct saa716x_dev *saa716x,
+					u32 fgpi_index);
 extern int saa716x_fgpi_start(struct saa716x_dev *saa716x, int port,
 			      struct fgpi_stream_params *stream_params);
 extern int saa716x_fgpi_stop(struct saa716x_dev *saa716x, int port);
