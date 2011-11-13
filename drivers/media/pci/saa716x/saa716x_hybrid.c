@@ -245,11 +245,7 @@ static void demux_worker(unsigned long data)
 	struct dvb_demux *demux;
 	u32 fgpi_index;
 	u32 i;
-	u32 fgpi_base;
-	u32 buf_mode_reg;
-	u32 buf_mode;
 	u32 write_index;
-	u32 fgpiStatus;
 
 	fgpi_index = fgpi_entry->dma_channel - 6;
 	demux = NULL;
@@ -265,44 +261,11 @@ static void demux_worker(unsigned long data)
 		return;
 	}
 
-	switch (fgpi_index) {
-	case 0: /* FGPI_0 */
-		fgpi_base = FGPI0;
-		buf_mode_reg = BAM_FGPI0_DMA_BUF_MODE;
-		break;
-
-	case 1: /* FGPI_1 */
-		fgpi_base = FGPI1;
-		buf_mode_reg = BAM_FGPI1_DMA_BUF_MODE;
-		break;
-
-	case 2: /* FGPI_2 */
-		fgpi_base = FGPI2;
-		buf_mode_reg = BAM_FGPI2_DMA_BUF_MODE;
-		break;
-
-	case 3: /* FGPI_3 */
-		fgpi_base = FGPI3;
-		buf_mode_reg = BAM_FGPI3_DMA_BUF_MODE;
-		break;
-
-	default:
-		printk(KERN_ERR "%s: unexpected channel %u\n",
-		       __func__, fgpi_entry->dma_channel);
+	write_index = saa716x_fgpi_get_write_index(saa716x, fgpi_index);
+	if (write_index < 0)
 		return;
-	}
 
-	buf_mode = SAA716x_EPRD(BAM, buf_mode_reg);
-	if (saa716x->revision < 2) {
-		/* restore buffer numbers on BAM for revision 1 */
-		SAA716x_EPWR(fgpi_base, INT_CLR_STATUS, 0x7F);
-		SAA716x_EPWR(BAM, buf_mode_reg, buf_mode | 7);
-	}
-	write_index = (buf_mode >> 3) & 0x7;
-
-	fgpiStatus = SAA716x_EPRD(fgpi_base, INT_STATUS);
-	dprintk(SAA716x_DEBUG, 1, "fgpiStatus = %04X, buffer = %d",
-		fgpiStatus, write_index);
+	dprintk(SAA716x_DEBUG, 1, "dma buffer = %d", write_index);
 
 	if (write_index == fgpi_entry->read_index) {
 		printk(KERN_DEBUG "%s: called but nothing to do\n", __func__);
