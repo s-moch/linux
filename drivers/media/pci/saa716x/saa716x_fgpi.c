@@ -97,6 +97,49 @@ void saa716x_fgpiint_disable(struct saa716x_dmabuf *dmabuf, int channel)
 }
 EXPORT_SYMBOL_GPL(saa716x_fgpiint_disable);
 
+int saa716x_fgpi_get_write_index(struct saa716x_dev *saa716x, u32 fgpi_index)
+{
+	u32 fgpi_base;
+	u32 buf_mode_reg;
+	u32 buf_mode;
+
+ 	switch (fgpi_index) {
+	case 0: /* FGPI_0 */
+		fgpi_base = FGPI0;
+		buf_mode_reg = BAM_FGPI0_DMA_BUF_MODE;
+		break;
+
+	case 1: /* FGPI_1 */
+		fgpi_base = FGPI1;
+		buf_mode_reg = BAM_FGPI1_DMA_BUF_MODE;
+		break;
+
+	case 2: /* FGPI_2 */
+		fgpi_base = FGPI2;
+		buf_mode_reg = BAM_FGPI2_DMA_BUF_MODE;
+		break;
+
+	case 3: /* FGPI_3 */
+		fgpi_base = FGPI3;
+		buf_mode_reg = BAM_FGPI3_DMA_BUF_MODE;
+		break;
+
+	default:
+		printk(KERN_ERR "%s: unexpected fgpi %u\n",
+		       __func__, fgpi_index);
+		return -1;
+	}
+
+	buf_mode = SAA716x_EPRD(BAM, buf_mode_reg);
+	if (saa716x->revision < 2) {
+		/* workaround for revision 1: restore buffer numbers on BAM */
+		SAA716x_EPWR(fgpi_base, INT_CLR_STATUS, 0x7F);
+		SAA716x_EPWR(BAM, buf_mode_reg, buf_mode | 7);
+	}
+	return (buf_mode >> 3) & 0x7;
+}
+EXPORT_SYMBOL_GPL(saa716x_fgpi_get_write_index);
+
 static u32 saa716x_init_ptables(struct saa716x_dmabuf *dmabuf, int channel)
 {
 	struct saa716x_dev *saa716x = dmabuf->saa716x;
