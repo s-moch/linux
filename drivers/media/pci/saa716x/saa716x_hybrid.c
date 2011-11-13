@@ -20,8 +20,6 @@
 
 #include "saa716x_mod.h"
 
-#include "saa716x_dma_reg.h"
-#include "saa716x_fgpi_reg.h"
 #include "saa716x_gpio_reg.h"
 #include "saa716x_greg_reg.h"
 #include "saa716x_msi_reg.h"
@@ -54,7 +52,6 @@ static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct
 {
 	struct saa716x_dev *saa716x;
 	int err = 0;
-	u32 sts;
 
 	saa716x = kzalloc(sizeof (struct saa716x_dev), GFP_KERNEL);
 	if (saa716x == NULL) {
@@ -99,8 +96,6 @@ static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct
 		goto fail1;
 	}
 
-	pci_read_config_dword(pdev, 0x06, &sts);
-
 	err = saa716x_i2c_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x I2C Initialization failed");
@@ -140,7 +135,6 @@ fail2:
 	saa716x_pci_exit(saa716x);
 fail1:
 	kfree(saa716x);
-
 fail0:
 	return err;
 }
