@@ -82,8 +82,6 @@ struct saa716x_dev;
 struct saa716x_adapter;
 struct saa716x_spi_config;
 
-typedef int (*saa716x_load_config_t)(struct saa716x_dev *saa716x);
-
 struct saa716x_adap_config {
 	u32				ts_port;
 	void				(*worker)(unsigned long);
@@ -94,8 +92,6 @@ struct saa716x_config {
 	char				*dev_type;
 
 	enum saa716x_boot_mode		boot_mode;
-
-	saa716x_load_config_t		load_config;
 
 	int				adapters;
 	int				frontends;
