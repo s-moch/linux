@@ -1249,13 +1249,6 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
-static int load_config_s26400(struct saa716x_dev *saa716x)
-{
-	int ret = 0;
-
-	return ret;
-}
-
 #define SAA716x_MODEL_S2_6400_DUAL	"Technotrend S2 6400 Dual S2 Premium"
 #define SAA716x_DEV_S2_6400_DUAL	"2x DVB-S/S2 + Hardware decode"
 
@@ -1366,7 +1359,6 @@ static struct saa716x_config saa716x_s26400_config = {
 	.model_name		= SAA716x_MODEL_S2_6400_DUAL,
 	.dev_type		= SAA716x_DEV_S2_6400_DUAL,
 	.boot_mode		= SAA716x_EXT_BOOT,
-	.load_config		= &load_config_s26400,
 	.adapters		= 2,
 	.frontend_attach	= saa716x_s26400_frontend_attach,
 	.irq_handler		= saa716x_ff_pci_irq,
