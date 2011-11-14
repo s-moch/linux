@@ -307,13 +307,6 @@ static struct tda1004x_config tda1004x_vp6090_config = {
 	.request_firmware	= tda1004x_vp6090_request_firmware,
 };
 
-static int load_config_vp6090(struct saa716x_dev *saa716x)
-{
-	int ret = 0;
-
-	return ret;
-}
-
 static int vp6090_dvbs_set_voltage(struct dvb_frontend *fe, fe_sec_voltage_t voltage)
 {
 	struct saa716x_dev *saa716x = fe->dvb->priv;
@@ -383,7 +376,6 @@ static struct saa716x_config saa716x_vp6090_config = {
 	.model_name		= SAA716x_MODEL_TWINHAN_VP6090,
 	.dev_type		= SAA716x_DEV_TWINHAN_VP6090,
 	.boot_mode		= SAA716x_EXT_BOOT,
-	.load_config		= &load_config_vp6090,
 	.adapters		= 1,
 	.frontend_attach	= saa716x_vp6090_frontend_attach,
 	.irq_handler		= saa716x_hybrid_pci_irq,
@@ -417,12 +409,6 @@ static struct tda1004x_config tda1004x_atlantis_config = {
 	.request_firmware	= tda1004x_atlantis_request_firmware,
 };
 
-static int load_config_atlantis(struct saa716x_dev *saa716x)
-{
-	int ret = 0;
-	return ret;
-}
-
 static int saa716x_atlantis_frontend_attach(struct saa716x_adapter *adapter, int count)
 {
 	struct saa716x_dev *saa716x = adapter->saa716x;
@@ -454,7 +440,6 @@ static struct saa716x_config saa716x_atlantis_config = {
 	.model_name		= SAA716x_MODEL_NXP_ATLANTIS,
 	.dev_type		= SAA716x_DEV_NXP_ATLANTIS,
 	.boot_mode		= SAA716x_EXT_BOOT,
-	.load_config		= &load_config_atlantis,
 	.adapters		= 2,
 	.frontend_attach	= saa716x_atlantis_frontend_attach,
 	.irq_handler		= saa716x_hybrid_pci_irq,
@@ -496,12 +481,6 @@ static struct tda827x_config tda827x_nemo_config = {
 	.switch_addr	= 0,
 	.agcf		= NULL,
 };
-
-static int load_config_nemo(struct saa716x_dev *saa716x)
-{
-    int ret = 0;
-    return ret;
-}
 
 static int saa716x_nemo_frontend_attach(struct saa716x_adapter *adapter, int count)
 {
@@ -559,7 +538,6 @@ static struct saa716x_config saa716x_nemo_config = {
 	.model_name		= SAA716x_MODEL_NXP_NEMO,
 	.dev_type		= SAA716x_DEV_NXP_NEMO,
 	.boot_mode		= SAA716x_EXT_BOOT,
-	.load_config		= &load_config_nemo,
 	.adapters		= 1,
 	.frontend_attach	= saa716x_nemo_frontend_attach,
 	.irq_handler		= saa716x_hybrid_pci_irq,
@@ -577,12 +555,6 @@ static struct saa716x_config saa716x_nemo_config = {
 
 #define SAA716x_MODEL_AVERMEDIA_HC82	"Avermedia HC82 Express-54"
 #define SAA716x_DEV_AVERMEDIA_HC82	"DVB-T + Analog"
-
-static int load_config_averhc82(struct saa716x_dev *saa716x)
-{
-	int ret = 0;
-	return ret;
-}
 
 #if 0
 static struct zl10353_config saa716x_averhc82_zl10353_config = {
@@ -611,7 +583,6 @@ static struct saa716x_config saa716x_averhc82_config = {
 	.model_name		= SAA716x_MODEL_AVERMEDIA_HC82,
 	.dev_type		= SAA716x_DEV_AVERMEDIA_HC82,
 	.boot_mode		= SAA716x_EXT_BOOT,
-	.load_config		= &load_config_averhc82,
 	.adapters		= 1,
 	.frontend_attach	= saa716x_averhc82_frontend_attach,
 	.irq_handler		= saa716x_hybrid_pci_irq,
@@ -620,12 +591,6 @@ static struct saa716x_config saa716x_averhc82_config = {
 
 #define SAA716x_MODEL_AVERMEDIA_H788	"Avermedia H788"
 #define SAA716x_DEV_AVERMEDIA_H788	"DVB-T + Analaog"
-
-static int load_config_averh788(struct saa716x_dev *saa716x)
-{
-	int ret = 0;
-	return ret;
-}
 
 static int saa716x_averh88_frontend_attach(struct saa716x_adapter *adapter, int count)
 {
@@ -641,7 +606,6 @@ static struct saa716x_config saa716x_averh788_config = {
 	.model_name		= SAA716x_MODEL_AVERMEDIA_H788,
 	.dev_type		= SAA716x_DEV_AVERMEDIA_H788,
 	.boot_mode		= SAA716x_EXT_BOOT,
-	.load_config		= &load_config_averh788,
 	.adapters		= 1,
 	.frontend_attach	= saa716x_averh88_frontend_attach,
 	.irq_handler		= saa716x_hybrid_pci_irq,
