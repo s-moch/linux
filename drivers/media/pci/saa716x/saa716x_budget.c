@@ -277,12 +277,6 @@ static void demux_worker(unsigned long data)
 	} while (write_index != fgpi_entry->read_index);
 }
 
-static int load_config_vp3071(struct saa716x_dev *saa716x)
-{
-	int ret = 0;
-
-	return ret;
-}
 
 #define SAA716x_MODEL_TWINHAN_VP3071	"Twinhan/Azurewave VP-3071"
 #define SAA716x_DEV_TWINHAN_VP3071	"2x DVB-T"
@@ -300,19 +294,12 @@ static struct saa716x_config saa716x_vp3071_config = {
 	.model_name		= SAA716x_MODEL_TWINHAN_VP3071,
 	.dev_type		= SAA716x_DEV_TWINHAN_VP3071,
 	.boot_mode		= SAA716x_EXT_BOOT,
-	.load_config		= &load_config_vp3071,
 	.adapters		= 2,
 	.frontend_attach	= saa716x_vp3071_frontend_attach,
 	.irq_handler		= saa716x_budget_pci_irq,
 	.i2c_rate		= SAA716x_I2C_RATE_100,
 };
 
-static int load_config_vp1028(struct saa716x_dev *saa716x)
-{
-	int ret = 0;
-
-	return ret;
-}
 
 #define SAA716x_MODEL_TWINHAN_VP1028	"Twinhan/Azurewave VP-1028"
 #define SAA716x_DEV_TWINHAN_VP1028	"DVB-S"
@@ -398,19 +385,12 @@ static struct saa716x_config saa716x_vp1028_config = {
 	.model_name		= SAA716x_MODEL_TWINHAN_VP1028,
 	.dev_type		= SAA716x_DEV_TWINHAN_VP1028,
 	.boot_mode		= SAA716x_EXT_BOOT,
-	.load_config		= &load_config_vp1028,
 	.adapters		= 1,
 	.frontend_attach	= saa716x_vp1028_frontend_attach,
 	.irq_handler		= saa716x_budget_pci_irq,
 	.i2c_rate		= SAA716x_I2C_RATE_100,
 };
 
-static int load_config_vp6002(struct saa716x_dev *saa716x)
-{
-	int ret = 0;
-
-	return ret;
-}
 
 #define SAA716x_MODEL_TWINHAN_VP6002	"Twinhan/Azurewave VP-6002"
 #define SAA716x_DEV_TWINHAN_VP6002	"DVB-S"
@@ -429,19 +409,12 @@ static struct saa716x_config saa716x_vp6002_config = {
 	.model_name		= SAA716x_MODEL_TWINHAN_VP6002,
 	.dev_type		= SAA716x_DEV_TWINHAN_VP6002,
 	.boot_mode		= SAA716x_EXT_BOOT,
-	.load_config		= &load_config_vp6002,
 	.adapters		= 1,
 	.frontend_attach	= saa716x_vp6002_frontend_attach,
 	.irq_handler		= saa716x_budget_pci_irq,
 	.i2c_rate		= SAA716x_I2C_RATE_100,
 };
 
-static int load_config_knc1_duals2(struct saa716x_dev *saa716x)
-{
-	int ret = 0;
-
-	return ret;
-}
 
 #define SAA716x_MODEL_KNC1_DUALS2	"KNC One Dual S2"
 #define SAA716x_DEV_KNC1_DUALS2		"1xDVB-S + 1xDVB-S/S2"
@@ -460,7 +433,6 @@ static struct saa716x_config saa716x_knc1_duals2_config = {
 	.model_name		= SAA716x_MODEL_KNC1_DUALS2,
 	.dev_type		= SAA716x_DEV_KNC1_DUALS2,
 	.boot_mode		= SAA716x_EXT_BOOT,
-	.load_config		= &load_config_knc1_duals2,
 	.adapters		= 2,
 	.frontend_attach	= saa716x_knc1_duals2_frontend_attach,
 	.irq_handler		= saa716x_budget_pci_irq,
