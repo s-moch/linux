@@ -114,6 +114,20 @@ static int __devinit saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct
 		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM dump failed");
 	}
 
+	/* enable decoders on 7162 */
+	if (pdev->device == SAA7162) {
+		saa716x_gpio_set_output(saa716x, 24);
+		saa716x_gpio_set_output(saa716x, 25);
+
+		saa716x_gpio_write(saa716x, 24, 0);
+		saa716x_gpio_write(saa716x, 25, 0);
+
+		msleep(10);
+
+		saa716x_gpio_write(saa716x, 24, 1);
+		saa716x_gpio_write(saa716x, 25, 1);
+	}
+
 	/* set default port mapping */
 	SAA716x_EPWR(GREG, GREG_VI_CTRL, 0x2C688F44);
 	/* enable FGPI3 and FGPI0 for TS input from Port 3 and 6 */
@@ -403,37 +417,88 @@ static struct tda1004x_config tda1004x_atlantis_config = {
 	.demod_address		= 0x8,
 	.invert			= 0,
 	.invert_oclk		= 0,
-	.xtal_freq		= TDA10046_XTAL_4M,
-	.agc_config		= TDA10046_AGC_DEFAULT,
-	.if_freq		= TDA10046_FREQ_3617,
+	.xtal_freq		= TDA10046_XTAL_16M,
+	.agc_config		= TDA10046_AGC_TDA827X,
+	.if_freq		= TDA10046_FREQ_045,
 	.request_firmware	= tda1004x_atlantis_request_firmware,
+	.tuner_address          = 0x60,
 };
 
-static int saa716x_atlantis_frontend_attach(struct saa716x_adapter *adapter, int count)
+static struct tda827x_config tda827x_atlantis_config = {
+	.init		= NULL,
+	.sleep		= NULL,
+	.config		= 0,
+	.switch_addr	= 0,
+	.agcf		= NULL,
+};
+
+static int saa716x_atlantis_frontend_attach(struct saa716x_adapter *adapter,
+					    int count)
 {
 	struct saa716x_dev *saa716x = adapter->saa716x;
-	struct saa716x_i2c *i2c = &saa716x->i2c[count];
+	struct saa716x_i2c *i2c;
+	u8 i2c_buf[3] = { 0x05, 0x23, 0x01 }; /* activate the silent I2C bus */
+	struct i2c_msg msg = {
+		.addr  = 0x42 >> 1,
+		.flags = 0,
+		.buf   = i2c_buf,
+		.len   = sizeof(i2c_buf)
+	};
 
-	if (count  == 0) {
-		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
-		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
-		dprintk(SAA716x_ERROR, 1, "Adapter (%d) Power ON", count);
+	if (count < saa716x->config->adapters) {
+		u32 reset_gpio;
 
-		saa716x_gpio_set_output(saa716x, 14);
-		saa716x_gpio_write(saa716x, 14, 1);
-		msleep(100);
+		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init",
+			count);
+		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count,
+			saa716x->pdev->subsystem_device);
 
-		adapter->fe = tda10046_attach(&tda1004x_atlantis_config, &i2c->i2c_adapter);
-		if (adapter->fe == NULL) {
-			dprintk(SAA716x_ERROR, 1, "Frontend attach failed");
-			return -ENODEV;
+		if (count == 0) {
+			reset_gpio = 14;
+			i2c = &saa716x->i2c[SAA716x_I2C_BUS_A];
 		} else {
-			dprintk(SAA716x_ERROR, 1, "Done!");
-			return 0;
+			reset_gpio = 15;
+			i2c = &saa716x->i2c[SAA716x_I2C_BUS_B];
 		}
+
+		/* activate the silent I2C bus */
+		i2c_transfer(&i2c->i2c_adapter, &msg, 1);
+
+		saa716x_gpio_set_output(saa716x, reset_gpio);
+
+		/* Reset the demodulator */
+		saa716x_gpio_write(saa716x, reset_gpio, 1);
+		msleep(10);
+		saa716x_gpio_write(saa716x, reset_gpio, 0);
+		msleep(10);
+		saa716x_gpio_write(saa716x, reset_gpio, 1);
+		msleep(10);
+
+		adapter->fe = tda10046_attach(&tda1004x_atlantis_config,
+					      &i2c->i2c_adapter);
+		if (adapter->fe == NULL)
+			goto exit;
+
+		dprintk(SAA716x_ERROR, 1,
+			"found TDA10046 DVB-T frontend @0x%02x",
+			tda1004x_atlantis_config.demod_address);
+
+		if (dvb_attach(tda827x_attach, adapter->fe,
+			       tda1004x_atlantis_config.tuner_address,
+			       &i2c->i2c_adapter, &tda827x_atlantis_config)) {
+			dprintk(SAA716x_ERROR, 1, "found TDA8275 tuner @0x%02x",
+				tda1004x_atlantis_config.tuner_address);
+		} else {
+			goto exit;
+		}
+
+		dprintk(SAA716x_ERROR, 1, "Done!");
+		return 0;
 	}
 
-	return 0;
+exit:
+	dprintk(SAA716x_ERROR, 1, "Frontend attach failed");
+	return -ENODEV;
 }
 
 static struct saa716x_config saa716x_atlantis_config = {
@@ -444,6 +509,18 @@ static struct saa716x_config saa716x_atlantis_config = {
 	.frontend_attach	= saa716x_atlantis_frontend_attach,
 	.irq_handler		= saa716x_hybrid_pci_irq,
 	.i2c_rate		= SAA716x_I2C_RATE_100,
+	.adap_config		= {
+		{
+			/* Adapter 0 */
+			.ts_port = 3, /* using FGPI 3 */
+			.worker = demux_worker
+		},
+		{
+			/* Adapter 1 */
+			.ts_port = 0, /* using FGPI 0 */
+			.worker = demux_worker
+		}
+	}
 };
 
 /*
@@ -615,10 +692,11 @@ static struct saa716x_config saa716x_averh788_config = {
 static struct pci_device_id saa716x_hybrid_pci_table[] = {
 
 	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_6090, SAA7162, &saa716x_vp6090_config),
-	MAKE_ENTRY(NXP_REFERENCE_BOARD, PCI_ANY_ID, SAA7162, &saa716x_atlantis_config),
-	MAKE_ENTRY(NXP_REFERENCE_BOARD, PCI_ANY_ID, SAA7160, &saa716x_nemo_config),
 	MAKE_ENTRY(AVERMEDIA, AVERMEDIA_HC82, SAA7160, &saa716x_averhc82_config),
 	MAKE_ENTRY(AVERMEDIA, AVERMEDIA_H788, SAA7160, &saa716x_averh788_config),
+	MAKE_ENTRY(KWORLD, KWORLD_DVB_T_PE310, SAA7162, &saa716x_atlantis_config),
+	MAKE_ENTRY(NXP_REFERENCE_BOARD, PCI_ANY_ID, SAA7162, &saa716x_atlantis_config),
+	MAKE_ENTRY(NXP_REFERENCE_BOARD, PCI_ANY_ID, SAA7160, &saa716x_nemo_config),
 	{ }
 };
 MODULE_DEVICE_TABLE(pci, saa716x_hybrid_pci_table);
