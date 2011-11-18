@@ -8,11 +8,7 @@
 		"SAA716x I2C Core 1" :	\
 		"SAA716x I2C Core 0"))
 
-#define SAA716x_I2C_BUS(__x) (( 				\
-	(__x == 1) ?						\
-	((saa716x->revision > 2) ? 0x0000b000 : 0x0000c000) :	\
-	((saa716x->revision > 2) ? 0x0000c000 : 0x0000b000)	\
-))
+#define SAA716x_I2C_BUS(__x) ((__x == 1) ? 0x0000c000 : 0x0000b000)
 
 #define SAA716x_I2C_BUS_A		0x01
 #define SAA716x_I2C_BUS_B		0x00
