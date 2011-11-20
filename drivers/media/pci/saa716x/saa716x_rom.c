@@ -69,7 +69,7 @@ static int saa716x_read_rombytes(struct saa716x_dev *saa716x, u16 reg, u16 len, 
 			/* last message */
 			if (len % DUMP_BYTES) {
 				msg[1].len = len % DUMP_BYTES;
-				dprintk(SAA716x_ERROR, 1, "Last Message length=%d", len % DUMP_BYTES);
+				dprintk(SAA716x_DEBUG, 1, "Last Message length=%d", len % DUMP_BYTES);
 			} else {
 				msg[1].len = DUMP_BYTES;
 			}
@@ -99,7 +99,7 @@ static int saa716x_get_offset(struct saa716x_dev *saa716x, u8 *buf, u32 *offset)
 		if (!(strncmp("START", buf + i, 5)))
 			break;
 	}
-	dprintk(SAA716x_ERROR, 1, "Offset @ %d", i);
+	dprintk(SAA716x_INFO, 1, "Offset @ %d", i);
 	*offset = i;
 
 	return 0;
@@ -1047,7 +1047,7 @@ int saa716x_eeprom_data(struct saa716x_dev *saa716x)
 	}
 
 	for (i = 0; i < rom_header.devices; i++) {
-		dprintk(SAA716x_ERROR, 0, "    SAA%02x ROM: ===== Device %d =====\n",
+		dprintk(SAA716x_NOTICE, 0, "    SAA%02x ROM: ===== Device %d =====\n",
 			saa716x->pdev->device,
 			i);
 
