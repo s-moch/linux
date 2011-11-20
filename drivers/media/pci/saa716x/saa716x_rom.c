@@ -992,7 +992,7 @@ int saa716x_eeprom_data(struct saa716x_dev *saa716x)
 	device = kzalloc(sizeof (struct saa716x_devinfo) * rom_header.devices, GFP_KERNEL);
 	if (device == NULL) {
 		dprintk(SAA716x_ERROR, 1, "ERROR: out of memory");
-		goto err1;
+		goto err0;
 	}
 
 	for (i = 0; i < rom_header.devices; i++) {
@@ -1006,6 +1006,8 @@ int saa716x_eeprom_data(struct saa716x_dev *saa716x)
 			goto err1;
 		}
 	}
+
+	kfree(device);
 
 	return 0;
 
