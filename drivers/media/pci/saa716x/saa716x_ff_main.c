@@ -744,12 +744,11 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM dump failed");
 	}
-#if 0
+
 	err = saa716x_eeprom_data(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM dump failed");
 	}
-#endif
 
 	/* enable FGPI2 and FGPI3 for TS inputs */
 	SAA716x_EPWR(GREG, GREG_VI_CTRL, 0x0689F04);
