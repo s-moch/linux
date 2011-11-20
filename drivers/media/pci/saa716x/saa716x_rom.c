@@ -779,7 +779,7 @@ static int saa716x_device_info(struct saa716x_dev *saa716x,
 	*offset += device->struct_size;
 
 	if (device->addr_size) {
-		memcpy(&address, &buf[*offset], device->addr_size);
+		address = buf[*offset];
 		address >>= 1;
 		*offset += device->addr_size;
 	}
