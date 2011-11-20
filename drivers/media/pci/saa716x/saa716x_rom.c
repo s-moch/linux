@@ -720,6 +720,33 @@ static int saa716x_streamdev_info(struct saa716x_dev *saa716x,
 	return 0;
 }
 
+static int saa716x_unknown_device_info(struct saa716x_dev *saa716x,
+				       u8 *buf,
+				       u32 *offset)
+{
+	u8 size;
+	u8 ext_size = 0;
+
+	size = buf[*offset];
+	if (size > 1)
+		ext_size = buf[*offset + size -1];
+
+	saa716x_descriptor_dbg(saa716x, buf, offset, size, ext_size);
+
+	dprintk(SAA716x_NOTICE, 0,
+		"        SAA%02x ROM: Size=%d bytes\n",
+		saa716x->pdev->device,
+		size);
+
+	dprintk(SAA716x_NOTICE, 0,
+		"        SAA%02x ROM: Ext data=%d bytes\n\n",
+		saa716x->pdev->device,
+		ext_size);
+
+	*offset += size + ext_size;
+	return 0;
+}
+
 
 static void saa716x_device_dbg(struct saa716x_dev *saa716x,
 			       u8 *buf,
@@ -829,138 +856,162 @@ static int saa716x_device_info(struct saa716x_dev *saa716x,
 		device->extd_data_size);
 
 	if (device->extd_data_size) {
-		if (device->device_type & DECODER_DEVICE) {
-			dprintk(SAA716x_NOTICE, 0,
-				"        SAA%02x ROM: Found decoder device\n",
-				saa716x->pdev->device);
+		u32 mask;
 
-			saa716x_decoder_info(saa716x, buf, offset);
-		}
+		mask = 0x00000001;
+		while (mask) {
+			if (device->device_type & mask) {
+				switch (mask) {
+				case DECODER_DEVICE:
+					dprintk(SAA716x_NOTICE, 0,
+						"        SAA%02x ROM: Found decoder device\n",
+						saa716x->pdev->device);
 
-		if (device->device_type & GPIO_SOURCE) {
-			dprintk(SAA716x_NOTICE, 0,
-				"        SAA%02x ROM: Found GPIO device\n",
-				saa716x->pdev->device);
+					saa716x_decoder_info(saa716x, buf, offset);
+					break;
 
-			saa716x_gpio_info(saa716x, buf, offset);
-		}
+				case GPIO_SOURCE:
+					dprintk(SAA716x_NOTICE, 0,
+						"        SAA%02x ROM: Found GPIO device\n",
+						saa716x->pdev->device);
 
-		if (device->device_type & VIDEO_DECODER) {
-			dprintk(SAA716x_NOTICE, 0,
-				"        SAA%02x ROM: Found Video Decoder device\n",
-				saa716x->pdev->device);
+					saa716x_gpio_info(saa716x, buf, offset);
+					break;
 
-			saa716x_video_decoder_info(saa716x, buf, offset);
-		}
+				case VIDEO_DECODER:
+					dprintk(SAA716x_NOTICE, 0,
+						"        SAA%02x ROM: Found Video Decoder device\n",
+						saa716x->pdev->device);
 
-		if (device->device_type & AUDIO_DECODER) {
-			dprintk(SAA716x_NOTICE, 0,
-				"        SAA%02x ROM: Found Audio Decoder device\n",
-				saa716x->pdev->device);
+					saa716x_video_decoder_info(saa716x, buf, offset);
+					break;
 
-			saa716x_audio_decoder_info(saa716x, buf, offset);
-		}
+				case AUDIO_DECODER:
+					dprintk(SAA716x_NOTICE, 0,
+						"        SAA%02x ROM: Found Audio Decoder device\n",
+						saa716x->pdev->device);
 
-		if (device->device_type & EVENT_SOURCE) {
-			dprintk(SAA716x_NOTICE, 0,
-				"        SAA%02x ROM: Found Event source\n",
-				saa716x->pdev->device);
+					saa716x_audio_decoder_info(saa716x, buf, offset);
+					break;
 
-			saa716x_event_source_info(saa716x, buf, offset);
-		}
+				case EVENT_SOURCE:
+					dprintk(SAA716x_NOTICE, 0,
+						"        SAA%02x ROM: Found Event source\n",
+						saa716x->pdev->device);
 
-		if (device->device_type & CROSSBAR) {
-			dprintk(SAA716x_NOTICE, 0,
-				"        SAA%02x ROM: Found Crossbar device\n",
-				saa716x->pdev->device);
+					saa716x_event_source_info(saa716x, buf, offset);
+					break;
 
-			saa716x_crossbar_info(saa716x, buf, offset);
-		}
+				case CROSSBAR:
+					dprintk(SAA716x_NOTICE, 0,
+						"        SAA%02x ROM: Found Crossbar device\n",
+						saa716x->pdev->device);
 
-		if (device->device_type & TUNER_DEVICE) {
-			dprintk(SAA716x_NOTICE, 0,
-				"        SAA%02x ROM: Found Tuner device\n",
-				saa716x->pdev->device);
+					saa716x_crossbar_info(saa716x, buf, offset);
+					break;
 
-			saa716x_tuner_info(saa716x, buf, offset);
-		}
+				case TUNER_DEVICE:
+					dprintk(SAA716x_NOTICE, 0,
+						"        SAA%02x ROM: Found Tuner device\n",
+						saa716x->pdev->device);
 
-		if (device->device_type & PLL_DEVICE) {
-			dprintk(SAA716x_NOTICE, 0,
-				"        SAA%02x ROM: Found PLL device\n",
-				saa716x->pdev->device);
+					saa716x_tuner_info(saa716x, buf, offset);
+					break;
 
-			saa716x_pll_info(saa716x, buf, offset);
-		}
+				case PLL_DEVICE:
+					dprintk(SAA716x_NOTICE, 0,
+						"        SAA%02x ROM: Found PLL device\n",
+						saa716x->pdev->device);
 
-		if (device->device_type & CHANNEL_DECODER) {
-			dprintk(SAA716x_NOTICE, 0,
-				"        SAA%02x ROM: Found Channel Demodulator device\n",
-				saa716x->pdev->device);
+					saa716x_pll_info(saa716x, buf, offset);
+					break;
 
-			saa716x_channel_decoder_info(saa716x, buf, offset);
-		}
+				case CHANNEL_DECODER:
+					dprintk(SAA716x_NOTICE, 0,
+						"        SAA%02x ROM: Found Channel Demodulator device\n",
+						saa716x->pdev->device);
 
-		if (device->device_type & RDS_DECODER) {
-			dprintk(SAA716x_NOTICE, 0,
-				"        SAA%02x ROM: Found RDS Decoder device\n",
-				saa716x->pdev->device);
-		}
+					saa716x_channel_decoder_info(saa716x, buf, offset);
+					break;
 
-		if (device->device_type & ENCODER_DEVICE) {
-			dprintk(SAA716x_NOTICE, 0,
-				"        SAA%02x ROM: Found Encoder device\n",
-				saa716x->pdev->device);
+				case RDS_DECODER:
+					dprintk(SAA716x_NOTICE, 0,
+						"        SAA%02x ROM: Found RDS Decoder device\n",
+						saa716x->pdev->device);
 
-			saa716x_encoder_info(saa716x, buf, offset);
-		}
+					saa716x_unknown_device_info(saa716x, buf, offset);
+					break;
 
-		if (device->device_type & IR_DEVICE) {
-			dprintk(SAA716x_NOTICE, 0,
-				"        SAA%02x ROM: Found IR device\n",
-				saa716x->pdev->device);
+				case ENCODER_DEVICE:
+					dprintk(SAA716x_NOTICE, 0,
+						"        SAA%02x ROM: Found Encoder device\n",
+						saa716x->pdev->device);
 
-			saa716x_ir_info(saa716x, buf, offset);
-		}
+					saa716x_encoder_info(saa716x, buf, offset);
+					break;
 
-		if (device->device_type & EEPROM_DEVICE) {
-			dprintk(SAA716x_NOTICE, 0,
-				"        SAA%02x ROM: Found EEPROM device\n",
-				saa716x->pdev->device);
+				case IR_DEVICE:
+					dprintk(SAA716x_NOTICE, 0,
+						"        SAA%02x ROM: Found IR device\n",
+						saa716x->pdev->device);
 
-			saa716x_eeprom_info(saa716x, buf, offset);
-		}
+					saa716x_ir_info(saa716x, buf, offset);
+					break;
 
-		if (device->device_type & NOISE_FILTER) {
-			dprintk(SAA716x_NOTICE, 0,
-				"        SAA%02x ROM: Found Noise filter device\n",
-				saa716x->pdev->device);
+				case EEPROM_DEVICE:
+					dprintk(SAA716x_NOTICE, 0,
+						"        SAA%02x ROM: Found EEPROM device\n",
+						saa716x->pdev->device);
 
-			saa716x_filter_info(saa716x, buf, offset);
-		}
+					saa716x_eeprom_info(saa716x, buf, offset);
+					break;
 
-		if (device->device_type & LNx_DEVICE) {
-			dprintk(SAA716x_NOTICE, 0,
-				"        SAA%02x ROM: Found LNx device\n",
-				saa716x->pdev->device);
-		}
+				case NOISE_FILTER:
+					dprintk(SAA716x_NOTICE, 0,
+						"        SAA%02x ROM: Found Noise filter device\n",
+						saa716x->pdev->device);
 
-		if (device->device_type & STREAM_DEVICE) {
-			dprintk(SAA716x_NOTICE, 0,
-				"        SAA%02x ROM: Found streaming device\n",
-				saa716x->pdev->device);
+					saa716x_filter_info(saa716x, buf, offset);
+					break;
 
-			saa716x_streamdev_info(saa716x, buf, offset);
-		}
+				case LNx_DEVICE:
+					dprintk(SAA716x_NOTICE, 0,
+						"        SAA%02x ROM: Found LNx device\n",
+						saa716x->pdev->device);
 
-		if (device->device_type & CONFIGSPACE_DEVICE) {
-			dprintk(SAA716x_NOTICE, 0,
-				"        SAA%02x ROM: Found Configspace device\n",
-				saa716x->pdev->device);
+					saa716x_unknown_device_info(saa716x, buf, offset);
+					break;
+
+				case STREAM_DEVICE:
+					dprintk(SAA716x_NOTICE, 0,
+						"        SAA%02x ROM: Found streaming device\n",
+						saa716x->pdev->device);
+
+					saa716x_streamdev_info(saa716x, buf, offset);
+					break;
+
+				case CONFIGSPACE_DEVICE:
+					dprintk(SAA716x_NOTICE, 0,
+						"        SAA%02x ROM: Found Configspace device\n",
+						saa716x->pdev->device);
+
+					saa716x_unknown_device_info(saa716x, buf, offset);
+					break;
+
+				default:
+					dprintk(SAA716x_NOTICE, 0,
+						"        SAA%02x ROM: Found unknown device\n",
+						saa716x->pdev->device);
+
+					saa716x_unknown_device_info(saa716x, buf, offset);
+					break;
+				}
+			}
+			mask <<= 1;
 		}
 	}
 
-	dprintk(SAA716x_DEBUG, 0, "\n");
+	dprintk(SAA716x_NOTICE, 0, "\n");
 
 	return 0;
 }
