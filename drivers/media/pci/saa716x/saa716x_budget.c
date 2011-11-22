@@ -34,6 +34,8 @@
 #include "saa716x_priv.h"
 
 #include "mb86a16.h"
+#include "stv6110x.h"
+#include "stv090x.h"
 
 unsigned int verbose;
 module_param(verbose, int, 0644);
@@ -443,16 +445,92 @@ static struct saa716x_config saa716x_knc1_duals2_config = {
 #define SAA716x_MODEL_SKYSTAR2_EXPRESS_HD	"SkyStar 2 eXpress HD"
 #define SAA716x_DEV_SKYSTAR2_EXPRESS_HD		"DVB-S/S2"
 
+static struct stv090x_config skystar2_stv090x_config = {
+	.device			= STV0903,
+	.demod_mode		= STV090x_SINGLE,
+	.clk_mode		= STV090x_CLK_EXT,
+
+	.xtal			= 13500000,
+	.address		= 0x68,
+
+	.ts1_mode		= STV090x_TSMODE_DVBCI,
+	.ts2_mode		= STV090x_TSMODE_SERIAL_CONTINUOUS,
+
+	.repeater_level		= STV090x_RPTLEVEL_16,
+
+	.tuner_init		= NULL,
+	.tuner_sleep		= NULL,
+	.tuner_set_mode		= NULL,
+	.tuner_set_frequency	= NULL,
+	.tuner_get_frequency	= NULL,
+	.tuner_set_bandwidth	= NULL,
+	.tuner_get_bandwidth	= NULL,
+	.tuner_set_bbgain	= NULL,
+	.tuner_get_bbgain	= NULL,
+	.tuner_set_refclk	= NULL,
+	.tuner_get_status	= NULL,
+};
+
+static struct stv6110x_config skystar2_stv6110x_config = {
+	.addr			= 0x60,
+	.refclk			= 27000000,
+	.clk_div		= 2,
+};
+
 static int skystar2_express_hd_frontend_attach(struct saa716x_adapter *adapter,
 					       int count)
 {
 	struct saa716x_dev *saa716x = adapter->saa716x;
+	struct saa716x_i2c *i2c = &saa716x->i2c[SAA716x_I2C_BUS_A];
+	struct stv6110x_devctl *ctl;
 
 	if (count < saa716x->config->adapters) {
 		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init",
 			count);
 		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count,
 			saa716x->pdev->subsystem_device);
+
+		adapter->fe = dvb_attach(stv090x_attach,
+					 &skystar2_stv090x_config,
+					 &i2c->i2c_adapter,
+					 STV090x_DEMODULATOR_0);
+
+		if (adapter->fe) {
+			dprintk(SAA716x_NOTICE, 1, "found STV0903 @0x%02x",
+				skystar2_stv090x_config.address);
+		} else {
+			goto exit;
+		}
+
+		ctl = dvb_attach(stv6110x_attach,
+				 adapter->fe,
+				 &skystar2_stv6110x_config,
+				 &i2c->i2c_adapter);
+
+		if (ctl) {
+			dprintk(SAA716x_NOTICE, 1, "found STV6110(A) @0x%02x",
+				skystar2_stv6110x_config.addr);
+
+			skystar2_stv090x_config.tuner_init	    = ctl->tuner_init;
+			skystar2_stv090x_config.tuner_sleep	    = ctl->tuner_sleep;
+			skystar2_stv090x_config.tuner_set_mode	    = ctl->tuner_set_mode;
+			skystar2_stv090x_config.tuner_set_frequency = ctl->tuner_set_frequency;
+			skystar2_stv090x_config.tuner_get_frequency = ctl->tuner_get_frequency;
+			skystar2_stv090x_config.tuner_set_bandwidth = ctl->tuner_set_bandwidth;
+			skystar2_stv090x_config.tuner_get_bandwidth = ctl->tuner_get_bandwidth;
+			skystar2_stv090x_config.tuner_set_bbgain    = ctl->tuner_set_bbgain;
+			skystar2_stv090x_config.tuner_get_bbgain    = ctl->tuner_get_bbgain;
+			skystar2_stv090x_config.tuner_set_refclk    = ctl->tuner_set_refclk;
+			skystar2_stv090x_config.tuner_get_status    = ctl->tuner_get_status;
+
+			/* call the init function once to initialize
+			   tuner's clock output divider and demod's
+			   master clock */
+			if (adapter->fe->ops.init)
+				adapter->fe->ops.init(adapter->fe);
+		} else {
+			goto exit;
+		}
 
 		dprintk(SAA716x_ERROR, 1, "Done!");
 		return 0;
