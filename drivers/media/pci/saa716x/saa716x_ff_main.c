@@ -125,8 +125,11 @@ static int saa716x_ff_fpga_init(struct saa716x_dev *saa716x)
 
 	release_firmware(fw);
 
-	if (!fpgaDone)
+	if (!fpgaDone) {
+		printk(KERN_ERR "SAA716x FF FPGA is not responding, did you "
+				"connect the power supply?\n");
 		return -EINVAL;
+	}
 
 	sti7109->fpga_version = SAA716x_EPRD(PHI_1, FPGA_ADDR_VERSION);
 	printk(KERN_INFO "SAA716x FF FPGA version %X.%02X\n",
