@@ -490,6 +490,16 @@ static int skystar2_express_hd_frontend_attach(struct saa716x_adapter *adapter,
 		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count,
 			saa716x->pdev->subsystem_device);
 
+		saa716x_gpio_set_output(saa716x, 20);
+
+		/* Reset the demodulator */
+		saa716x_gpio_write(saa716x, 20, 1);
+		msleep(10);
+		saa716x_gpio_write(saa716x, 20, 0);
+		msleep(10);
+		saa716x_gpio_write(saa716x, 20, 1);
+		msleep(10);
+
 		adapter->fe = dvb_attach(stv090x_attach,
 					 &skystar2_stv090x_config,
 					 &i2c->i2c_adapter,
