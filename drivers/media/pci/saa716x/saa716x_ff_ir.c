@@ -72,21 +72,27 @@ static void ir_emit_key(unsigned long parm)
 	u16 keycode;
 
 	/* extract device address and data */
-	switch (ir->protocol) {
-	case IR_RC5: /* extended RC5: 5 bits device address, 7 bits data */
-		addr = (ircom >> 6) & 0x1f;
-		/* data bits 1..6 */
-		data = ircom & 0x3f;
-		/* data bit 7 (inverted) */
-		if (!(ircom & 0x1000))
-			data |= 0x40;
-		toggle = ircom & 0x0800;
-		break;
+	if (ircom & 0x80000000) { /* CEC remote command */
+		addr = 0;
+		data = ircom & 0x7F;
+		toggle = 0;
+	} else {
+		switch (ir->protocol) {
+		case IR_RC5: /* extended RC5: 5 bits device address, 7 bits data */
+			addr = (ircom >> 6) & 0x1f;
+			/* data bits 1..6 */
+			data = ircom & 0x3f;
+			/* data bit 7 (inverted) */
+			if (!(ircom & 0x1000))
+				data |= 0x40;
+			toggle = ircom & 0x0800;
+			break;
 
-	default:
-		printk(KERN_ERR "%s: invalid protocol %x\n",
-			__func__, ir->protocol);
-		return;
+		default:
+			printk(KERN_ERR "%s: invalid protocol %x\n",
+				__func__, ir->protocol);
+			return;
+		}
 	}
 
 	input_event(ir->input_dev, EV_MSC, MSC_RAW, (addr << 16) | data);
