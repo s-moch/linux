@@ -684,6 +684,7 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 	sti7109->int_count_enable = int_count_enable;
 	sti7109->total_int_count = 0;
 	memset(sti7109->fgpi_int_count, 0, sizeof(sti7109->fgpi_int_count));
+	memset(sti7109->i2c_int_count, 0, sizeof(sti7109->i2c_int_count));
 	sti7109->ext_int_total_count = 0;
 	memset(sti7109->ext_int_source_count, 0, sizeof(sti7109->ext_int_source_count));
 	sti7109->last_int_ticks = jiffies;
@@ -995,6 +996,19 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 		//dprintk(SAA716x_INFO, 1, "msiStatusH: %08X", msiStatusH);
 	}
 
+	if (msiStatusH & MSI_INT_I2CINT_0) {
+		if (sti7109->int_count_enable)
+			sti7109->i2c_int_count[0]++;
+		saa716x->i2c[0].i2c_op = 0;
+		wake_up(&saa716x->i2c[0].i2c_wq);
+	}
+	if (msiStatusH & MSI_INT_I2CINT_1) {
+		if (sti7109->int_count_enable)
+			sti7109->i2c_int_count[1]++;
+		saa716x->i2c[1].i2c_op = 0;
+		wake_up(&saa716x->i2c[1].i2c_wq);
+	}
+
 	if (msiStatusH & MSI_INT_EXTINT_0) {
 
 		phiISR = SAA716x_EPRD(PHI_1, FPGA_ADDR_EMI_ISR);
@@ -1219,11 +1233,13 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 
 	if (sti7109->int_count_enable) {
 		if (jiffies - sti7109->last_int_ticks >= HZ) {
-			dprintk(SAA716x_INFO, 1, "int count: t: %d, f:%d %d, "
+			dprintk(SAA716x_INFO, 1, "int count: t: %d, f:%d %d, i:%d %d,"
 				"e: %d (%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d)",
 				sti7109->total_int_count,
 				sti7109->fgpi_int_count[0],
 				sti7109->fgpi_int_count[1],
+				sti7109->i2c_int_count[0],
+				sti7109->i2c_int_count[1],
 				sti7109->ext_int_total_count,
 				sti7109->ext_int_source_count[0],
 				sti7109->ext_int_source_count[1],
@@ -1243,6 +1259,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 				sti7109->ext_int_source_count[15]);
 			sti7109->total_int_count = 0;
 			memset(sti7109->fgpi_int_count, 0, sizeof(sti7109->fgpi_int_count));
+			memset(sti7109->i2c_int_count, 0, sizeof(sti7109->i2c_int_count));
 			sti7109->ext_int_total_count = 0;
 			memset(sti7109->ext_int_source_count, 0, sizeof(sti7109->ext_int_source_count));
 			sti7109->last_int_ticks = jiffies;
