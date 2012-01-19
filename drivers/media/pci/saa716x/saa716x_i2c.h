@@ -31,6 +31,8 @@ struct saa716x_i2c {
 
 	u32				stat_tx_prior;
 	u32				stat_tx_done;
+	wait_queue_head_t		i2c_wq;
+	int				i2c_op;
 };
 
 extern int saa716x_i2c_init(struct saa716x_dev *saa716x);
