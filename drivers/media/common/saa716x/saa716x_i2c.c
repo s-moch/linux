@@ -27,6 +27,8 @@
 #define SAA716x_I2C_RXBUSY	(I2C_RECEIVE		| \
 				 I2C_RECEIVE_CLEAR)
 
+#define SAA716x_I2C_USE_IRQ	1
+
 static const char* state[] = {
 	"Idle",
 	"DoneStop",
@@ -235,28 +237,21 @@ static int saa716x_i2c_hwinit(struct saa716x_i2c *i2c, u32 I2C_DEV)
 	/* Disable all interrupts and clear status */
 	SAA716x_EPWR(I2C_DEV, INT_CLR_ENABLE, 0x1fff);
 	SAA716x_EPWR(I2C_DEV, INT_CLR_STATUS, 0x1fff);
-#if 0
+
+#if SAA716x_I2C_USE_IRQ
 	/* Enabled interrupts:
-	* Master Transaction Done (),
-	* Master Arbitration Failure,
-	* Master Transaction No Ack,
-	* I2C Error IBE
+	* Master Transaction Done,
 	* Master Transaction Data Request
-	* (0xc7)
+	* (0x81)
 	*/
 	msleep(5);
 
-	SAA716x_EPWR(I2C_DEV[i],
-			INT_SET_ENABLE,
-			I2C_MASTER_INTERRUPT_MTDR	| \
-			I2C_ERROR_IBE		| \
-			I2C_ENABLE_MTNA		| \
-			I2C_ENABLE_MAF		| \
-			I2C_ENABLE_MTD);
+	SAA716x_EPWR(I2C_DEV, INT_SET_ENABLE,
+		I2C_SET_ENABLE_MTDR | I2C_SET_ENABLE_MTD);
 
 	/* Check interrupt enable status */
-	reg = SAA716x_EPRD(I2C_DEV[i], INT_ENABLE);
-	if (reg != 0xc7) {
+	reg = SAA716x_EPRD(I2C_DEV, INT_ENABLE);
+	if (reg != 0x81) {
 
 		dprintk(SAA716x_ERROR, 1,
 			"Adapter (%d) %s Interrupt enable failed, Exiting !",
@@ -302,6 +297,9 @@ static int saa716x_i2c_send(struct saa716x_i2c *i2c, u32 I2C_DEV, u32 data)
 	struct saa716x_dev *saa716x = i2c->saa716x;
 	int i, err = 0;
 	u32 reg;
+#if SAA716x_I2C_USE_IRQ
+	unsigned long timeout;
+#endif
 
 	/* Check FIFO status before TX */
 	reg = SAA716x_EPRD(I2C_DEV, I2C_STATUS);
@@ -327,9 +325,27 @@ static int saa716x_i2c_send(struct saa716x_i2c *i2c, u32 I2C_DEV, u32 data)
 		}
 	}
 
+	i2c->i2c_op = 1;
+	SAA716x_EPWR(I2C_DEV, INT_CLR_STATUS, 0x1fff);
+
 	/* Write to FIFO */
 	SAA716x_EPWR(I2C_DEV, TX_FIFO, data);
 
+#if SAA716x_I2C_USE_IRQ
+	timeout = HZ/100 + 1; /* 10ms */
+	timeout = wait_event_interruptible_timeout(i2c->i2c_wq, i2c->i2c_op == 0, timeout);
+	if (timeout == -ERESTARTSYS || i2c->i2c_op) {
+		SAA716x_EPWR(I2C_DEV, INT_CLR_STATUS, 0x1fff);
+		if (timeout == -ERESTARTSYS) {
+			/* a signal arrived */
+			err = -ERESTARTSYS;
+			goto exit;
+		}
+		dprintk(SAA716x_ERROR, 1, "timed out waiting for end of xfer!");
+		err = -EIO;
+		goto exit;
+	}
+#endif
 	/* Check for data write */
 	for (i = 0; i < 1000; i++) {
 		/* TODO! check for hotplug devices */
@@ -512,6 +528,9 @@ int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 
 		mutex_init(&i2c->i2c_lock);
 
+		init_waitqueue_head(&i2c->i2c_wq);
+		i2c->i2c_op = 0;
+
 		i2c->i2c_dev	= i;
 		i2c->i2c_rate	= saa716x->config->i2c_rate;
 		adapter		= &i2c->i2c_adapter;
@@ -544,6 +563,11 @@ int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
 		}
 		i2c++;
 	}
+
+#if SAA716x_I2C_USE_IRQ
+	SAA716x_EPWR(MSI, MSI_INT_ENA_SET_H, MSI_INT_I2CINT_0);
+	SAA716x_EPWR(MSI, MSI_INT_ENA_SET_H, MSI_INT_I2CINT_1);
+#endif
 
 	dprintk(SAA716x_DEBUG, 1, "SAA%02x I2C Core succesfully initialized",
 		saa716x->pdev->device);
