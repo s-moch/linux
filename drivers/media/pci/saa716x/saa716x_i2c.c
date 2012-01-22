@@ -397,6 +397,85 @@ exit:
 	return err;
 }
 
+static int saa716x_i2c_write_msg(struct saa716x_i2c *i2c, u32 I2C_DEV,
+				 u16 addr, u8 *buf, u16 len, u8 add_stop)
+{
+	struct saa716x_dev *saa716x = i2c->saa716x;
+	u32 data;
+	int err;
+	int i;
+
+	/* first write START with I2C address */
+	data = I2C_START_BIT | (addr << 1);
+	dprintk(SAA716x_DEBUG, 1, "length=%d Addr:0x%02x", len, data);
+	err = saa716x_i2c_send(i2c, I2C_DEV, data);
+	if (err < 0) {
+		dprintk(SAA716x_ERROR, 1, "Address write failed");
+		goto exit;
+	}
+
+	/* now write the data */
+	for (i = 0; i < len; i++) {
+		data = buf[i];
+		dprintk(SAA716x_DEBUG, 0, "    <W %04x> 0x%02x\n", i, data);
+		if (add_stop && i == (len - 1))
+			data |= I2C_STOP_BIT;
+		err = saa716x_i2c_send(i2c, I2C_DEV, data);
+		if (err < 0) {
+			dprintk(SAA716x_ERROR, 1, "Data send failed");
+			goto exit;
+		}
+	}
+
+	return 0;
+
+exit:
+	dprintk(SAA716x_ERROR, 1, "Error writing data, err=%d", err);
+	return err;
+}
+
+static int saa716x_i2c_read_msg(struct saa716x_i2c *i2c, u32 I2C_DEV,
+				u16 addr, u8 *buf, u16 len, u8 add_stop)
+{
+	struct saa716x_dev *saa716x = i2c->saa716x;
+	u32 data;
+	int err;
+	int i;
+
+	/* first write START with I2C address */
+	data = I2C_START_BIT | (addr << 1) | 1;
+	dprintk(SAA716x_DEBUG, 1, "length=%d Addr:0x%02x", len, data);
+	err = saa716x_i2c_send(i2c, I2C_DEV, data);
+	if (err < 0) {
+		dprintk(SAA716x_ERROR, 1, "Address write failed");
+		goto exit;
+	}
+
+	/* now read the data */
+	for (i = 0; i < len; i++) {
+		data = 0x00; /* dummy write for reading */
+		if (add_stop && i == (len - 1))
+			data |= I2C_STOP_BIT;
+		err = saa716x_i2c_send(i2c, I2C_DEV, data);
+		if (err < 0) {
+			dprintk(SAA716x_ERROR, 1, "Data send failed");
+			goto exit;
+		}
+		err = saa716x_i2c_recv(i2c, I2C_DEV, &data);
+		if (err < 0) {
+			dprintk(SAA716x_ERROR, 1, "Data receive failed");
+			goto exit;
+		}
+		dprintk(SAA716x_DEBUG, 0, "    <R %04x> 0x%02x\n\n", i, data);
+		buf[i] = data;
+	}
+	return 0;
+
+exit:
+	dprintk(SAA716x_ERROR, 1, "Error reading data, err=%d", err);
+	return err;
+}
+
 static int saa716x_i2c_xfer(struct i2c_adapter *adapter, struct i2c_msg *msgs, int num)
 {
 	struct saa716x_i2c *i2c		= i2c_get_adapdata(adapter);
@@ -405,7 +484,6 @@ static int saa716x_i2c_xfer(struct i2c_adapter *adapter, struct i2c_msg *msgs, i
 	u32 DEV = SAA716x_I2C_BUS(i2c->i2c_dev);
 	int i, j, err = 0;
 	int t;
-	u32 data;
 
 	dprintk(SAA716x_DEBUG, 0, "\n");
 	dprintk(SAA716x_DEBUG, 1, "Bus(%02x) I2C transfer", DEV);
@@ -413,46 +491,17 @@ static int saa716x_i2c_xfer(struct i2c_adapter *adapter, struct i2c_msg *msgs, i
 
 	for (t = 0; t < 3; t++) {
 		for (i = 0; i < num; i++) {
-			/* first write START width I2C address */
-			data = (msgs[i].addr << 1) | I2C_START_BIT;
 			if (msgs[i].flags & I2C_M_RD)
-				data |= 1;
-			dprintk(SAA716x_DEBUG, 1, "length=%d Addr:0x%02x",
-				msgs[i].len, data);
-			err = saa716x_i2c_send(i2c, DEV, data);
+				err = saa716x_i2c_read_msg(i2c, DEV,
+					msgs[i].addr, msgs[i].buf, msgs[i].len,
+					i == (num - 1));
+			else
+				err = saa716x_i2c_write_msg(i2c, DEV,
+					msgs[i].addr, msgs[i].buf, msgs[i].len,
+					i == (num - 1));
 			if (err < 0) {
-				dprintk(SAA716x_ERROR, 1, "Address write failed");
 				err = -EIO;
 				goto retry;
-			}
-			/* now read or write the data */
-			for (j = 0; j < msgs[i].len; j++) {
-				if (msgs[i].flags & I2C_M_RD)
-					data = 0x00; /* dummy write for reading */
-				else {
-					data = msgs[i].buf[j];
-					dprintk(SAA716x_DEBUG, 0, "    <W %04x> 0x%02x\n",
-						j, data);
-				}
-				if (i == (num - 1) && j == (msgs[i].len - 1))
-					data |= I2C_STOP_BIT;
-				err = saa716x_i2c_send(i2c, DEV, data);
-				if (err < 0) {
-					dprintk(SAA716x_ERROR, 1, "Data send failed");
-					err = -EIO;
-					goto retry;
-				}
-				if (msgs[i].flags & I2C_M_RD) {
-					err = saa716x_i2c_recv(i2c, DEV, &data);
-					if (err < 0) {
-						dprintk(SAA716x_ERROR, 1, "Data receive failed");
-						err = -EIO;
-						goto retry;
-					}
-					dprintk(SAA716x_DEBUG, 0, "    <R %04x> 0x%02x\n\n",
-						j, data);
-					msgs[i].buf[j] = data;
-				}
 			}
 		}
 		break;
