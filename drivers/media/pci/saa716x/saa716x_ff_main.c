@@ -1382,6 +1382,7 @@ static struct saa716x_config saa716x_s26400_config = {
 	.frontend_attach	= saa716x_s26400_frontend_attach,
 	.irq_handler		= saa716x_ff_pci_irq,
 	.i2c_rate		= SAA716x_I2C_RATE_100,
+	.i2c_mode		= SAA716x_I2C_MODE_IRQ_BUFFERED,
 
 	.adap_config		= {
 		{
