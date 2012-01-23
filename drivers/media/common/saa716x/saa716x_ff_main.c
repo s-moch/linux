@@ -1178,9 +1178,9 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_REMOTE_EVENT_MASK);
 
 			if (remote_event == 0) {
-				dprintk(SAA716x_ERROR, 1, "REMOTE EVENT: %u ignored", remote_event);
+				dprintk(SAA716x_ERROR, 1, "REMOTE EVENT: %X ignored", remote_event);
 			} else {
-				dprintk(SAA716x_INFO, 1, "REMOTE EVENT: %u", remote_event);
+				dprintk(SAA716x_INFO, 1, "REMOTE EVENT: %X", remote_event);
 				saa716x_ir_handler(saa716x, remote_event);
 			}
 		}
