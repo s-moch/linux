@@ -101,6 +101,7 @@ struct saa716x_config {
 
 	struct saa716x_adap_config	adap_config[SAA716x_MAX_ADAPTERS];
 	enum saa716x_i2c_rate		i2c_rate;
+	enum saa716x_i2c_mode		i2c_mode;
 };
 
 struct saa716x_adapter {
