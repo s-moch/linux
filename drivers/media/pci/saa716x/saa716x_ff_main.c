@@ -258,14 +258,69 @@ static int saa716x_ff_st7109_init(struct saa716x_dev *saa716x)
 	return 0;
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
-static int dvb_osd_ioctl(struct inode *inode, struct file *file,
-#else
-static int dvb_osd_ioctl(struct file *file,
-#endif
-			 unsigned int cmd, void *parg)
+static int saa716x_usercopy(struct dvb_device *dvbdev,
+			    unsigned int cmd, unsigned long arg,
+			    int (*func)(struct dvb_device *dvbdev,
+			    unsigned int cmd, void *arg))
 {
-	struct dvb_device *dvbdev	= file->private_data;
+	char    sbuf[128];
+	void    *mbuf = NULL;
+	void    *parg = NULL;
+	int     err  = -EINVAL;
+
+	/*  Copy arguments into temp kernel buffer  */
+	switch (_IOC_DIR(cmd)) {
+	case _IOC_NONE:
+		/*
+		 * For this command, the pointer is actually an integer
+		 * argument.
+		 */
+		parg = (void *) arg;
+		break;
+	case _IOC_READ: /* some v4l ioctls are marked wrong ... */
+	case _IOC_WRITE:
+	case (_IOC_WRITE | _IOC_READ):
+		if (_IOC_SIZE(cmd) <= sizeof(sbuf)) {
+			parg = sbuf;
+		} else {
+			/* too big to allocate from stack */
+			mbuf = kmalloc(_IOC_SIZE(cmd),GFP_KERNEL);
+			if (NULL == mbuf)
+				return -ENOMEM;
+			parg = mbuf;
+		}
+
+		err = -EFAULT;
+		if (copy_from_user(parg, (void __user *)arg, _IOC_SIZE(cmd)))
+			goto out;
+		break;
+	}
+
+	/* call driver */
+	if ((err = func(dvbdev, cmd, parg)) == -ENOIOCTLCMD)
+		err = -EINVAL;
+
+	if (err < 0)
+		goto out;
+
+	/*  Copy results into user buffer  */
+	switch (_IOC_DIR(cmd))
+	{
+	case _IOC_READ:
+	case (_IOC_WRITE | _IOC_READ):
+		if (copy_to_user((void __user *)arg, parg, _IOC_SIZE(cmd)))
+			err = -EFAULT;
+		break;
+	}
+
+out:
+	kfree(mbuf);
+	return err;
+}
+
+static int do_dvb_osd_ioctl(struct dvb_device *dvbdev,
+			    unsigned int cmd, void *parg)
+{
 	struct sti7109_dev *sti7109	= dvbdev->priv;
 	int ret_val = -EINVAL;
 
@@ -292,13 +347,27 @@ static int dvb_osd_ioctl(struct file *file,
 	return ret_val;
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
+static int dvb_osd_ioctl(struct inode *inode, struct file *file,
+#else
+static long dvb_osd_ioctl(struct file *file,
+#endif
+			 unsigned int cmd, unsigned long arg)
+{
+	struct dvb_device *dvbdev = file->private_data;
+
+	if (!dvbdev)
+		return -ENODEV;
+
+	return saa716x_usercopy (dvbdev, cmd, arg, do_dvb_osd_ioctl);
+}
 
 static struct file_operations dvb_osd_fops = {
 	.owner		= THIS_MODULE,
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
-	.ioctl		= dvb_generic_ioctl,
+	.ioctl		= dvb_osd_ioctl,
 #else
-	.unlocked_ioctl	= dvb_generic_ioctl,
+	.unlocked_ioctl	= dvb_osd_ioctl,
 #endif
 	.open		= dvb_generic_open,
 	.release	= dvb_generic_release,
@@ -309,7 +378,7 @@ static struct dvb_device dvbdev_osd = {
 	.users		= 2,
 	.writers	= 2,
 	.fops		= &dvb_osd_fops,
-	.kernel_ioctl	= dvb_osd_ioctl,
+	.kernel_ioctl	= NULL,
 };
 
 static int saa716x_ff_osd_exit(struct saa716x_dev *saa716x)
@@ -334,14 +403,9 @@ static int saa716x_ff_osd_init(struct saa716x_dev *saa716x)
 	return 0;
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
-static int dvb_audio_ioctl(struct inode *inode, struct file *file,
-#else
-static int dvb_audio_ioctl(struct file *file,
-#endif
-			   unsigned int cmd, void *parg)
+static int do_dvb_audio_ioctl(struct dvb_device *dvbdev,
+			      unsigned int cmd, void *parg)
 {
-	struct dvb_device *dvbdev	= file->private_data;
 	struct sti7109_dev *sti7109	= dvbdev->priv;
 	//struct saa716x_dev *saa716x	= sti7109->dev;
 	int ret = 0;
@@ -359,12 +423,27 @@ static int dvb_audio_ioctl(struct file *file,
 	return ret;
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
+static int dvb_audio_ioctl(struct inode *inode, struct file *file,
+#else
+static long dvb_audio_ioctl(struct file *file,
+#endif
+			   unsigned int cmd, unsigned long arg)
+{
+	struct dvb_device *dvbdev = file->private_data;
+
+	if (!dvbdev)
+		return -ENODEV;
+
+	return saa716x_usercopy (dvbdev, cmd, arg, do_dvb_audio_ioctl);
+}
+
 static struct file_operations dvb_audio_fops = {
 	.owner		= THIS_MODULE,
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
-	.ioctl		= dvb_generic_ioctl,
+	.ioctl		= dvb_audio_ioctl,
 #else
-	.unlocked_ioctl	= dvb_generic_ioctl,
+	.unlocked_ioctl	= dvb_audio_ioctl,
 #endif
 	.open		= dvb_generic_open,
 	.release	= dvb_generic_release,
@@ -375,7 +454,7 @@ static struct dvb_device dvbdev_audio = {
 	.users		= 1,
 	.writers	= 1,
 	.fops		= &dvb_audio_fops,
-	.kernel_ioctl	= dvb_audio_ioctl,
+	.kernel_ioctl	= NULL,
 };
 
 static int saa716x_ff_audio_exit(struct saa716x_dev *saa716x)
@@ -497,14 +576,9 @@ static unsigned int dvb_video_poll(struct file *file, poll_table *wait)
 	return mask;
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
-static int dvb_video_ioctl(struct inode *inode, struct file *file,
-#else
-static int dvb_video_ioctl(struct file *file,
-#endif
-			   unsigned int cmd, void *parg)
+static int do_dvb_video_ioctl(struct dvb_device *dvbdev,
+			      unsigned int cmd, void *parg)
 {
-	struct dvb_device *dvbdev	= file->private_data;
 	struct sti7109_dev *sti7109	= dvbdev->priv;
 	struct saa716x_dev *saa716x	= sti7109->dev;
 	int ret = 0;
@@ -550,13 +624,28 @@ static int dvb_video_ioctl(struct file *file,
 	return ret;
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
+static int dvb_video_ioctl(struct inode *inode, struct file *file,
+#else
+static long dvb_video_ioctl(struct file *file,
+#endif
+			   unsigned int cmd, unsigned long arg)
+{
+	struct dvb_device *dvbdev = file->private_data;
+
+	if (!dvbdev)
+		return -ENODEV;
+
+	return saa716x_usercopy (dvbdev, cmd, arg, do_dvb_video_ioctl);
+}
+
 static struct file_operations dvb_video_fops = {
 	.owner		= THIS_MODULE,
 	.write		= dvb_video_write,
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
-	.ioctl		= dvb_generic_ioctl,
+	.ioctl		= dvb_video_ioctl,
 #else
-	.unlocked_ioctl	= dvb_generic_ioctl,
+	.unlocked_ioctl	= dvb_video_ioctl,
 #endif
 	.open		= dvb_generic_open,
 	.release	= dvb_generic_release,
@@ -568,7 +657,7 @@ static struct dvb_device dvbdev_video = {
 	.users		= 1,
 	.writers	= 1,
 	.fops		= &dvb_video_fops,
-	.kernel_ioctl	= dvb_video_ioctl,
+	.kernel_ioctl	= NULL,
 };
 
 static int saa716x_ff_video_exit(struct saa716x_dev *saa716x)
