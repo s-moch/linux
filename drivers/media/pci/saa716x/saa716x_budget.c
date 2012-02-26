@@ -481,7 +481,7 @@ static int skystar2_express_hd_frontend_attach(struct saa716x_adapter *adapter,
 					       int count)
 {
 	struct saa716x_dev *saa716x = adapter->saa716x;
-	struct saa716x_i2c *i2c = &saa716x->i2c[SAA716x_I2C_BUS_A];
+	struct saa716x_i2c *i2c = &saa716x->i2c[SAA716x_I2C_BUS_B];
 	struct stv6110x_devctl *ctl;
 
 	if (count < saa716x->config->adapters) {
