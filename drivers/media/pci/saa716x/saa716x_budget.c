@@ -114,9 +114,9 @@ static int __devinit saa716x_budget_pci_probe(struct pci_dev *pdev, const struct
 	}
 
 	/* set default port mapping */
-	SAA716x_EPWR(GREG, GREG_VI_CTRL, 0x2C688F44);
-	/* enable FGPI3 and FGPI0 for TS input from Port 3 and 6 */
-	SAA716x_EPWR(GREG, GREG_FGPI_CTRL, 0x894);
+	SAA716x_EPWR(GREG, GREG_VI_CTRL, 0x04080FA9);
+	/* enable FGPI3 and FGPI1 for TS input from Port 2 and 6 */
+	SAA716x_EPWR(GREG, GREG_FGPI_CTRL, 0x321);
 
 	err = saa716x_dvb_init(saa716x);
 	if (err) {
@@ -450,13 +450,17 @@ static struct stv090x_config skystar2_stv090x_config = {
 	.demod_mode		= STV090x_SINGLE,
 	.clk_mode		= STV090x_CLK_EXT,
 
-	.xtal			= 13500000,
+	.xtal			= 8000000,
 	.address		= 0x68,
 
 	.ts1_mode		= STV090x_TSMODE_DVBCI,
 	.ts2_mode		= STV090x_TSMODE_SERIAL_CONTINUOUS,
 
 	.repeater_level		= STV090x_RPTLEVEL_16,
+
+	.gpio_voltage_enable	= 2,
+	.gpio_voltage_select	= 3,
+	.gpio_voltage_boost	= 4,
 
 	.tuner_init		= NULL,
 	.tuner_sleep		= NULL,
@@ -473,7 +477,7 @@ static struct stv090x_config skystar2_stv090x_config = {
 
 static struct stv6110x_config skystar2_stv6110x_config = {
 	.addr			= 0x60,
-	.refclk			= 27000000,
+	.refclk			= 16000000,
 	.clk_div		= 2,
 };
 
@@ -561,7 +565,7 @@ static struct saa716x_config skystar2_express_hd_config = {
 	.adap_config		= {
 		{
 			/* Adapter 0 */
-			.ts_port = 3, /* using FGPI 3, TODO: check */
+			.ts_port = 1, /* using FGPI 1 */
 			.worker = demux_worker
 		}
 	}
