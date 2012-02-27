@@ -458,10 +458,6 @@ static struct stv090x_config skystar2_stv090x_config = {
 
 	.repeater_level		= STV090x_RPTLEVEL_16,
 
-	.gpio_voltage_enable	= 2,
-	.gpio_voltage_select	= 3,
-	.gpio_voltage_boost	= 4,
-
 	.tuner_init		= NULL,
 	.tuner_sleep		= NULL,
 	.tuner_set_mode		= NULL,
@@ -474,6 +470,63 @@ static struct stv090x_config skystar2_stv090x_config = {
 	.tuner_set_refclk	= NULL,
 	.tuner_get_status	= NULL,
 };
+
+static int skystar2_set_voltage(struct dvb_frontend *fe,
+				enum fe_sec_voltage voltage)
+{
+	int err;
+	u8 en = 0;
+	u8 sel = 0;
+
+	switch (voltage) {
+	case SEC_VOLTAGE_OFF:
+		en = 0;
+		break;
+
+	case SEC_VOLTAGE_13:
+		en = 1;
+		sel = 0;
+		break;
+
+	case SEC_VOLTAGE_18:
+		en = 1;
+		sel = 1;
+		break;
+
+	default:
+		break;
+	}
+
+	err = stv090x_set_gpio(fe, 2, 0, en, 0);
+	if (err < 0)
+		goto exit;
+	err = stv090x_set_gpio(fe, 3, 0, sel, 0);
+	if (err < 0)
+		goto exit;
+
+	return 0;
+exit:
+	return err;
+}
+
+static int skystar2_voltage_boost(struct dvb_frontend *fe, long arg)
+{
+	int err;
+	u8 value;
+
+	if (arg)
+		value = 1;
+	else
+		value = 0;
+
+	err = stv090x_set_gpio(fe, 4, 0, value, 0);
+	if (err < 0)
+		goto exit;
+
+	return 0;
+exit:
+	return err;
+}
 
 static struct stv6110x_config skystar2_stv6110x_config = {
 	.addr			= 0x60,
@@ -515,6 +568,9 @@ static int skystar2_express_hd_frontend_attach(struct saa716x_adapter *adapter,
 		} else {
 			goto exit;
 		}
+
+		adapter->fe->ops.set_voltage = skystar2_set_voltage;
+		adapter->fe->ops.enable_high_lnb_voltage = skystar2_voltage_boost;
 
 		ctl = dvb_attach(stv6110x_attach,
 				 adapter->fe,
