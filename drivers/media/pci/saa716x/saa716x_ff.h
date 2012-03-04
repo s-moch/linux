@@ -86,6 +86,7 @@
 #define SIZE_BLOCK_HEADER	8      /* block header size */
 
 #define MAX_RESULT_LEN		256
+#define MAX_DATA_LEN		(1024 * 1024)
 
 #define TSOUT_LEN		(1024 * TS_SIZE)
 #define TSBUF_LEN		(8 * 1024)
@@ -108,21 +109,28 @@ struct sti7109_dev {
 
 	wait_queue_head_t	cmd_ready_wq;
 	int			cmd_ready;
+	u8			cmd_data[SIZE_CMD_DATA];
+	u32			cmd_len;
 
 	wait_queue_head_t	result_avail_wq;
 	int			result_avail;
 	u8			result_data[MAX_RESULT_LEN];
 	u32			result_len;
+	u32			result_max_len;
 
 	wait_queue_head_t	osd_cmd_ready_wq;
 	int			osd_cmd_ready;
+	u8			osd_cmd_data[SIZE_OSD_CMD_DATA];
+	u32			osd_cmd_len;
 
 	wait_queue_head_t	osd_result_avail_wq;
 	int			osd_result_avail;
 	u8			osd_result_data[MAX_RESULT_LEN];
 	u32			osd_result_len;
+	u32			osd_result_max_len;
 
 	u16			data_handle;
+	u8			*data_buffer; /* raw data transfer buffer */
 	wait_queue_head_t	data_ready_wq;
 	int			data_ready;
 	wait_queue_head_t	block_done_wq;
