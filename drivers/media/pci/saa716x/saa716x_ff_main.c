@@ -318,35 +318,6 @@ out:
 	return err;
 }
 
-static int do_dvb_osd_ioctl(struct dvb_device *dvbdev,
-			    unsigned int cmd, void *parg)
-{
-	struct sti7109_dev *sti7109	= dvbdev->priv;
-	int ret_val = -EINVAL;
-
-	if (cmd == OSD_RAW_CMD) {
-		osd_raw_cmd_t * pcmd = (osd_raw_cmd_t *) parg;
-		u8 * pdata = (u8 *) pcmd->cmd_data;
-		if (pdata[3] == 4) {
-			mutex_lock(&sti7109->osd_cmd_lock);
-			ret_val = sti7109_raw_osd_cmd(sti7109, (osd_raw_cmd_t *) parg);
-			mutex_unlock(&sti7109->osd_cmd_lock);
-		}
-		else {
-			mutex_lock(&sti7109->cmd_lock);
-			ret_val = sti7109_raw_cmd(sti7109, (osd_raw_cmd_t *) parg);
-			mutex_unlock(&sti7109->cmd_lock);
-		}
-	}
-	else if (cmd == OSD_RAW_DATA) {
-		mutex_lock(&sti7109->data_lock);
-		ret_val = sti7109_raw_data(sti7109, (osd_raw_data_t *) parg);
-		mutex_unlock(&sti7109->data_lock);
-	}
-
-	return ret_val;
-}
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
 static int dvb_osd_ioctl(struct inode *inode, struct file *file,
 #else
@@ -355,11 +326,53 @@ static long dvb_osd_ioctl(struct file *file,
 			 unsigned int cmd, unsigned long arg)
 {
 	struct dvb_device *dvbdev = file->private_data;
+	struct sti7109_dev *sti7109 = dvbdev->priv;
+	int err = -EINVAL;
 
 	if (!dvbdev)
 		return -ENODEV;
 
-	return saa716x_usercopy (dvbdev, cmd, arg, do_dvb_osd_ioctl);
+	if (cmd == OSD_RAW_CMD) {
+		osd_raw_cmd_t raw_cmd;
+		u8 hdr[4];
+
+		err = -EFAULT;
+		if (copy_from_user(&raw_cmd, (void __user *)arg,
+				   _IOC_SIZE(cmd)))
+			goto out;
+
+		if (copy_from_user(hdr, (void __user *)raw_cmd.cmd_data, 4))
+			goto out;
+
+		if (hdr[3] == 4)
+			err = sti7109_raw_osd_cmd(sti7109, &raw_cmd);
+		else
+			err = sti7109_raw_cmd(sti7109, &raw_cmd);
+
+		if (err)
+			goto out;
+
+		if (copy_to_user((void __user *)arg, &raw_cmd, _IOC_SIZE(cmd)))
+			err = -EFAULT;
+	}
+	else if (cmd == OSD_RAW_DATA) {
+		osd_raw_data_t raw_data;
+
+		err = -EFAULT;
+		if (copy_from_user(&raw_data, (void __user *)arg,
+				   _IOC_SIZE(cmd)))
+			goto out;
+
+		err = sti7109_raw_data(sti7109, &raw_data);
+		if (err)
+			goto out;
+
+		if (copy_to_user((void __user *)arg, &raw_data, _IOC_SIZE(cmd)))
+			err = -EFAULT;
+	}
+
+out:
+	return err;
 }
 
 static struct file_operations dvb_osd_fops = {
@@ -764,7 +777,7 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 
 	sti7109->dev = saa716x;
 
-	sti7109->iobuf = vmalloc(TSOUT_LEN + TSBUF_LEN);
+	sti7109->iobuf = vmalloc(TSOUT_LEN + TSBUF_LEN + MAX_DATA_LEN);
 	if (!sti7109->iobuf)
 		goto fail4;
 
