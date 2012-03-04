@@ -948,6 +948,8 @@ static void __devexit saa716x_ff_pci_remove(struct pci_dev *pdev)
 	/* disable board power */
 	saa716x_gpio_write(saa716x, TT_PREMIUM_GPIO_POWER_ENABLE, 0);
 
+	vfree(sti7109->iobuf);
+
 	saa716x->priv = NULL;
 	kfree(sti7109);
 
