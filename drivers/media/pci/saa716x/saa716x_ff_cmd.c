@@ -33,6 +33,7 @@ int sti7109_cmd_init(struct sti7109_dev *sti7109)
 	sti7109->osd_result_avail = 0;
 
 	sti7109->data_handle = 0;
+	sti7109->data_buffer = (u8 *) (sti7109->iobuf + TSOUT_LEN + TSBUF_LEN);
 	init_waitqueue_head(&sti7109->data_ready_wq);
 	sti7109->data_ready = 0;
 	init_waitqueue_head(&sti7109->block_done_wq);
@@ -40,7 +41,7 @@ int sti7109_cmd_init(struct sti7109_dev *sti7109)
 	return 0;
 }
 
-int sti7109_raw_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
+static int sti7109_do_raw_cmd(struct sti7109_dev * sti7109)
 {
 	struct saa716x_dev * saa716x = sti7109->dev;
 	unsigned long timeout;
@@ -63,10 +64,11 @@ int sti7109_raw_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
 
 	sti7109->cmd_ready = 0;
 	sti7109->result_avail = 0;
-	saa716x_phi_write(saa716x, ADDR_CMD_DATA, cmd->cmd_data, cmd->cmd_len);
+	saa716x_phi_write(saa716x, ADDR_CMD_DATA, sti7109->cmd_data,
+			  sti7109->cmd_len);
 	SAA716x_EPWR(PHI_1, FPGA_ADDR_PHI_ISET, ISR_CMD_MASK);
 
-	if (cmd->result_len > 0) {
+	if (sti7109->result_max_len > 0) {
 		timeout = 1 * HZ;
 		timeout = wait_event_interruptible_timeout(
 				sti7109->result_avail_wq,
@@ -74,7 +76,7 @@ int sti7109_raw_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
 				timeout);
 
 		if (timeout == -ERESTARTSYS || sti7109->result_avail == 0) {
-			cmd->result_len = 0;
+			sti7109->result_len = 0;
 			if (timeout == -ERESTARTSYS) {
 				/* a signal arrived */
 				dprintk(SAA716x_ERROR, 1, "result ERESTARTSYS");
@@ -85,22 +87,54 @@ int sti7109_raw_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
 			return -EIO;
 		}
 
-		if (sti7109->result_len > 0) {
-			if (sti7109->result_len > cmd->result_len) {
-				memcpy(cmd->result_data, sti7109->result_data,
-					cmd->result_len);
-			} else {
-				memcpy(cmd->result_data, sti7109->result_data,
-					sti7109->result_len);
-				cmd->result_len = sti7109->result_len;
-			}
+		if (sti7109->result_len > sti7109->result_max_len) {
+			sti7109->result_len = sti7109->result_max_len;
+			dprintk(SAA716x_NOTICE, 1,
+				"not enough space in result buffer");
 		}
 	}
 
 	return 0;
 }
 
-int sti7109_raw_osd_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
+int sti7109_raw_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
+{
+	struct saa716x_dev * saa716x = sti7109->dev;
+	int err;
+
+	if (cmd->cmd_len > SIZE_CMD_DATA) {
+		dprintk(SAA716x_ERROR, 1, "command too long");
+		return -EFAULT;
+	}
+
+	mutex_lock(&sti7109->cmd_lock);
+
+	err = -EFAULT;
+	if (copy_from_user(sti7109->cmd_data, (void __user *)cmd->cmd_data,
+			   cmd->cmd_len))
+		goto out;
+
+	sti7109->cmd_len = cmd->cmd_len;
+	sti7109->result_max_len = cmd->result_len;
+
+	err = sti7109_do_raw_cmd(sti7109);
+	if (err)
+		goto out;
+
+	cmd->result_len = sti7109->result_len;
+	if (sti7109->result_len > 0) {
+		if (copy_to_user((void __user *)cmd->result_data,
+				 sti7109->result_data,
+				 sti7109->result_len))
+			err = -EFAULT;
+	}
+
+out:
+	mutex_unlock(&sti7109->cmd_lock);
+	return err;
+}
+
+static int sti7109_do_raw_osd_cmd(struct sti7109_dev * sti7109)
 {
 	struct saa716x_dev * saa716x = sti7109->dev;
 	unsigned long timeout;
@@ -123,11 +157,11 @@ int sti7109_raw_osd_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
 
 	sti7109->osd_cmd_ready = 0;
 	sti7109->osd_result_avail = 0;
-	saa716x_phi_write(saa716x, ADDR_OSD_CMD_DATA, cmd->cmd_data,
-			  cmd->cmd_len);
+	saa716x_phi_write(saa716x, ADDR_OSD_CMD_DATA, sti7109->osd_cmd_data,
+			  sti7109->osd_cmd_len);
 	SAA716x_EPWR(PHI_1, FPGA_ADDR_PHI_ISET, ISR_OSD_CMD_MASK);
 
-	if (cmd->result_len > 0) {
+	if (sti7109->osd_result_max_len > 0) {
 		timeout = 1 * HZ;
 		timeout = wait_event_interruptible_timeout(
 				sti7109->osd_result_avail_wq,
@@ -135,7 +169,7 @@ int sti7109_raw_osd_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
 				timeout);
 
 		if (timeout == -ERESTARTSYS || sti7109->osd_result_avail == 0) {
-			cmd->result_len = 0;
+			sti7109->osd_result_len = 0;
 			if (timeout == -ERESTARTSYS) {
 				/* a signal arrived */
 				dprintk(SAA716x_ERROR, 1,
@@ -147,24 +181,54 @@ int sti7109_raw_osd_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
 			return -EIO;
 		}
 
-		if (sti7109->osd_result_len > 0) {
-			if (sti7109->osd_result_len > cmd->result_len) {
-				memcpy(cmd->result_data,
-					sti7109->osd_result_data,
-					cmd->result_len);
-			} else {
-				memcpy(cmd->result_data,
-					sti7109->osd_result_data,
-					sti7109->osd_result_len);
-				cmd->result_len = sti7109->osd_result_len;
-			}
+		if (sti7109->osd_result_len > sti7109->osd_result_max_len) {
+			sti7109->osd_result_len = sti7109->osd_result_max_len;
+			dprintk(SAA716x_NOTICE, 1,
+				"not enough space in result buffer");
 		}
 	}
 
 	return 0;
 }
 
-int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
+int sti7109_raw_osd_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
+{
+	struct saa716x_dev * saa716x = sti7109->dev;
+	int err;
+
+	if (cmd->cmd_len > SIZE_OSD_CMD_DATA) {
+		dprintk(SAA716x_ERROR, 1, "command too long");
+		return -EFAULT;
+	}
+
+	mutex_lock(&sti7109->osd_cmd_lock);
+
+	err = -EFAULT;
+	if (copy_from_user(sti7109->osd_cmd_data, (void __user *)cmd->cmd_data,
+			   cmd->cmd_len))
+		goto out;
+
+	sti7109->osd_cmd_len = cmd->cmd_len;
+	sti7109->osd_result_max_len = cmd->result_len;
+
+	err = sti7109_do_raw_osd_cmd(sti7109);
+	if (err)
+		goto out;
+
+	cmd->result_len = sti7109->osd_result_len;
+	if (sti7109->osd_result_len > 0) {
+		if (copy_to_user((void __user *)cmd->result_data,
+				 sti7109->osd_result_data,
+				 sti7109->osd_result_len))
+			err = -EFAULT;
+	}
+
+out:
+	mutex_unlock(&sti7109->osd_cmd_lock);
+	return err;
+}
+
+static int sti7109_do_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 {
 	struct saa716x_dev * saa716x = sti7109->dev;
 	unsigned long timeout;
@@ -211,7 +275,7 @@ int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 	blockHeader[3] = (u8) numBlocks;
 	blockHeader[6] = (u8) (sti7109->data_handle >> 8);
 	blockHeader[7] = (u8) sti7109->data_handle;
-	blockPtr = (u8 *) data->data_buffer;
+	blockPtr = sti7109->data_buffer;
 	activeBlock = 0;
 	for (blockIndex = 0; blockIndex < numBlocks; blockIndex++) {
 		u32 addr;
@@ -262,67 +326,86 @@ int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
 	return 0;
 }
 
+int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
+{
+	struct saa716x_dev * saa716x = sti7109->dev;
+	int err;
+
+	if (data->data_length > MAX_DATA_LEN) {
+		dprintk(SAA716x_ERROR, 1, "data too big");
+		return -EFAULT;
+	}
+
+	mutex_lock(&sti7109->data_lock);
+
+	err = -EFAULT;
+	if (copy_from_user(sti7109->data_buffer,
+			   (void __user *)data->data_buffer,
+			   data->data_length))
+		goto out;
+
+	err = sti7109_do_raw_data(sti7109, data);
+	if (err)
+		goto out;
+
+out:
+	mutex_unlock(&sti7109->data_lock);
+	return err;
+}
+
 int sti7109_cmd_get_fw_version(struct sti7109_dev *sti7109, u32 *fw_version)
 {
-	osd_raw_cmd_t cmd;
-	u8 cmd_data[6];
-	u8 result_data[MAX_RESULT_LEN];
 	int ret_val = -EINVAL;
 
-	cmd_data[0] = 0x00;
-	cmd_data[1] = 0x04;
-	cmd_data[2] = 0x00;
-	cmd_data[3] = 0x00;
-	cmd_data[4] = 0x00;
-	cmd_data[5] = 0x00;
-	cmd.cmd_data = cmd_data;
-	cmd.cmd_len = sizeof(cmd_data);
-	cmd.result_data = result_data;
-	cmd.result_len = sizeof(result_data);
-
 	mutex_lock(&sti7109->cmd_lock);
-	ret_val = sti7109_raw_cmd(sti7109, &cmd);
-	mutex_unlock(&sti7109->cmd_lock);
 
+	sti7109->cmd_data[0] = 0x00;
+	sti7109->cmd_data[1] = 0x04;
+	sti7109->cmd_data[2] = 0x00;
+	sti7109->cmd_data[3] = 0x00;
+	sti7109->cmd_data[4] = 0x00;
+	sti7109->cmd_data[5] = 0x00;
+	sti7109->cmd_len = 6;
+	sti7109->result_max_len = MAX_RESULT_LEN;
+
+	ret_val = sti7109_do_raw_cmd(sti7109);
 	if (ret_val == 0) {
-		*fw_version = (result_data[6] << 16)
-			    | (result_data[7] << 8)
-			    | result_data[8];
+		*fw_version = (sti7109->result_data[6] << 16)
+			    | (sti7109->result_data[7] << 8)
+			    | sti7109->result_data[8];
 	}
+
+	mutex_unlock(&sti7109->cmd_lock);
 
 	return ret_val;
 }
 
 int sti7109_cmd_get_video_format(struct sti7109_dev *sti7109, video_size_t *vs)
 {
-	osd_raw_cmd_t cmd;
-	u8 cmd_data[7];
-	u8 result_data[MAX_RESULT_LEN];
 	int ret_val = -EINVAL;
 
-	cmd_data[0] = 0x00;
-	cmd_data[1] = 0x05; /* command length */
-	cmd_data[2] = 0x00;
-	cmd_data[3] = 0x01; /* A/V decoder command group */
-	cmd_data[4] = 0x00;
-	cmd_data[5] = 0x10; /* get video format info command */
-	cmd_data[6] = 0x00; /* decoder index 0 */
-	cmd.cmd_data = cmd_data;
-	cmd.cmd_len = sizeof(cmd_data);
-	cmd.result_data = result_data;
-	cmd.result_len = sizeof(result_data);
-
 	mutex_lock(&sti7109->cmd_lock);
-	ret_val = sti7109_raw_cmd(sti7109, &cmd);
-	mutex_unlock(&sti7109->cmd_lock);
 
+	sti7109->cmd_data[0] = 0x00;
+	sti7109->cmd_data[1] = 0x05; /* command length */
+	sti7109->cmd_data[2] = 0x00;
+	sti7109->cmd_data[3] = 0x01; /* A/V decoder command group */
+	sti7109->cmd_data[4] = 0x00;
+	sti7109->cmd_data[5] = 0x10; /* get video format info command */
+	sti7109->cmd_data[6] = 0x00; /* decoder index 0 */
+	sti7109->cmd_len = 7;
+	sti7109->result_max_len = MAX_RESULT_LEN;
+
+	ret_val = sti7109_do_raw_cmd(sti7109);
 	if (ret_val == 0) {
-		vs->w = (result_data[7] << 8)
-		      | result_data[8];
-		vs->h = (result_data[9] << 8)
-		      | result_data[10];
-		vs->aspect_ratio = result_data[11] >> 4;
+		vs->w = (sti7109->result_data[7] << 8)
+		      | sti7109->result_data[8];
+		vs->h = (sti7109->result_data[9] << 8)
+		      | sti7109->result_data[10];
+		vs->aspect_ratio = sti7109->result_data[11] >> 4;
 	}
+
+	mutex_unlock(&sti7109->cmd_lock);
 
 	return ret_val;
 }
