@@ -352,7 +352,7 @@ int saa716x_fgpi_stop(struct saa716x_dev *saa716x, int port)
 	return 0;
 }
 
-int saa716x_fgpi_init(struct saa716x_dev *saa716x, int port,
+int saa716x_fgpi_init(struct saa716x_dev *saa716x, int port, int dma_buf_size,
 		      void (*worker)(unsigned long))
 {
 	int i;
@@ -361,8 +361,9 @@ int saa716x_fgpi_init(struct saa716x_dev *saa716x, int port,
 	saa716x->fgpi[port].dma_channel = port + 6;
 	for (i = 0; i < FGPI_BUFFERS; i++)
 	{
-		/* TODO: what is a good size for TS DMA buffer? */
-		ret = saa716x_dmabuf_alloc(saa716x, &saa716x->fgpi[port].dma_buf[i], 16 * SAA716x_PAGE_SIZE);
+		ret = saa716x_dmabuf_alloc(saa716x,
+					   &saa716x->fgpi[port].dma_buf[i],
+					   dma_buf_size);
 		if (ret < 0) {
 			return ret;
 		}
