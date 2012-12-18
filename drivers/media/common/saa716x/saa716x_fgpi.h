@@ -106,7 +106,8 @@ extern int saa716x_fgpi_start(struct saa716x_dev *saa716x, int port,
 extern int saa716x_fgpi_stop(struct saa716x_dev *saa716x, int port);
 
 extern int saa716x_fgpi_init(struct saa716x_dev *saa716x, int port,
-			     void (*worker)(unsigned long));
+			      int dma_buf_size,
+			      void (*worker)(unsigned long));
 extern int saa716x_fgpi_exit(struct saa716x_dev *saa716x, int port);
 
 #endif /* __SAA716x_FGPI_H */
