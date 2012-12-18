@@ -13,6 +13,8 @@
 #include "saa716x_priv.h"
 
 
+#define SAA716X_TS_DMA_BUF_SIZE		(16 * SAA716x_PAGE_SIZE)
+
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
 
@@ -24,7 +26,7 @@ void saa716x_dma_start(struct saa716x_dev *saa716x, u8 adapter)
 
 	params.bits		= 8;
 	params.samples		= 188;
-	params.lines		= 348;
+	params.lines		= SAA716X_TS_DMA_BUF_SIZE / 188;
 	params.pitch		= 188;
 	params.offset		= 0;
 	params.page_tables	= 0;
@@ -190,6 +192,7 @@ int __devinit saa716x_dvb_init(struct saa716x_dev *saa716x)
 		}
 
 		saa716x_fgpi_init(saa716x, config->adap_config[i].ts_port,
+				  SAA716X_TS_DMA_BUF_SIZE,
 				  config->adap_config[i].worker);
 
 		saa716x_adap++;
