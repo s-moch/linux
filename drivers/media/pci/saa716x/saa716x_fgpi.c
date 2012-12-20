@@ -359,6 +359,7 @@ int saa716x_fgpi_start(struct saa716x_dev *saa716x, int port,
 
 	return 0;
 }
+EXPORT_SYMBOL_GPL(saa716x_fgpi_start);
 
 int saa716x_fgpi_stop(struct saa716x_dev *saa716x, int port)
 {
@@ -377,6 +378,7 @@ int saa716x_fgpi_stop(struct saa716x_dev *saa716x, int port)
 
 	return 0;
 }
+EXPORT_SYMBOL_GPL(saa716x_fgpi_stop);
 
 int saa716x_fgpi_init(struct saa716x_dev *saa716x, int port, int dma_buf_size,
 		      void (*worker)(unsigned long))
@@ -401,6 +403,7 @@ int saa716x_fgpi_init(struct saa716x_dev *saa716x, int port, int dma_buf_size,
 
 	return 0;
 }
+EXPORT_SYMBOL_GPL(saa716x_fgpi_init);
 
 int saa716x_fgpi_exit(struct saa716x_dev *saa716x, int port)
 {
@@ -414,3 +417,4 @@ int saa716x_fgpi_exit(struct saa716x_dev *saa716x, int port)
 
 	return 0;
 }
+EXPORT_SYMBOL_GPL(saa716x_fgpi_exit);
