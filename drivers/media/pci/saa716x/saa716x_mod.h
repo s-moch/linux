@@ -41,7 +41,7 @@
 #define I2C_A				0x0000c000
 #define SPI				0x0000d000
 #define GPIO				0x0000e000
-#define	PHI_0				0x0000f000
+#define PHI_0				0x0000f000
 #define GREG				0x00012000
 #define CGU				0x00013000
 #define DCS				0x00014000

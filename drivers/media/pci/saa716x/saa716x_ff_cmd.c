@@ -3,6 +3,8 @@
 #include <linux/dvb/video.h>
 #include <linux/dvb/osd.h>
 
+#include "saa716x_mod.h"
+
 #include "saa716x_phi_reg.h"
 
 #include "saa716x_phi.h"
