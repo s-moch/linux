@@ -206,17 +206,18 @@ int saa716x_fgpi_setparams(struct saa716x_dmabuf *dmabuf,
 	u32 fgpi_port, buf_mode, val, mid;
 	u32 D1_XY_END, offst_1, offst_2;
 	int i = 0;
+	u8 dma_channel;
 
 	fgpi_port = fgpi_ch[port];
 	buf_mode = bamdma_bufmode[port];
+	dma_channel = saa716x->fgpi[port].dma_channel;
 
 	/* Reset FGPI block */
 	SAA716x_EPWR(fgpi_port, FGPI_SOFT_RESET, FGPI_SOFTWARE_RESET);
 
 	/* Reset DMA channel */
 	SAA716x_EPWR(BAM, buf_mode, 0x00000040);
-	saa716x_init_ptables(dmabuf, saa716x->fgpi[port].dma_channel,
-			     stream_params);
+	saa716x_init_ptables(dmabuf, dma_channel, stream_params);
 
 
 	/* monitor BAM reset */
@@ -236,14 +237,14 @@ int saa716x_fgpi_setparams(struct saa716x_dmabuf *dmabuf,
 	SAA716x_EPWR(BAM, buf_mode, FGPI_BUFFERS - 1);
 
 	/* initialize all available address offsets */
-	SAA716x_EPWR(BAM, BAM_FGPI_ADDR_OFFST_0(port), 0x0);
-	SAA716x_EPWR(BAM, BAM_FGPI_ADDR_OFFST_1(port), 0x0);
-	SAA716x_EPWR(BAM, BAM_FGPI_ADDR_OFFST_2(port), 0x0);
-	SAA716x_EPWR(BAM, BAM_FGPI_ADDR_OFFST_3(port), 0x0);
-	SAA716x_EPWR(BAM, BAM_FGPI_ADDR_OFFST_4(port), 0x0);
-	SAA716x_EPWR(BAM, BAM_FGPI_ADDR_OFFST_5(port), 0x0);
-	SAA716x_EPWR(BAM, BAM_FGPI_ADDR_OFFST_6(port), 0x0);
-	SAA716x_EPWR(BAM, BAM_FGPI_ADDR_OFFST_7(port), 0x0);
+	SAA716x_EPWR(BAM, BAM_ADDR_OFFSET_0(dma_channel), 0x0);
+	SAA716x_EPWR(BAM, BAM_ADDR_OFFSET_1(dma_channel), 0x0);
+	SAA716x_EPWR(BAM, BAM_ADDR_OFFSET_2(dma_channel), 0x0);
+	SAA716x_EPWR(BAM, BAM_ADDR_OFFSET_3(dma_channel), 0x0);
+	SAA716x_EPWR(BAM, BAM_ADDR_OFFSET_4(dma_channel), 0x0);
+	SAA716x_EPWR(BAM, BAM_ADDR_OFFSET_5(dma_channel), 0x0);
+	SAA716x_EPWR(BAM, BAM_ADDR_OFFSET_6(dma_channel), 0x0);
+	SAA716x_EPWR(BAM, BAM_ADDR_OFFSET_7(dma_channel), 0x0);
 
 	/* get module ID */
 	mid = SAA716x_EPRD(fgpi_port, FGPI_MODULE_ID);
@@ -302,8 +303,8 @@ int saa716x_fgpi_setparams(struct saa716x_dmabuf *dmabuf,
 		break;
 	}
 
-	SAA716x_EPWR(fgpi_port, FGPI_BASE_1, ((saa716x->fgpi[port].dma_channel) << 21) + offst_1);
-	SAA716x_EPWR(fgpi_port, FGPI_BASE_2, ((saa716x->fgpi[port].dma_channel) << 21) + offst_2);
+	SAA716x_EPWR(fgpi_port, FGPI_BASE_1, (dma_channel << 21) + offst_1);
+	SAA716x_EPWR(fgpi_port, FGPI_BASE_2, (dma_channel << 21) + offst_2);
 
 	return 0;
 }
