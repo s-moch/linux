@@ -56,8 +56,6 @@
 
 /* -------------- PHI_1 Registers -------------- */
 
-#define	PHI_1				0x00020000
-
 #define PHI_1_MODE			0x00004
 #define PHI_1_0_CONFIG			0x00018
 #define PHI_1_1_CONFIG			0x0001c
@@ -91,10 +89,6 @@
 
 #define PHI_1_7_RW_0			0x7000
 #define PHI_1_7_RW_16383		0x7ffc
-
-
-/* BAR = 20 bits */
-/* -------------- PHI1 Registers -------------- */
 
 
 #endif /* __SAA716x_PHI_REG_H */
