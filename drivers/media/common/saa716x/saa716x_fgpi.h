@@ -4,29 +4,7 @@
 #include <linux/interrupt.h>
 
 #define FGPI_BUFFERS		8
-#define PTA_LSB(__mem)		((u32 ) (__mem))
-#define PTA_MSB(__mem)		((u32 ) ((u64)(__mem) >> 32))
 
-#define BAM_DMA_BUF_MODE_BASE		0x0d8
-#define BAM_DMA_BUF_MODE_OFFSET		0x24
-
-#define BAM_DMA_BUF_MODE(__ch)		(BAM_DMA_BUF_MODE_BASE + (BAM_DMA_BUF_MODE_OFFSET * __ch))
-
-#define BAM_FGPI_ADDR_OFFST_BASE	0x0dc
-#define BAM_FGPI_ADDR_OFFST_OFFSET	0x24
-
-#define BAM_FGPI_ADDR_OFFSET(__ch)	(BAM_FGPI_ADDR_OFFST_BASE + (BAM_FGPI_ADDR_OFFST_OFFSET * __ch))
-
-#define BAM_FGPI_ADDR_OFFST_0(__ch)	BAM_FGPI_ADDR_OFFSET(__ch) + 0x00
-#define BAM_FGPI_ADDR_OFFST_1(__ch)	BAM_FGPI_ADDR_OFFSET(__ch) + 0x04
-#define BAM_FGPI_ADDR_OFFST_2(__ch)	BAM_FGPI_ADDR_OFFSET(__ch) + 0x08
-#define BAM_FGPI_ADDR_OFFST_3(__ch)	BAM_FGPI_ADDR_OFFSET(__ch) + 0x0c
-#define BAM_FGPI_ADDR_OFFST_4(__ch)	BAM_FGPI_ADDR_OFFSET(__ch) + 0x10
-#define BAM_FGPI_ADDR_OFFST_5(__ch)	BAM_FGPI_ADDR_OFFSET(__ch) + 0x14
-#define BAM_FGPI_ADDR_OFFST_6(__ch)	BAM_FGPI_ADDR_OFFSET(__ch) + 0x18
-#define BAM_FGPI_ADDR_OFFST_7(__ch)	BAM_FGPI_ADDR_OFFSET(__ch) + 0x1c
-
-struct saa716x_dmabuf;
 
 /*
  * Port supported streams
