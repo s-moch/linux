@@ -155,6 +155,8 @@
 #define MMU_DMA_CONFIG14		0x03c
 #define MMU_DMA_CONFIG15		0x040
 
+#define MMU_DMA_CONFIG(__ch)		(MMU_DMA_CONFIG0 + (4 * __ch))
+
 #define MMU_SW_RST			0xff0
 #define MMU_SW_RESET			(0x0001 <<  0)
 
@@ -175,26 +177,25 @@
 #define MMU_PTA_BASE14			0x3c4 /* DMA 14 */
 #define MMU_PTA_BASE15			0x404 /* DMA 15 */
 
-#define MMU_PTA_BASE			0x044 /* DMA 0 */
 #define MMU_PTA_OFFSET			0x40
 
-#define PTA_BASE(__ch)			(MMU_PTA_BASE + (MMU_PTA_OFFSET * __ch))
+#define MMU_PTA_BASE(__ch)		(MMU_PTA_BASE0 + (MMU_PTA_OFFSET * __ch))
 
-#define MMU_PTA0_LSB(__ch)		PTA_BASE(__ch) + 0x00
-#define MMU_PTA0_MSB(__ch)		PTA_BASE(__ch) + 0x04
-#define MMU_PTA1_LSB(__ch)		PTA_BASE(__ch) + 0x08
-#define MMU_PTA1_MSB(__ch)		PTA_BASE(__ch) + 0x0c
-#define MMU_PTA2_LSB(__ch)		PTA_BASE(__ch) + 0x10
-#define MMU_PTA2_MSB(__ch)		PTA_BASE(__ch) + 0x14
-#define MMU_PTA3_LSB(__ch)		PTA_BASE(__ch) + 0x18
-#define MMU_PTA3_MSB(__ch)		PTA_BASE(__ch) + 0x1c
-#define MMU_PTA4_LSB(__ch)		PTA_BASE(__ch) + 0x20
-#define MMU_PTA4_MSB(__ch)		PTA_BASE(__ch) + 0x24
-#define MMU_PTA5_LSB(__ch)		PTA_BASE(__ch) + 0x28
-#define MMU_PTA5_MSB(__ch)		PTA_BASE(__ch) + 0x2c
-#define MMU_PTA6_LSB(__ch)		PTA_BASE(__ch) + 0x30
-#define MMU_PTA6_MSB(__ch)		PTA_BASE(__ch) + 0x34
-#define MMU_PTA7_LSB(__ch)		PTA_BASE(__ch) + 0x38
-#define MMU_PTA7_MSB(__ch)		PTA_BASE(__ch) + 0x3c
+#define MMU_PTA0_LSB(__ch)		MMU_PTA_BASE(__ch) + 0x00
+#define MMU_PTA0_MSB(__ch)		MMU_PTA_BASE(__ch) + 0x04
+#define MMU_PTA1_LSB(__ch)		MMU_PTA_BASE(__ch) + 0x08
+#define MMU_PTA1_MSB(__ch)		MMU_PTA_BASE(__ch) + 0x0c
+#define MMU_PTA2_LSB(__ch)		MMU_PTA_BASE(__ch) + 0x10
+#define MMU_PTA2_MSB(__ch)		MMU_PTA_BASE(__ch) + 0x14
+#define MMU_PTA3_LSB(__ch)		MMU_PTA_BASE(__ch) + 0x18
+#define MMU_PTA3_MSB(__ch)		MMU_PTA_BASE(__ch) + 0x1c
+#define MMU_PTA4_LSB(__ch)		MMU_PTA_BASE(__ch) + 0x20
+#define MMU_PTA4_MSB(__ch)		MMU_PTA_BASE(__ch) + 0x24
+#define MMU_PTA5_LSB(__ch)		MMU_PTA_BASE(__ch) + 0x28
+#define MMU_PTA5_MSB(__ch)		MMU_PTA_BASE(__ch) + 0x2c
+#define MMU_PTA6_LSB(__ch)		MMU_PTA_BASE(__ch) + 0x30
+#define MMU_PTA6_MSB(__ch)		MMU_PTA_BASE(__ch) + 0x34
+#define MMU_PTA7_LSB(__ch)		MMU_PTA_BASE(__ch) + 0x38
+#define MMU_PTA7_MSB(__ch)		MMU_PTA_BASE(__ch) + 0x3c
 
 #endif /* __SAA716x_DMA_REG_H */
