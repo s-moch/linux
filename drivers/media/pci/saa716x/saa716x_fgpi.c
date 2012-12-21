@@ -11,44 +11,6 @@
 #include "saa716x_spi.h"
 #include "saa716x_priv.h"
 
-static const u32 mmu_pta_base[] = {
-	MMU_PTA_BASE0,
-	MMU_PTA_BASE1,
-	MMU_PTA_BASE2,
-	MMU_PTA_BASE3,
-	MMU_PTA_BASE4,
-	MMU_PTA_BASE5,
-	MMU_PTA_BASE6,
-	MMU_PTA_BASE7,
-	MMU_PTA_BASE8,
-	MMU_PTA_BASE9,
-	MMU_PTA_BASE10,
-	MMU_PTA_BASE11,
-	MMU_PTA_BASE12,
-	MMU_PTA_BASE13,
-	MMU_PTA_BASE14,
-	MMU_PTA_BASE15,
-};
-
-static const u32 mmu_dma_cfg[] = {
-	MMU_DMA_CONFIG0,
-	MMU_DMA_CONFIG1,
-	MMU_DMA_CONFIG2,
-	MMU_DMA_CONFIG3,
-	MMU_DMA_CONFIG4,
-	MMU_DMA_CONFIG5,
-	MMU_DMA_CONFIG6,
-	MMU_DMA_CONFIG7,
-	MMU_DMA_CONFIG8,
-	MMU_DMA_CONFIG9,
-	MMU_DMA_CONFIG10,
-	MMU_DMA_CONFIG11,
-	MMU_DMA_CONFIG12,
-	MMU_DMA_CONFIG13,
-	MMU_DMA_CONFIG14,
-	MMU_DMA_CONFIG15,
-};
-
 static const u32 fgpi_ch[] = {
 	FGPI0,
 	FGPI1,
@@ -150,7 +112,7 @@ static u32 saa716x_init_ptables(struct saa716x_dmabuf *dmabuf, int channel,
 	for (i = 0; i < FGPI_BUFFERS; i++)
 		BUG_ON((dmabuf[i].mem_ptab_phys == 0));
 
-	config = mmu_dma_cfg[channel]; /* DMACONFIGx */
+	config = MMU_DMA_CONFIG(channel); /* DMACONFIGx */
 
 	SAA716x_EPWR(MMU, config, (FGPI_BUFFERS - 1));
 
@@ -326,7 +288,7 @@ int saa716x_fgpi_start(struct saa716x_dev *saa716x, int port,
 		return -EIO;
 	}
 
-	config = mmu_dma_cfg[saa716x->fgpi[port].dma_channel]; /* DMACONFIGx */
+	config = MMU_DMA_CONFIG(saa716x->fgpi[port].dma_channel); /* DMACONFIGx */
 
 	val = SAA716x_EPRD(MMU, config);
 	SAA716x_EPWR(MMU, config, val & ~0x40);
