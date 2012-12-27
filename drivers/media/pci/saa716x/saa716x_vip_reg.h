@@ -22,27 +22,15 @@
 #define HSP_RGB				(0x00000001 <<  2)
 #define HSP_MODE			(0x00000003 <<  0)
 
-#define RCRB_CTRL			0x004
-#define RCRB_CFG_ADDR			0x008
-#define RCRB_CFG_EXT_ADDR		0x00c
-#define RCRB_IO_ADDR			0x010
-#define RCRB_MEM_LADDR			0x014
-#define RCRB_MEM_UADDR			0x018
-#define RCRB_DATA			0x01c
-#define RCRB_MASK			0x020
-#define RCRB_MSG_HDR			0x040
-#define RCRB_MSG_PL0			0x044
-#define RCRB_MSG_PL1			0x048
-
-#define ID_MASK0			0x020
+#define ANC_DID_FIELD0			0x020
 #define VI_ID_MASK_0			(0x000000ff <<  8)
 #define VI_DATA_ID_0			(0x000000ff <<  0)
 
-#define ID_MASK1			0x024
+#define ANC_DID_FIELD1			0x024
 #define VI_ID_MASK_1			(0x000000ff <<  8)
 #define VI_DATA_ID_1			(0x000000ff <<  0)
 
-#define VIP_LINE_THRESH			0x040
+#define VI_LINE_THRESH			0x040
 #define VI_LCTHR			(0x000007ff <<  0)
 
 #define VIN_FORMAT			0x100
@@ -61,13 +49,33 @@
 #define VI_REVS				(0x00000001 <<  1)
 #define VI_REHS				(0x00000001 <<  0)
 
-#define TC76543210			0x800
-#define TCFEDCBA98			0x804
-#define PHYCFG				0x900
-#define CONFIG				0xfd4
-#define INT_ENABLE_CLR			0xfd8
-#define INT_ENABLE_SET			0xfdc
+#define VIN_TESTPGEN			0x104
 
+#define WIN_XYSTART			0x140
+#define WIN_XYEND			0x144
+
+#define PRE_DIT_CTRL			0x160
+#define POST_DIT_CTRL			0x164
+
+#define AUX_XYSTART			0x180
+#define AUX_XYEND			0x184
+
+#define CSM_CKEY			0x284
+
+#define PSU_FORMAT			0x300
+#define PSU_WINDOW			0x304
+#define PSU_BASE1			0x340
+#define PSU_PITCH1			0x344
+#define PSU_BASE2			0x348
+#define PSU_PITCH2			0x34c
+#define PSU_BASE3			0x350
+#define PSU_BASE4			0x354
+#define PSU_BASE5			0x358
+#define PSU_BASE6			0x35c
+
+#define AUX_FORMAT			0x380
+#define AUX_BASE			0x390
+#define AUX_PITCH			0x394
 
 #define INT_STATUS			0xfe0
 #define VI_STAT_FID_AUX			(0x00000001 << 31)
@@ -123,5 +131,8 @@
 
 #define VIP_POWER_DOWN			0xff4
 #define VI_PWR_DWN			(0x00000001 << 31)
+
+#define VI_MODULE_ID			0xffc
+
 
 #endif /* __SAA716x_VIP_REG_H */
