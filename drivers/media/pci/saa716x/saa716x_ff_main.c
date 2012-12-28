@@ -632,15 +632,23 @@ static ssize_t dvb_video_read(struct file *file, char __user *buf,
 	size_t copy_bytes;
 	u32 read_index;
 	u8 *data;
+	int err = 0;
 
 	if ((file->f_flags & O_ACCMODE) == O_WRONLY)
 		return -EPERM;
 
-	if (sti7109->video_capture == VIDEO_CAPTURE_OFF)
-		return -ENODATA;
+	mutex_lock(&sti7109->video_lock);
 
-	if (video_get_stream_params(&stream_params, sti7109->video_format) != 0)
-		return -ENODATA;
+	if (sti7109->video_capture == VIDEO_CAPTURE_OFF) {
+		err = -ENODATA;
+		goto out;
+	}
+
+	if (video_get_stream_params(&stream_params,
+				    sti7109->video_format) != 0) {
+		err = -ENODATA;
+		goto out;
+	}
 
 	if (sti7109->video_capture == VIDEO_CAPTURE_ONE_SHOT)
 		one_shot = 1;
@@ -657,8 +665,10 @@ static ssize_t dvb_video_read(struct file *file, char __user *buf,
 	if (count > (sizeof(pix_format) + pix_format.sizeimage))
 		count = sizeof(pix_format) + pix_format.sizeimage;
 
-	if (count < sizeof(pix_format))
-		return -EFAULT;
+	if (count < sizeof(pix_format)) {
+		err = -EFAULT;
+		goto out;
+	}
 
 	saa716x_vip_start(saa716x, 0, one_shot, &stream_params);
 	/* Sleep long enough to be sure to capture at least one frame.
@@ -677,16 +687,20 @@ static ssize_t dvb_video_read(struct file *file, char __user *buf,
 		read_index = (read_index + 7) & 7;
 	}
 
-	if (copy_to_user((void __user *)buf, &pix_format, sizeof(pix_format)))
-		return -EFAULT;
+	if (copy_to_user((void __user *)buf, &pix_format, sizeof(pix_format))) {
+		err = -EFAULT;
+		goto out;
+	}
 	num_bytes = sizeof(pix_format);
 
 	copy_bytes = count - num_bytes;
 	if (copy_bytes > (SAA716x_PAGE_SIZE / 8 * SAA716x_PAGE_SIZE))
 		copy_bytes = SAA716x_PAGE_SIZE / 8 * SAA716x_PAGE_SIZE;
 	data = (u8 *)saa716x->vip[0].dma_buf[0][read_index].mem_virt;
-	if (copy_to_user((void __user *)(buf + num_bytes), data, copy_bytes))
-		return -EFAULT;
+	if (copy_to_user((void __user *)(buf + num_bytes), data, copy_bytes)) {
+		err = -EFAULT;
+		goto out;
+	}
 	num_bytes += copy_bytes;
 	if (saa716x->vip[0].dual_channel &&
 	    count - num_bytes > 0) {
@@ -694,12 +708,20 @@ static ssize_t dvb_video_read(struct file *file, char __user *buf,
 		if (copy_bytes > (SAA716x_PAGE_SIZE / 8 * SAA716x_PAGE_SIZE))
 			copy_bytes = SAA716x_PAGE_SIZE / 8 * SAA716x_PAGE_SIZE;
 		data = (u8 *)saa716x->vip[0].dma_buf[1][read_index].mem_virt;
-		if (copy_to_user((void __user *)(buf + num_bytes), data, copy_bytes))
-			return -EFAULT;
+		if (copy_to_user((void __user *)(buf + num_bytes), data,
+				 copy_bytes)) {
+			err = -EFAULT;
+			goto out;
+		}
 		num_bytes += copy_bytes;
 	}
 
+	mutex_unlock(&sti7109->video_lock);
 	return num_bytes;
+
+out:
+	mutex_unlock(&sti7109->video_lock);
+	return err;
 }
 
 #define FREE_COND_TS (dvb_ringbuffer_free(&sti7109->tsout) >= TS_SIZE)
@@ -967,6 +989,7 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 	sti7109_cmd_init(sti7109);
 
 	sti7109->video_capture = video_capture;
+	mutex_init(&sti7109->video_lock);
 
 	sti7109->int_count_enable = int_count_enable;
 	sti7109->total_int_count = 0;
