@@ -261,7 +261,7 @@ static int saa716x_vip_setparams(struct saa716x_dev *saa716x, int port,
 	return 0;
 }
 
-int saa716x_vip_start(struct saa716x_dev *saa716x, int port,
+int saa716x_vip_start(struct saa716x_dev *saa716x, int port, int one_shot,
 		      struct vip_stream_params *stream_params)
 {
 	u32 vi_port;
@@ -307,7 +307,19 @@ int saa716x_vip_start(struct saa716x_dev *saa716x, int port,
 
 	/* enable video capture path */
 	val = SAA716x_EPRD(vi_port, VI_MODE);
-	val |= VID_CFEN | VID_FSEQ;
+	val &= ~(VID_CFEN | VID_FSEQ | VID_OSM);
+
+	if ((stream_params->stream_flags & VIP_INTERLACED) &&
+	    (stream_params->stream_flags & VIP_ODD_FIELD) &&
+	    (stream_params->stream_flags & VIP_EVEN_FIELD)) {
+		val |= VID_CFEN_BOTH; /* capture both fields */
+		val |= VID_FSEQ; /* start capture with odd field */
+	} else {
+		val |= VID_CFEN_BOTH; /* capture both fields */
+	}
+
+	if (one_shot)
+		val |= VID_OSM; /* stop capture after receiving one frame */
 
 	saa716x_set_clk_external(saa716x, saa716x->vip[port].dma_channel[0]);
 
