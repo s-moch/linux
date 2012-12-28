@@ -143,6 +143,7 @@ struct sti7109_dev {
 	struct mutex		cmd_lock;
 	struct mutex		osd_cmd_lock;
 	struct mutex		data_lock;
+	struct mutex		video_lock;
 
 	u64			audio_pts;
 	u64			video_pts;
