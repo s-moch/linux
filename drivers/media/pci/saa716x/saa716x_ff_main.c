@@ -785,6 +785,7 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 
 	sti7109->int_count_enable = int_count_enable;
 	sti7109->total_int_count = 0;
+	memset(sti7109->vi_int_count, 0, sizeof(sti7109->vi_int_count));
 	memset(sti7109->fgpi_int_count, 0, sizeof(sti7109->fgpi_int_count));
 	memset(sti7109->i2c_int_count, 0, sizeof(sti7109->i2c_int_count));
 	sti7109->ext_int_total_count = 0;
@@ -1087,12 +1088,12 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 	if (msiStatusL) {
 		if (msiStatusL & MSI_INT_TAGACK_FGPI_2) {
 			if (sti7109->int_count_enable)
-				sti7109->fgpi_int_count[0]++;
+				sti7109->fgpi_int_count[2]++;
 			tasklet_schedule(&saa716x->fgpi[2].tasklet);
 		}
 		if (msiStatusL & MSI_INT_TAGACK_FGPI_3) {
 			if (sti7109->int_count_enable)
-				sti7109->fgpi_int_count[1]++;
+				sti7109->fgpi_int_count[3]++;
 			tasklet_schedule(&saa716x->fgpi[3].tasklet);
 		}
 	}
@@ -1337,11 +1338,16 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 
 	if (sti7109->int_count_enable) {
 		if (jiffies - sti7109->last_int_ticks >= HZ) {
-			dprintk(SAA716x_INFO, 1, "int count: t: %d, f:%d %d, i:%d %d,"
+			dprintk(SAA716x_INFO, 1,
+				"int count: t: %d, v: %d %d, f:%d %d %d %d, i:%d %d,"
 				"e: %d (%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d)",
 				sti7109->total_int_count,
+				sti7109->vi_int_count[0],
+				sti7109->vi_int_count[1],
 				sti7109->fgpi_int_count[0],
 				sti7109->fgpi_int_count[1],
+				sti7109->fgpi_int_count[2],
+				sti7109->fgpi_int_count[3],
 				sti7109->i2c_int_count[0],
 				sti7109->i2c_int_count[1],
 				sti7109->ext_int_total_count,
@@ -1362,6 +1368,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 				sti7109->ext_int_source_count[14],
 				sti7109->ext_int_source_count[15]);
 			sti7109->total_int_count = 0;
+			memset(sti7109->vi_int_count, 0, sizeof(sti7109->vi_int_count));
 			memset(sti7109->fgpi_int_count, 0, sizeof(sti7109->fgpi_int_count));
 			memset(sti7109->i2c_int_count, 0, sizeof(sti7109->i2c_int_count));
 			sti7109->ext_int_total_count = 0;
