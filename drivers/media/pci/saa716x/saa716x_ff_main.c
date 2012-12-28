@@ -20,6 +20,7 @@
 
 #include <linux/i2c.h>
 
+#include <linux/videodev2.h>
 #include <linux/dvb/video.h>
 #include <linux/dvb/audio.h>
 #include <linux/dvb/osd.h>
@@ -33,8 +34,6 @@
 #include "saa716x_spi_reg.h"
 #include "saa716x_msi_reg.h"
 
-#include "saa716x_vip.h"
-#include "saa716x_aip.h"
 #include "saa716x_msi.h"
 #include "saa716x_adap.h"
 #include "saa716x_gpio.h"
@@ -61,6 +60,10 @@ MODULE_PARM_DESC(int_type, "force Interrupt Handler type: 0=INT-A, 1=MSI, 2=MSI-
 unsigned int int_count_enable;
 module_param(int_count_enable, int, 0644);
 MODULE_PARM_DESC(int_count_enable, "enable counting of interrupts");
+
+unsigned int video_capture;
+module_param(video_capture, int, 0644);
+MODULE_PARM_DESC(video_capture, "capture digital video coming from STi7109: 0=off, 1=one-shot. default off");
 
 #define DRIVER_NAME	"SAA716x FF"
 
@@ -527,6 +530,178 @@ static void fifo_worker(unsigned long data)
 	spin_unlock(&sti7109->tsout.lock);
 }
 
+static void video_worker(unsigned long data)
+{
+	struct saa716x_vip_stream_port *vip_entry = (struct saa716x_vip_stream_port *)data;
+	struct saa716x_dev *saa716x = vip_entry->saa716x;
+	u32 vip_index;
+	u32 write_index;
+
+	vip_index = vip_entry->dma_channel[0];
+	if (vip_index != 0) {
+		printk(KERN_ERR "%s: unexpected channel %u\n",
+		       __func__, vip_entry->dma_channel[0]);
+		return;
+	}
+
+	write_index = saa716x_vip_get_write_index(saa716x, vip_index);
+	if (write_index < 0)
+		return;
+
+	dprintk(SAA716x_DEBUG, 1, "dma buffer = %d", write_index);
+
+	if (write_index == vip_entry->read_index) {
+		printk(KERN_DEBUG "%s: called but nothing to do\n", __func__);
+		return;
+	}
+
+	do {
+		pci_dma_sync_sg_for_cpu(saa716x->pdev,
+			vip_entry->dma_buf[0][vip_entry->read_index].sg_list,
+			vip_entry->dma_buf[0][vip_entry->read_index].list_len,
+			PCI_DMA_FROMDEVICE);
+		if (vip_entry->dual_channel) {
+			pci_dma_sync_sg_for_cpu(saa716x->pdev,
+				vip_entry->dma_buf[1][vip_entry->read_index].sg_list,
+				vip_entry->dma_buf[1][vip_entry->read_index].list_len,
+				PCI_DMA_FROMDEVICE);
+		}
+
+		vip_entry->read_index = (vip_entry->read_index + 1) & 7;
+	} while (write_index != vip_entry->read_index);
+}
+
+static int video_get_stream_params(struct vip_stream_params * params, u32 mode)
+{
+	switch (mode)
+	{
+		case 4:  /* 1280x720p60 */
+		case 19: /* 1280x720p50 */
+			params->bits		= 16;
+			params->samples		= 1280;
+			params->lines		= 720;
+			params->pitch		= 1280 * 2;
+			params->offset_x	= 32;
+			params->offset_y	= 30;
+			params->stream_flags	= VIP_HD;
+			break;
+
+		case 5:  /* 1920x1080i60 */
+		case 20: /* 1920x1080i50 */
+			params->bits		= 16;
+			params->samples		= 1920;
+			params->lines		= 1080;
+			params->pitch		= 1920 * 2;
+			params->offset_x	= 0;
+			params->offset_y	= 20;
+			params->stream_flags	= VIP_ODD_FIELD
+						| VIP_EVEN_FIELD
+						| VIP_INTERLACED
+						| VIP_HD
+						| VIP_NO_SCALER;
+			break;
+
+		case 32: /* 1920x1080p24 */
+		case 33: /* 1920x1080p25 */
+		case 34: /* 1920x1080p30 */
+			params->bits		= 16;
+			params->samples		= 1920;
+			params->lines		= 1080;
+			params->pitch		= 1920 * 2;
+			params->offset_x	= 0;
+			params->offset_y	= 0;
+			params->stream_flags	= VIP_HD;
+			break;
+
+		default:
+			return -1;
+	}
+	return 0;
+}
+
+static ssize_t dvb_video_read(struct file *file, char __user *buf,
+			      size_t count, loff_t *ppos)
+{
+	struct dvb_device *dvbdev	= file->private_data;
+	struct sti7109_dev *sti7109	= dvbdev->priv;
+	struct saa716x_dev *saa716x	= sti7109->dev;
+	struct vip_stream_params stream_params;
+	struct v4l2_pix_format pix_format;
+	int one_shot = 0;
+	size_t num_bytes;
+	size_t copy_bytes;
+	u32 read_index;
+	u8 *data;
+
+	if ((file->f_flags & O_ACCMODE) == O_WRONLY)
+		return -EPERM;
+
+	if (sti7109->video_capture == VIDEO_CAPTURE_OFF)
+		return -ENODATA;
+
+	if (video_get_stream_params(&stream_params, sti7109->video_format) != 0)
+		return -ENODATA;
+
+	if (sti7109->video_capture == VIDEO_CAPTURE_ONE_SHOT)
+		one_shot = 1;
+
+	/* put a v4l2_pix_format header at the beginning of the returned data */
+	memset(&pix_format, 0, sizeof(pix_format));
+	pix_format.width	= stream_params.samples;
+	pix_format.height	= stream_params.lines;
+	pix_format.pixelformat	= V4L2_PIX_FMT_UYVY;
+	pix_format.bytesperline	= stream_params.pitch;
+	pix_format.sizeimage	= stream_params.lines * stream_params.pitch;
+	pix_format.colorspace	= V4L2_COLORSPACE_REC709;
+
+	if (count > (sizeof(pix_format) + pix_format.sizeimage))
+		count = sizeof(pix_format) + pix_format.sizeimage;
+
+	if (count < sizeof(pix_format))
+		return -EFAULT;
+
+	saa716x_vip_start(saa716x, 0, one_shot, &stream_params);
+	/* Sleep long enough to be sure to capture at least one frame.
+	   TODO: Change this in a way that it just waits the required time. */
+	msleep(100);
+	saa716x_vip_stop(saa716x, 0);
+
+	read_index = saa716x->vip[0].read_index;
+	if ((stream_params.stream_flags & VIP_INTERLACED) &&
+	    (stream_params.stream_flags & VIP_ODD_FIELD) &&
+	    (stream_params.stream_flags & VIP_EVEN_FIELD)) {
+		read_index = read_index & ~1;
+		read_index = (read_index + 7) & 7;
+		read_index = read_index / 2;
+	} else {
+		read_index = (read_index + 7) & 7;
+	}
+
+	if (copy_to_user((void __user *)buf, &pix_format, sizeof(pix_format)))
+		return -EFAULT;
+	num_bytes = sizeof(pix_format);
+
+	copy_bytes = count - num_bytes;
+	if (copy_bytes > (SAA716x_PAGE_SIZE / 8 * SAA716x_PAGE_SIZE))
+		copy_bytes = SAA716x_PAGE_SIZE / 8 * SAA716x_PAGE_SIZE;
+	data = (u8 *)saa716x->vip[0].dma_buf[0][read_index].mem_virt;
+	if (copy_to_user((void __user *)(buf + num_bytes), data, copy_bytes))
+		return -EFAULT;
+	num_bytes += copy_bytes;
+	if (saa716x->vip[0].dual_channel &&
+	    count - num_bytes > 0) {
+		copy_bytes = count - num_bytes;
+		if (copy_bytes > (SAA716x_PAGE_SIZE / 8 * SAA716x_PAGE_SIZE))
+			copy_bytes = SAA716x_PAGE_SIZE / 8 * SAA716x_PAGE_SIZE;
+		data = (u8 *)saa716x->vip[0].dma_buf[1][read_index].mem_virt;
+		if (copy_to_user((void __user *)(buf + num_bytes), data, copy_bytes))
+			return -EFAULT;
+		num_bytes += copy_bytes;
+	}
+
+	return num_bytes;
+}
+
 #define FREE_COND_TS (dvb_ringbuffer_free(&sti7109->tsout) >= TS_SIZE)
 
 static ssize_t dvb_video_write(struct file *file, const char __user *buf,
@@ -654,6 +829,7 @@ static long dvb_video_ioctl(struct file *file,
 
 static struct file_operations dvb_video_fops = {
 	.owner		= THIS_MODULE,
+	.read		= dvb_video_read,
 	.write		= dvb_video_write,
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
 	.ioctl		= dvb_video_ioctl,
@@ -667,7 +843,8 @@ static struct file_operations dvb_video_fops = {
 
 static struct dvb_device dvbdev_video = {
 	.priv		= NULL,
-	.users		= 1,
+	.users		= 5,
+	.readers	= 5,
 	.writers	= 1,
 	.fops		= &dvb_video_fops,
 	.kernel_ioctl	= NULL,
@@ -676,6 +853,9 @@ static struct dvb_device dvbdev_video = {
 static int saa716x_ff_video_exit(struct saa716x_dev *saa716x)
 {
 	struct sti7109_dev *sti7109 = saa716x->priv;
+
+	if (sti7109->video_capture != VIDEO_CAPTURE_OFF)
+		saa716x_vip_exit(saa716x, 0);
 
 	tasklet_kill(&sti7109->fifo_tasklet);
 	dvb_unregister_device(sti7109->video_dev);
@@ -698,6 +878,9 @@ static int saa716x_ff_video_init(struct saa716x_dev *saa716x)
 
 	tasklet_init(&sti7109->fifo_tasklet, fifo_worker,
 		     (unsigned long)saa716x);
+
+	if (sti7109->video_capture != VIDEO_CAPTURE_OFF)
+		saa716x_vip_init(saa716x, 0, video_worker);
 
 	return 0;
 }
@@ -783,6 +966,8 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 
 	sti7109_cmd_init(sti7109);
 
+	sti7109->video_capture = video_capture;
+
 	sti7109->int_count_enable = int_count_enable;
 	sti7109->total_int_count = 0;
 	memset(sti7109->vi_int_count, 0, sizeof(sti7109->vi_int_count));
@@ -860,6 +1045,7 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 	/* enable FGPI2 and FGPI3 for TS inputs */
 	SAA716x_EPWR(GREG, GREG_VI_CTRL, 0x0689F04);
 	SAA716x_EPWR(GREG, GREG_FGPI_CTRL, 0x280);
+	SAA716x_EPWR(GREG, GREG_VIDEO_IN_CTRL, 0xC0);
 
 	err = saa716x_dvb_init(saa716x);
 	if (err) {
@@ -1086,6 +1272,11 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 	SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_H, msiStatusH);
 
 	if (msiStatusL) {
+		if (msiStatusL & MSI_INT_TAGACK_VI0_0) {
+			if (sti7109->int_count_enable)
+				sti7109->vi_int_count[0]++;
+			tasklet_schedule(&saa716x->vip[0].tasklet);
+		}
 		if (msiStatusL & MSI_INT_TAGACK_FGPI_2) {
 			if (sti7109->int_count_enable)
 				sti7109->fgpi_int_count[2]++;
@@ -1304,6 +1495,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_DVO_FORMAT_MASK);
 
 			dprintk(SAA716x_INFO, 1, "DVO FORMAT CHANGE: %u", format);
+			sti7109->video_format = format;
 		}
 
 		if (phiISR & ISR_LOG_MESSAGE_MASK) {
