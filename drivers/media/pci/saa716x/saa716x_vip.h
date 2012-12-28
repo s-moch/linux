@@ -1,6 +1,8 @@
 #ifndef __SAA716x_VIP_H
 #define __SAA716x_VIP_H
 
+#include "saa716x_dma.h"
+
 #define VIP_BUFFERS	8
 
 /*
@@ -20,7 +22,8 @@ enum vip_stream_flags {
  * samples: samples perline
  * lines: number of lines
  * pitch: stream pitch in bytes
- * offset: offset to first valid line
+ * offset_x: offset to first valid pixel
+ * offset_y: offset to first valid line
  */
 struct vip_stream_params {
 	u32			bits;
@@ -45,6 +48,7 @@ extern void saa716x_vipint_disable(struct saa716x_dev *saa716x);
 extern void saa716x_vip_disable(struct saa716x_dev *saa716x);
 extern int saa716x_vip_get_write_index(struct saa716x_dev *saa716x, int port);
 extern int saa716x_vip_start(struct saa716x_dev *saa716x, int port,
+			     int one_shot,
 			     struct vip_stream_params *stream_params);
 extern int saa716x_vip_stop(struct saa716x_dev *saa716x, int port);
 extern int saa716x_vip_init(struct saa716x_dev *saa716x, int port,
