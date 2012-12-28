@@ -205,7 +205,7 @@ static int saa716x_vip_setparams(struct saa716x_dev *saa716x, int port,
 	SAA716x_EPWR(vi_port, PSU_WINDOW,
 		     (stream_params->samples << 16) + num_lines);
 	/* set packet YUY2 output format */
-	SAA716x_EPWR(vi_port, PSU_FORMAT, 0x800000A0);
+	SAA716x_EPWR(vi_port, PSU_FORMAT, 0x800000A1);
 
 	SAA716x_EPWR(vi_port, PSU_BASE1, base_address);
 	SAA716x_EPWR(vi_port, PSU_PITCH1, pitch);
