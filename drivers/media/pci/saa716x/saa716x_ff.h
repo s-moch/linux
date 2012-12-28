@@ -91,6 +91,10 @@
 #define TSOUT_LEN		(1024 * TS_SIZE)
 #define TSBUF_LEN		(8 * 1024)
 
+#define VIDEO_CAPTURE_OFF	0
+#define VIDEO_CAPTURE_ONE_SHOT	1
+
+
 /* place to store all the necessary device information */
 struct sti7109_dev {
 	struct saa716x_dev	*dev;
@@ -143,6 +147,9 @@ struct sti7109_dev {
 	u64			audio_pts;
 	u64			video_pts;
 	u64			current_stc;
+
+	u32			video_capture;
+	u32			video_format;
 
 	u32			int_count_enable;
 	u32			total_int_count;
