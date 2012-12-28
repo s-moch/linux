@@ -5,6 +5,9 @@
 
 #define VI_MODE				0x000
 #define VID_CFEN			(0x00000003 << 30)
+#define VID_CFEN_ODD			(0x00000001 << 30)
+#define VID_CFEN_EVEN			(0x00000002 << 30)
+#define VID_CFEN_BOTH			(0x00000003 << 30)
 #define VID_OSM				(0x00000001 << 29)
 #define VID_FSEQ			(0x00000001 << 28)
 #define AUX_CFEN			(0x00000003 << 26)
