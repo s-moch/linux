@@ -232,7 +232,7 @@ int saa716x_fgpi_setparams(struct saa716x_dmabuf *dmabuf,
 
 	case FGPI_VIDEO_STREAM:
 		SAA716x_EPWR(fgpi_port, FGPI_CONTROL, 0x00000040);
-		SAA716x_EPWR(fgpi_port, FGPI_D1_XY_START, 0x00000002);
+		SAA716x_EPWR(fgpi_port, FGPI_D1_XY_START, stream_params->offset);
 
 		if ((stream_params->stream_flags & FGPI_INTERLACED) &&
 		    (stream_params->stream_flags & FGPI_ODD_FIELD) &&
@@ -242,7 +242,7 @@ int saa716x_fgpi_setparams(struct saa716x_dmabuf *dmabuf,
 			SAA716x_EPWR(fgpi_port, FGPI_STRIDE, stream_params->pitch * 2); /* interlaced stride of 2 lines */
 
 			D1_XY_END  = (stream_params->samples << 16);
-			D1_XY_END |= (stream_params->lines / 2) + 2;
+			D1_XY_END |= (stream_params->lines / 2) + stream_params->offset;
 
 			if (stream_params->stream_flags & FGPI_PAL)
 				offst_2 = stream_params->pitch;
@@ -254,7 +254,7 @@ int saa716x_fgpi_setparams(struct saa716x_dmabuf *dmabuf,
 			SAA716x_EPWR(fgpi_port, FGPI_STRIDE, stream_params->pitch); /* stride of 1 line */
 
 			D1_XY_END  = stream_params->samples << 16;
-			D1_XY_END |= stream_params->lines + 2;
+			D1_XY_END |= stream_params->lines + stream_params->offset;
 		}
 
 		SAA716x_EPWR(fgpi_port, FGPI_D1_XY_END, D1_XY_END);
