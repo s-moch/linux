@@ -530,7 +530,7 @@ static void fifo_worker(unsigned long data)
 	spin_unlock(&sti7109->tsout.lock);
 }
 
-static void video_worker(unsigned long data)
+static void video_vip_worker(unsigned long data)
 {
 	struct saa716x_vip_stream_port *vip_entry = (struct saa716x_vip_stream_port *)data;
 	struct saa716x_dev *saa716x = vip_entry->saa716x;
@@ -571,7 +571,8 @@ static void video_worker(unsigned long data)
 	} while (write_index != vip_entry->read_index);
 }
 
-static int video_get_stream_params(struct vip_stream_params * params, u32 mode)
+static int video_vip_get_stream_params(struct vip_stream_params * params,
+				       u32 mode)
 {
 	switch (mode)
 	{
@@ -644,8 +645,8 @@ static ssize_t dvb_video_read(struct file *file, char __user *buf,
 		goto out;
 	}
 
-	if (video_get_stream_params(&stream_params,
-				    sti7109->video_format) != 0) {
+	if (video_vip_get_stream_params(&stream_params,
+					sti7109->video_format) != 0) {
 		err = -ENODATA;
 		goto out;
 	}
@@ -902,7 +903,7 @@ static int saa716x_ff_video_init(struct saa716x_dev *saa716x)
 		     (unsigned long)saa716x);
 
 	if (sti7109->video_capture != VIDEO_CAPTURE_OFF)
-		saa716x_vip_init(saa716x, 0, video_worker);
+		saa716x_vip_init(saa716x, 0, video_vip_worker);
 
 	return 0;
 }
