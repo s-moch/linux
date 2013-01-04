@@ -239,19 +239,19 @@ int saa716x_fgpi_setparams(struct saa716x_dmabuf *dmabuf,
 		    (stream_params->stream_flags & FGPI_EVEN_FIELD)) {
 
 			SAA716x_EPWR(fgpi_port, FGPI_SIZE, stream_params->lines / 2);
-			SAA716x_EPWR(fgpi_port, FGPI_STRIDE, stream_params->samples * 4); /* interlaced stride of 2 lines */
+			SAA716x_EPWR(fgpi_port, FGPI_STRIDE, stream_params->pitch * 2); /* interlaced stride of 2 lines */
 
 			D1_XY_END  = (stream_params->samples << 16);
 			D1_XY_END |= (stream_params->lines / 2) + 2;
 
 			if (stream_params->stream_flags & FGPI_PAL)
-				offst_1 = stream_params->samples * 2;
+				offst_2 = stream_params->pitch;
 			else
-				offst_2 = stream_params->samples * 2;
+				offst_1 = stream_params->pitch;
 
 		} else {
 			SAA716x_EPWR(fgpi_port, FGPI_SIZE, stream_params->lines);
-			SAA716x_EPWR(fgpi_port, FGPI_STRIDE, stream_params->samples * 2); /* stride of 1 line */
+			SAA716x_EPWR(fgpi_port, FGPI_STRIDE, stream_params->pitch); /* stride of 1 line */
 
 			D1_XY_END  = stream_params->samples << 16;
 			D1_XY_END |= stream_params->lines + 2;
