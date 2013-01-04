@@ -620,13 +620,11 @@ static int video_vip_get_stream_params(struct vip_stream_params * params,
 	return 0;
 }
 
-static ssize_t dvb_video_read(struct file *file, char __user *buf,
-			      size_t count, loff_t *ppos)
+static ssize_t video_vip_read(struct sti7109_dev *sti7109,
+			      struct vip_stream_params * stream_params,
+			      char __user *buf, size_t count)
 {
-	struct dvb_device *dvbdev	= file->private_data;
-	struct sti7109_dev *sti7109	= dvbdev->priv;
-	struct saa716x_dev *saa716x	= sti7109->dev;
-	struct vip_stream_params stream_params;
+	struct saa716x_dev *saa716x = sti7109->dev;
 	struct v4l2_pix_format pix_format;
 	int one_shot = 0;
 	size_t num_bytes;
@@ -635,33 +633,16 @@ static ssize_t dvb_video_read(struct file *file, char __user *buf,
 	u8 *data;
 	int err = 0;
 
-	if ((file->f_flags & O_ACCMODE) == O_WRONLY)
-		return -EPERM;
-
-	mutex_lock(&sti7109->video_lock);
-
-	if (sti7109->video_capture == VIDEO_CAPTURE_OFF) {
-		err = -ENODATA;
-		goto out;
-	}
-
-	if (video_vip_get_stream_params(&stream_params,
-					sti7109->video_format) != 0) {
-		err = -ENODATA;
-		goto out;
-	}
-
 	if (sti7109->video_capture == VIDEO_CAPTURE_ONE_SHOT)
 		one_shot = 1;
 
 	/* put a v4l2_pix_format header at the beginning of the returned data */
 	memset(&pix_format, 0, sizeof(pix_format));
-	pix_format.width	= stream_params.samples;
-	pix_format.height	= stream_params.lines;
+	pix_format.width	= stream_params->samples;
+	pix_format.height	= stream_params->lines;
 	pix_format.pixelformat	= V4L2_PIX_FMT_UYVY;
-	pix_format.bytesperline	= stream_params.pitch;
-	pix_format.sizeimage	= stream_params.lines * stream_params.pitch;
-	pix_format.colorspace	= V4L2_COLORSPACE_REC709;
+	pix_format.bytesperline	= stream_params->pitch;
+	pix_format.sizeimage	= stream_params->lines * stream_params->pitch;
 
 	if (count > (sizeof(pix_format) + pix_format.sizeimage))
 		count = sizeof(pix_format) + pix_format.sizeimage;
@@ -671,16 +652,16 @@ static ssize_t dvb_video_read(struct file *file, char __user *buf,
 		goto out;
 	}
 
-	saa716x_vip_start(saa716x, 0, one_shot, &stream_params);
+	saa716x_vip_start(saa716x, 0, one_shot, stream_params);
 	/* Sleep long enough to be sure to capture at least one frame.
 	   TODO: Change this in a way that it just waits the required time. */
 	msleep(100);
 	saa716x_vip_stop(saa716x, 0);
 
 	read_index = saa716x->vip[0].read_index;
-	if ((stream_params.stream_flags & VIP_INTERLACED) &&
-	    (stream_params.stream_flags & VIP_ODD_FIELD) &&
-	    (stream_params.stream_flags & VIP_EVEN_FIELD)) {
+	if ((stream_params->stream_flags & VIP_INTERLACED) &&
+	    (stream_params->stream_flags & VIP_ODD_FIELD) &&
+	    (stream_params->stream_flags & VIP_EVEN_FIELD)) {
 		read_index = read_index & ~1;
 		read_index = (read_index + 7) & 7;
 		read_index = read_index / 2;
@@ -717,12 +698,35 @@ static ssize_t dvb_video_read(struct file *file, char __user *buf,
 		num_bytes += copy_bytes;
 	}
 
-	mutex_unlock(&sti7109->video_lock);
 	return num_bytes;
 
 out:
-	mutex_unlock(&sti7109->video_lock);
 	return err;
+}
+
+static ssize_t dvb_video_read(struct file *file, char __user *buf,
+			      size_t count, loff_t *ppos)
+{
+	struct dvb_device *dvbdev	= file->private_data;
+	struct sti7109_dev *sti7109	= dvbdev->priv;
+	struct vip_stream_params stream_params;
+	ssize_t ret = -ENODATA;
+
+	if ((file->f_flags & O_ACCMODE) == O_WRONLY)
+		return -EPERM;
+
+	mutex_lock(&sti7109->video_lock);
+
+	if (sti7109->video_capture != VIDEO_CAPTURE_OFF) {
+		if (video_vip_get_stream_params(&stream_params,
+						sti7109->video_format) == 0) {
+			ret = video_vip_read(sti7109, &stream_params,
+					     buf, count);
+		}
+	}
+
+	mutex_unlock(&sti7109->video_lock);
+	return ret;
 }
 
 #define FREE_COND_TS (dvb_ringbuffer_free(&sti7109->tsout) >= TS_SIZE)
