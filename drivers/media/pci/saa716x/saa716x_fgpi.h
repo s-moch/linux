@@ -16,6 +16,7 @@
  * FGPI_PROGRAM_STREAM
  */
 enum fgpi_stream_type {
+	FGPI_RAW_STREAM		= 0x00,
 	FGPI_AUDIO_STREAM	= 0x01,
 	FGPI_VIDEO_STREAM	= 0x02,
 	FGPI_VBI_STREAM		= 0x04,
