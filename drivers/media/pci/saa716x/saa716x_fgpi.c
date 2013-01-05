@@ -225,6 +225,7 @@ int saa716x_fgpi_setparams(struct saa716x_dmabuf *dmabuf,
 		SAA716x_EPWR(fgpi_port, FGPI_SIZE, stream_params->lines);
 		break;
 
+	case FGPI_RAW_STREAM:
 	case FGPI_PROGRAM_STREAM:
 		SAA716x_EPWR(fgpi_port, FGPI_CONTROL, 0x00000088);
 		SAA716x_EPWR(fgpi_port, FGPI_SIZE, stream_params->lines);
