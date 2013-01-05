@@ -289,6 +289,8 @@ int saa716x_fgpi_start(struct saa716x_dev *saa716x, int port,
 		return -EIO;
 	}
 
+	saa716x->fgpi[port].read_index = 0;
+
 	config = MMU_DMA_CONFIG(saa716x->fgpi[port].dma_channel); /* DMACONFIGx */
 
 	val = SAA716x_EPRD(MMU, config);
