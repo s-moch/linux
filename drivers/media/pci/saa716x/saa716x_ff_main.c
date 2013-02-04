@@ -1118,7 +1118,7 @@ static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci
 
 	err = sti7109_cmd_get_fw_version(sti7109, &fw_version);
 	if (!err) {
-		printk(KERN_INFO "SAA716x FF firmware version %X.%X.%X\n",
+		printk(KERN_INFO "SAA716x FF firmware version %d.%d.%d\n",
 			(fw_version >> 16) & 0xFF, (fw_version >> 8) & 0xFF,
 			fw_version & 0xFF);
 	}
