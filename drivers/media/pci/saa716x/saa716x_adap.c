@@ -86,7 +86,7 @@ static int saa716x_dvb_stop_feed(struct dvb_demux_feed *dvbdmxfeed)
 	return 0;
 }
 
-int __devinit saa716x_dvb_init(struct saa716x_dev *saa716x)
+int saa716x_dvb_init(struct saa716x_dev *saa716x)
 {
 	struct saa716x_adapter *saa716x_adap = saa716x->saa716x_adap;
 	struct saa716x_config *config = saa716x->config;
