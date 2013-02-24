@@ -91,7 +91,10 @@
 #define MAX_DATA_LEN		(1024 * 1024)
 
 #define TSOUT_LEN		(1024 * TS_SIZE)
-#define TSBUF_LEN		(8 * 1024)
+
+#define TSOUT_STAT_RESET	0
+#define TSOUT_STAT_FILL 	1
+#define TSOUT_STAT_RUN  	2
 
 #define VIDEO_CAPTURE_OFF	0
 #define VIDEO_CAPTURE_ONE_SHOT	1
@@ -106,7 +109,7 @@ struct sti7109_dev {
 
 	void			*iobuf;	 /* memory for all buffers */
 	struct dvb_ringbuffer	tsout;   /* buffer for TS output */
-	u8			*tsbuf;  /* temp ts buffer */
+	u32			tsout_stat;
 
 	struct workqueue_struct *fifo_workq;
 	struct work_struct	fifo_work;
