@@ -495,10 +495,10 @@ static int saa716x_ff_audio_init(struct saa716x_dev *saa716x)
 	return 0;
 }
 
-static void fifo_worker(unsigned long data)
+static void fifo_worker(struct work_struct *work)
 {
-	struct saa716x_dev *saa716x = (struct saa716x_dev *) data;
-	struct sti7109_dev *sti7109 = saa716x->priv;
+	struct sti7109_dev *sti7109 = container_of(work, struct sti7109_dev, fifo_work);
+	struct saa716x_dev *saa716x = sti7109->dev;
 	u32 fifoCtrl;
 	u32 fifoStat;
 	u16 fifoSize;
@@ -884,7 +884,8 @@ static int saa716x_ff_video_exit(struct saa716x_dev *saa716x)
 	if (sti7109->video_capture != VIDEO_CAPTURE_OFF)
 		saa716x_vip_exit(saa716x, 0);
 
-	tasklet_kill(&sti7109->fifo_tasklet);
+	cancel_work_sync(&sti7109->fifo_work);
+	destroy_workqueue(sti7109->fifo_workq);
 	dvb_unregister_device(sti7109->video_dev);
 	return 0;
 }
@@ -903,8 +904,12 @@ static int saa716x_ff_video_init(struct saa716x_dev *saa716x)
 			    sti7109,
 			    DVB_DEVICE_VIDEO);
 
-	tasklet_init(&sti7109->fifo_tasklet, fifo_worker,
-		     (unsigned long)saa716x);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 3, 0)
+	sti7109->fifo_workq = create_singlethread_workqueue("saa716x_fifo_wq");
+#else
+	sti7109->fifo_workq = alloc_workqueue("saa716x_fifo_wq%d", WQ_UNBOUND, 1, SAA716x_DEV);
+#endif
+	INIT_WORK(&sti7109->fifo_work, fifo_worker);
 
 	if (sti7109->video_capture != VIDEO_CAPTURE_OFF)
 		saa716x_vip_init(saa716x, 0, video_vip_worker);
@@ -1546,7 +1551,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 			fifoCtrl = SAA716x_EPRD(PHI_1, FPGA_ADDR_FIFO_CTRL);
 			fifoCtrl &= ~0x4;
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, fifoCtrl);
-			tasklet_schedule(&sti7109->fifo_tasklet);
+			queue_work(sti7109->fifo_workq, &sti7109->fifo_work);
 			phiISR &= ~ISR_FIFO1_EMPTY_MASK;
 		}
 
