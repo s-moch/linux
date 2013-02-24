@@ -138,7 +138,7 @@ static void saa716x_free_irq(struct saa716x_dev *saa716x)
 	}
 }
 
-int __devinit saa716x_pci_init(struct saa716x_dev *saa716x)
+int saa716x_pci_init(struct saa716x_dev *saa716x)
 {
 	struct pci_dev *pdev = saa716x->pdev;
 	int err = 0, ret = -ENODEV, i, use_dac, pm_cap;
