@@ -704,7 +704,7 @@ exit:
 }
 EXPORT_SYMBOL_GPL(saa716x_i2c_init);
 
-int __devexit saa716x_i2c_exit(struct saa716x_dev *saa716x)
+int saa716x_i2c_exit(struct saa716x_dev *saa716x)
 {
 	struct saa716x_i2c *i2c		= saa716x->i2c;
 	struct i2c_adapter *adapter	= NULL;
