@@ -912,7 +912,7 @@ static int saa716x_ff_video_init(struct saa716x_dev *saa716x)
 	return 0;
 }
 
-static int __devinit saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
+static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
 {
 	struct saa716x_dev *saa716x;
 	struct sti7109_dev *sti7109;
@@ -1156,7 +1156,7 @@ fail0:
 	return err;
 }
 
-static void __devexit saa716x_ff_pci_remove(struct pci_dev *pdev)
+static void saa716x_ff_pci_remove(struct pci_dev *pdev)
 {
 	struct saa716x_dev *saa716x = pci_get_drvdata(pdev);
 	struct sti7109_dev *sti7109 = saa716x->priv;
@@ -1741,7 +1741,7 @@ static struct pci_driver saa716x_ff_pci_driver = {
 	.name			= DRIVER_NAME,
 	.id_table		= saa716x_ff_pci_table,
 	.probe			= saa716x_ff_pci_probe,
-	.remove			= __devexit_p(saa716x_ff_pci_remove),
+	.remove			= saa716x_ff_pci_remove,
 };
 
 static int __init saa716x_ff_init(void)
