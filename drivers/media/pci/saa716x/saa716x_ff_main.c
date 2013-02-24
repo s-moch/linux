@@ -495,6 +495,46 @@ static int saa716x_ff_audio_init(struct saa716x_dev *saa716x)
 	return 0;
 }
 
+static ssize_t ringbuffer_write_user(struct dvb_ringbuffer *rbuf, const u8 __user *buf, size_t len)
+{
+	size_t todo = len;
+	size_t split;
+
+	split = (rbuf->pwrite + len > rbuf->size) ? rbuf->size - rbuf->pwrite : 0;
+
+	if (split > 0) {
+        	if (copy_from_user(rbuf->data+rbuf->pwrite, buf, split)) {
+			return -EFAULT;
+		}
+		buf += split;
+		todo -= split;
+		rbuf->pwrite = 0;
+	}
+	if (copy_from_user(rbuf->data+rbuf->pwrite, buf, todo)) {
+		return -EFAULT;
+	}
+	rbuf->pwrite = (rbuf->pwrite + todo) % rbuf->size;
+
+	return len;
+}
+
+static void ringbuffer_read_io32(struct dvb_ringbuffer *rbuf, u32 __iomem *buf, size_t len)
+{
+	size_t todo = len;
+	size_t split;
+
+	split = (rbuf->pread + len > rbuf->size) ? rbuf->size - rbuf->pread : 0;
+	if (split > 0) {
+		iowrite32_rep(buf, rbuf->data+rbuf->pread, split/4);
+		buf += split;
+		todo -= split;
+		rbuf->pread = 0;
+	}
+	iowrite32_rep(buf, rbuf->data+rbuf->pread, todo/4);
+
+	rbuf->pread = (rbuf->pread + todo) % rbuf->size;
+}
+
 static void fifo_worker(struct work_struct *work)
 {
 	struct sti7109_dev *sti7109 = container_of(work, struct sti7109_dev, fifo_work);
@@ -506,24 +546,31 @@ static void fifo_worker(struct work_struct *work)
 	u16 fifoFree;
 	int len;
 
-	fifoCtrl = SAA716x_EPRD(PHI_1, FPGA_ADDR_FIFO_CTRL);
+	if (sti7109->tsout_stat == TSOUT_STAT_RESET)
+		return;
+
 	fifoStat = SAA716x_EPRD(PHI_1, FPGA_ADDR_FIFO_STAT);
 	fifoSize = (u16) (fifoStat >> 16);
 	fifoUsage = (u16) fifoStat;
-	fifoFree = fifoSize - fifoUsage;
-	spin_lock(&sti7109->tsout.lock);
+	fifoFree = fifoSize - fifoUsage - 1;
 	len = dvb_ringbuffer_avail(&sti7109->tsout);
 	if (len > fifoFree)
 		len = fifoFree;
-	if (len >= TS_SIZE)
+	if (len < TS_SIZE)
+		return;
+
+	while (len >= TS_SIZE)
 	{
-		while (len >= TS_SIZE)
-		{
-			dvb_ringbuffer_read(&sti7109->tsout, sti7109->tsbuf, (size_t) TS_SIZE);
-			saa716x_phi_write_fifo(saa716x, sti7109->tsbuf, TS_SIZE);
-			len -= TS_SIZE;
-		}
-		wake_up(&sti7109->tsout.queue);
+		ringbuffer_read_io32(&sti7109->tsout, saa716x->mmio + PHI_0 + PHI_0_0_RW_0, (size_t) TS_SIZE);
+		len -= TS_SIZE;
+	}
+	wake_up(&sti7109->tsout.queue);
+
+	spin_lock(&sti7109->tsout.lock);
+	if (sti7109->tsout_stat != TSOUT_STAT_RESET) {
+		sti7109->tsout_stat = TSOUT_STAT_RUN;
+
+		fifoCtrl = SAA716x_EPRD(PHI_1, FPGA_ADDR_FIFO_CTRL);
 		fifoCtrl |= 0x4;
 		SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, fifoCtrl);
 	}
@@ -745,6 +792,9 @@ static ssize_t dvb_video_write(struct file *file, const char __user *buf,
 	if (av7110->videostate.stream_source != VIDEO_SOURCE_MEMORY)
 		return -EPERM;
 */
+	if (sti7109->tsout_stat == TSOUT_STAT_RESET)
+		return count;
+
 	if ((file->f_flags & O_NONBLOCK) && !FREE_COND_TS)
 		return -EWOULDBLOCK;
 
@@ -755,15 +805,14 @@ static ssize_t dvb_video_write(struct file *file, const char __user *buf,
 			if (wait_event_interruptible(sti7109->tsout.queue, FREE_COND_TS))
 				break;
 		}
-		dvb_ringbuffer_write(&sti7109->tsout, buf, TS_SIZE);
+		ringbuffer_write_user(&sti7109->tsout, buf, TS_SIZE);
 		todo -= TS_SIZE;
 		buf += TS_SIZE;
 	}
 
-	if (count > todo) {
-		u32 fifoCtrl;
-
-		fifoCtrl = SAA716x_EPRD(PHI_1, FPGA_ADDR_FIFO_CTRL);
+	if ((sti7109->tsout_stat == TSOUT_STAT_RUN) ||
+	    (dvb_ringbuffer_avail(&sti7109->tsout) > TSOUT_LEN/3)) {
+		u32 fifoCtrl = SAA716x_EPRD(PHI_1, FPGA_ADDR_FIFO_CTRL);
 		fifoCtrl |= 0x4;
 		SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, fifoCtrl);
 	}
@@ -777,14 +826,10 @@ static unsigned int dvb_video_poll(struct file *file, poll_table *wait)
 	struct sti7109_dev *sti7109	= dvbdev->priv;
 	unsigned int mask = 0;
 
-	if ((file->f_flags & O_ACCMODE) != O_RDONLY)
+	if ((file->f_flags & O_ACCMODE) != O_RDONLY) {
 		poll_wait(file, &sti7109->tsout.queue, wait);
 
-	if ((file->f_flags & O_ACCMODE) != O_RDONLY) {
-		if (1/*sti7109->playing*/) {
-			if (FREE_COND_TS)
-				mask |= (POLLOUT | POLLWRNORM);
-		} else /* if not playing: may play if asked for */
+		if (FREE_COND_TS)
 			mask |= (POLLOUT | POLLWRNORM);
 	}
 
@@ -807,19 +852,25 @@ static int do_dvb_video_ioctl(struct dvb_device *dvbdev,
 		if (stream_source == VIDEO_SOURCE_DEMUX) {
 			/* stop and reset FIFO 1 */
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, 1);
+			sti7109->tsout_stat = TSOUT_STAT_RESET;
+			break;
 		}
-		else {
-			dvb_ringbuffer_flush_spinlock_wakeup(&sti7109->tsout);
-			/* reset FIFO 1 */
-			SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, 1);
-			/* start FIFO 1 */
-			SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, 2);
-		}
-		break;
+		/* fall through */
 	}
 	case VIDEO_CLEAR_BUFFER:
 	{
-		dvb_ringbuffer_flush_spinlock_wakeup(&sti7109->tsout);
+		/* reset FIFO 1 */
+		spin_lock(&sti7109->tsout.lock);
+		SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, 1);
+		sti7109->tsout_stat = TSOUT_STAT_RESET;
+		spin_unlock(&sti7109->tsout.lock);
+		msleep(50);
+		cancel_work_sync(&sti7109->fifo_work);
+		/* start FIFO 1 */
+		SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, 2);
+		dvb_ringbuffer_flush(&sti7109->tsout);
+        	sti7109->tsout_stat = TSOUT_STAT_FILL;
+		wake_up(&sti7109->tsout.queue);
 		break;
 	}
 	case VIDEO_GET_PTS:
@@ -896,7 +947,6 @@ static int saa716x_ff_video_init(struct saa716x_dev *saa716x)
 	struct sti7109_dev *sti7109		= saa716x->priv;
 
 	dvb_ringbuffer_init(&sti7109->tsout, sti7109->iobuf, TSOUT_LEN);
-	sti7109->tsbuf = (u8 *) (sti7109->iobuf + TSOUT_LEN);
 
 	dvb_register_device(&saa716x_adap->dvb_adapter,
 			    &sti7109->video_dev,
@@ -992,7 +1042,7 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id
 
 	sti7109->dev = saa716x;
 
-	sti7109->iobuf = vmalloc(TSOUT_LEN + TSBUF_LEN + MAX_DATA_LEN);
+	sti7109->iobuf = vmalloc(TSOUT_LEN + MAX_DATA_LEN);
 	if (!sti7109->iobuf)
 		goto fail4;
 
