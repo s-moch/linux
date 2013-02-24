@@ -47,7 +47,7 @@ MODULE_PARM_DESC(int_type, "force Interrupt Handler type: 0=INT-A, 1=MSI, 2=MSI-
 
 #define DRIVER_NAME	"SAA716x Budget"
 
-static int __devinit saa716x_budget_pci_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
+static int saa716x_budget_pci_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
 {
 	struct saa716x_dev *saa716x;
 	int err = 0;
@@ -138,7 +138,7 @@ fail0:
 	return err;
 }
 
-static void __devexit saa716x_budget_pci_remove(struct pci_dev *pdev)
+static void saa716x_budget_pci_remove(struct pci_dev *pdev)
 {
 	struct saa716x_dev *saa716x = pci_get_drvdata(pdev);
 
@@ -643,7 +643,7 @@ static struct pci_driver saa716x_budget_pci_driver = {
 	.name			= DRIVER_NAME,
 	.id_table		= saa716x_budget_pci_table,
 	.probe			= saa716x_budget_pci_probe,
-	.remove			= __devexit_p(saa716x_budget_pci_remove),
+	.remove			= saa716x_budget_pci_remove,
 };
 
 static int __init saa716x_budget_init(void)
