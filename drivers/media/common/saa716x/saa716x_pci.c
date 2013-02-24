@@ -249,7 +249,7 @@ fail0:
 }
 EXPORT_SYMBOL_GPL(saa716x_pci_init);
 
-void __devexit saa716x_pci_exit(struct saa716x_dev *saa716x)
+void saa716x_pci_exit(struct saa716x_dev *saa716x)
 {
 	struct pci_dev *pdev = saa716x->pdev;
 
