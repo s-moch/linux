@@ -219,7 +219,7 @@ err0:
 }
 EXPORT_SYMBOL(saa716x_dvb_init);
 
-void __devexit saa716x_dvb_exit(struct saa716x_dev *saa716x)
+void saa716x_dvb_exit(struct saa716x_dev *saa716x)
 {
 	struct saa716x_adapter *saa716x_adap = saa716x->saa716x_adap;
 	int i;
