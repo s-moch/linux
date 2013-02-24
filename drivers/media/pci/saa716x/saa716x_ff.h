@@ -3,6 +3,7 @@
 
 #include "dvb_filter.h"
 #include "dvb_ringbuffer.h"
+#include <linux/version.h>
 
 #define TECHNOTREND			0x13c2
 #define S2_6400_DUAL_S2_PREMIUM_DEVEL	0x3009
