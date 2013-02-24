@@ -633,7 +633,7 @@ static const struct saa716x_i2cvec i2c_vec[] = {
 	}
 };
 
-int __devinit saa716x_i2c_init(struct saa716x_dev *saa716x)
+int saa716x_i2c_init(struct saa716x_dev *saa716x)
 {
 	struct pci_dev *pdev		= saa716x->pdev;
 	struct saa716x_i2c *i2c		= saa716x->i2c;
