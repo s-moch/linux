@@ -643,15 +643,15 @@ static struct pci_driver saa716x_budget_pci_driver = {
 	.name			= DRIVER_NAME,
 	.id_table		= saa716x_budget_pci_table,
 	.probe			= saa716x_budget_pci_probe,
-	.remove			= saa716x_budget_pci_remove,
+	.remove			= __devexit_p(saa716x_budget_pci_remove),
 };
 
-static int __devinit saa716x_budget_init(void)
+static int __init saa716x_budget_init(void)
 {
 	return pci_register_driver(&saa716x_budget_pci_driver);
 }
 
-static void __devexit saa716x_budget_exit(void)
+static void __exit saa716x_budget_exit(void)
 {
 	return pci_unregister_driver(&saa716x_budget_pci_driver);
 }
