@@ -35,7 +35,7 @@ int sti7109_cmd_init(struct sti7109_dev *sti7109)
 	sti7109->osd_result_avail = 0;
 
 	sti7109->data_handle = 0;
-	sti7109->data_buffer = (u8 *) (sti7109->iobuf + TSOUT_LEN + TSBUF_LEN);
+	sti7109->data_buffer = (u8 *) (sti7109->iobuf + TSOUT_LEN);
 	init_waitqueue_head(&sti7109->data_ready_wq);
 	sti7109->data_ready = 0;
 	init_waitqueue_head(&sti7109->block_done_wq);
