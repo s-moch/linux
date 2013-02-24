@@ -4,6 +4,7 @@
 #include "dvb_filter.h"
 #include "dvb_ringbuffer.h"
 #include <linux/version.h>
+#include <linux/workqueue.h>
 
 #define TECHNOTREND			0x13c2
 #define S2_6400_DUAL_S2_PREMIUM_DEVEL	0x3009
@@ -107,7 +108,8 @@ struct sti7109_dev {
 	struct dvb_ringbuffer	tsout;   /* buffer for TS output */
 	u8			*tsbuf;  /* temp ts buffer */
 
-	struct tasklet_struct	fifo_tasklet;
+	struct workqueue_struct *fifo_workq;
+	struct work_struct	fifo_work;
 
 	wait_queue_head_t	boot_finish_wq;
 	int			boot_finished;
