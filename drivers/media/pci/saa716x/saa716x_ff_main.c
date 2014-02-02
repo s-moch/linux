@@ -1755,6 +1755,8 @@ static int saa716x_s26400_frontend_attach(struct saa716x_adapter *adapter, int c
 				   i2c_adapter,
 				   &tt6400_isl6423_config[count]);
 
+			if (adapter->fe->ops.sleep)
+				adapter->fe->ops.sleep(adapter->fe);
 		}
 	}
 	return 0;
