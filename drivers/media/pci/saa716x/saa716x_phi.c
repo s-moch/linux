@@ -11,24 +11,18 @@
 #define PHI_CONFIG(__cs, __ready, __strobe, __cycle) \
 	((__cs) + ((__ready) << 8) + ((__strobe) << 12) +  ((__cycle) << 20))
 
-int saa716x_init_phi(struct saa716x_dev *saa716x, u32 port, u8 slave)
+int saa716x_phi_init(struct saa716x_dev *saa716x)
 {
 	int i;
 
-	/* Reset */
+	/* Reset PHI */
 	SAA716x_EPWR(PHI_0, PHI_SW_RST, 0x1);
-
 	for (i = 0; i < 20; i++) {
 		msleep(1);
 		if (!(SAA716x_EPRD(PHI_0, PHI_SW_RST)))
 			break;
 	}
 
-	return 0;
-}
-
-int saa716x_phi_init(struct saa716x_dev *saa716x)
-{
 
 	/* init PHI 0 to FIFO mode */
 	SAA716x_EPWR(PHI_0, PHI_0_MODE, PHI_FIFO_MODE);
