@@ -6,6 +6,11 @@
 #include "saa716x_priv.h"
 
 
+
+/* phi config register values: chip_select mask, ready mask, strobe time, cycle time */
+#define PHI_CONFIG(__cs, __ready, __strobe, __cycle) \
+	((__cs) + ((__ready) << 8) + ((__strobe) << 12) +  ((__cycle) << 20))
+
 int saa716x_init_phi(struct saa716x_dev *saa716x, u32 port, u8 slave)
 {
 	int i;
@@ -24,36 +29,17 @@ int saa716x_init_phi(struct saa716x_dev *saa716x, u32 port, u8 slave)
 
 int saa716x_phi_init(struct saa716x_dev *saa716x)
 {
-	uint32_t value;
 
 	/* init PHI 0 to FIFO mode */
-	value = 0;
-	value |= PHI_FIFO_MODE;
-	SAA716x_EPWR(PHI_0, PHI_0_MODE, value);
-
-	value = 0;
-	value |= 0x02; /* chip select 1 */
-	value |= 0x00 << 8; /* ready mask */
-	value |= 0x03 << 12; /* strobe time */
-	value |= 0x06 << 20; /* cycle time */
-	SAA716x_EPWR(PHI_0, PHI_0_0_CONFIG, value);
+	SAA716x_EPWR(PHI_0, PHI_0_MODE, PHI_FIFO_MODE);
+	SAA716x_EPWR(PHI_0, PHI_0_0_CONFIG, PHI_CONFIG(0x02, 0, 3, 6));
 
 	/* init PHI 1 to SRAM mode, auto increment on */
-	value = 0;
-	value |= PHI_AUTO_INCREMENT;
-	SAA716x_EPWR(PHI_0, PHI_1_MODE, value);
+	SAA716x_EPWR(PHI_0, PHI_1_MODE, PHI_AUTO_INCREMENT);
+	SAA716x_EPWR(PHI_0, PHI_1_0_CONFIG, PHI_CONFIG(0x01, 0, 3, 5));
 
-	value = 0;
-	value |= 0x01; /* chip select 0 */
-	value |= 0x00 << 8; /* ready mask */
-	value |= 0x03 << 12; /* strobe time */
-	value |= 0x05 << 20; /* cycle time */
-	SAA716x_EPWR(PHI_0, PHI_1_0_CONFIG, value);
-
-	value = 0;
-	value |= PHI_ALE_POL; /* ALE is active high */
-	SAA716x_EPWR(PHI_0, PHI_POLARITY, value);
-
+	/* ALE is active high */
+	SAA716x_EPWR(PHI_0, PHI_POLARITY, PHI_ALE_POL);
 	SAA716x_EPWR(PHI_0, PHI_TIMEOUT, 0x2a);
 
 	return 0;
