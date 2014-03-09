@@ -65,6 +65,7 @@ static int sti7109_do_raw_cmd(struct sti7109_dev * sti7109)
 	}
 
 	sti7109->cmd_ready = 0;
+	sti7109->result_len = 0;
 	sti7109->result_avail = 0;
 	saa716x_phi_write(saa716x, ADDR_CMD_DATA, sti7109->cmd_data,
 			  sti7109->cmd_len);
@@ -158,6 +159,7 @@ static int sti7109_do_raw_osd_cmd(struct sti7109_dev * sti7109)
 	}
 
 	sti7109->osd_cmd_ready = 0;
+	sti7109->osd_result_len = 0;
 	sti7109->osd_result_avail = 0;
 	saa716x_phi_write(saa716x, ADDR_OSD_CMD_DATA, sti7109->osd_cmd_data,
 			  sti7109->osd_cmd_len);
