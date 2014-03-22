@@ -520,6 +520,7 @@ int saa716x_set_clk(struct saa716x_dev *saa716x,
 
 	return 0;
 }
+EXPORT_SYMBOL(saa716x_set_clk);
 
 int saa716x_cgu_init(struct saa716x_dev *saa716x)
 {
