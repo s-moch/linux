@@ -521,19 +521,20 @@ static ssize_t ringbuffer_write_user(struct dvb_ringbuffer *rbuf, const u8 __use
 	return len;
 }
 
-static void ringbuffer_read_io32(struct dvb_ringbuffer *rbuf, u32 __iomem *buf, size_t len)
+static void ringbuffer_read_tofifo(struct dvb_ringbuffer *rbuf,
+				   struct saa716x_dev *saa716x, int len)
 {
 	size_t todo = len;
 	size_t split;
 
 	split = (rbuf->pread + len > rbuf->size) ? rbuf->size - rbuf->pread : 0;
 	if (split > 0) {
-		iowrite32_rep(buf, rbuf->data+rbuf->pread, split/4);
-		buf += split;
+		saa716x_ff_phi_write_fifo(saa716x, rbuf->data + rbuf->pread,
+					  split);
 		todo -= split;
 		rbuf->pread = 0;
 	}
-	iowrite32_rep(buf, rbuf->data+rbuf->pread, todo/4);
+	saa716x_ff_phi_write_fifo(saa716x, rbuf->data + rbuf->pread, todo);
 
 	rbuf->pread = (rbuf->pread + todo) % rbuf->size;
 }
@@ -564,7 +565,7 @@ static void fifo_worker(struct work_struct *work)
 
 	while (len >= TS_SIZE)
 	{
-		ringbuffer_read_io32(&sti7109->tsout, saa716x->mmio + PHI_0 + PHI_0_0_RW_0, (size_t) TS_SIZE);
+		ringbuffer_read_tofifo(&sti7109->tsout, saa716x, TS_SIZE);
 		len -= TS_SIZE;
 	}
 	wake_up(&sti7109->tsout.queue);
