@@ -1069,6 +1069,8 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id
 	saa716x_gpio_set_mode(saa716x, TT_PREMIUM_GPIO_FPGA_CS0, 1);
 	saa716x_gpio_set_output(saa716x, TT_PREMIUM_GPIO_FPGA_CS1);
 	saa716x_gpio_set_mode(saa716x, TT_PREMIUM_GPIO_FPGA_CS1, 1);
+	saa716x_gpio_set_output(saa716x, TT_PREMIUM_GPIO_FPGA_CS2);
+	saa716x_gpio_set_mode(saa716x, TT_PREMIUM_GPIO_FPGA_CS2, 1);
 	saa716x_gpio_set_output(saa716x, TT_PREMIUM_GPIO_FPGA_PROGRAMN);
 	saa716x_gpio_set_input(saa716x, TT_PREMIUM_GPIO_FPGA_DONE);
 	saa716x_gpio_set_input(saa716x, TT_PREMIUM_GPIO_FPGA_INITN);
@@ -1085,6 +1087,9 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id
 		dprintk(SAA716x_ERROR, 1, "SAA716x FF FPGA Initialization failed");
 		goto fail5;
 	}
+
+	/* reconfigure PHI based on FPGA version and phi_mode */
+	saa716x_ff_phi_config(saa716x);
 
 	/* configure TS muxer */
 	if (sti7109->fpga_version < 0x110) {
