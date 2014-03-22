@@ -44,6 +44,7 @@
 
 #include "saa716x_ff.h"
 #include "saa716x_ff_cmd.h"
+#include "saa716x_ff_phi.h"
 
 #include "stv6110x.h"
 #include "stv090x.h"
@@ -174,7 +175,7 @@ static int saa716x_ff_st7109_init(struct saa716x_dev *saa716x)
 	printk(KERN_INFO "SAA716x FF loader version %X.%02X\n",
 		loaderVersion >> 8, loaderVersion & 0xFF);
 
-	saa716x_phi_write(saa716x, 0, fw->data, fw->size);
+	saa716x_ff_phi_write(saa716x, 0, fw->data, fw->size);
 	msleep(10);
 
 	release_firmware(fw);
@@ -223,9 +224,11 @@ static int saa716x_ff_st7109_init(struct saa716x_dev *saa716x)
 		writtenBlock++;
 		/* write one block (last may differ from blockSize) */
 		if (lastBlockSize && writtenBlock == (numBlocks + 1))
-			saa716x_phi_write(saa716x, 0, &fw->data[i], lastBlockSize);
+			saa716x_ff_phi_write(saa716x, 0, &fw->data[i],
+					     lastBlockSize);
 		else
-			saa716x_phi_write(saa716x, 0, &fw->data[i], blockSize);
+			saa716x_ff_phi_write(saa716x, 0, &fw->data[i],
+					     blockSize);
 
 		SAA716x_EPWR(PHI_1, 0x3ff8, writtenBlock);
 		startTime = jiffies;
@@ -1016,18 +1019,12 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id
 	err = saa716x_jetpack_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x Jetpack core initialization failed");
-		goto fail1;
+		goto fail2;
 	}
 
 	err = saa716x_i2c_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x I2C Initialization failed");
-		goto fail3;
-	}
-
-	err = saa716x_phi_init(saa716x);
-	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x PHI Initialization failed");
 		goto fail3;
 	}
 
@@ -1041,9 +1038,14 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id
 	}
 
 	sti7109->dev = saa716x;
+	saa716x->priv = sti7109;
 
 	sti7109->iobuf = vmalloc(TSOUT_LEN + MAX_DATA_LEN);
 	if (!sti7109->iobuf)
+		goto fail4;
+
+	err = saa716x_ff_phi_init(saa716x);
+	if (err)
 		goto fail4;
 
 	sti7109_cmd_init(sti7109);
@@ -1059,8 +1061,6 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id
 	sti7109->ext_int_total_count = 0;
 	memset(sti7109->ext_int_source_count, 0, sizeof(sti7109->ext_int_source_count));
 	sti7109->last_int_ticks = jiffies;
-
-	saa716x->priv = sti7109;
 
 	saa716x_gpio_set_output(saa716x, TT_PREMIUM_GPIO_POWER_ENABLE);
 	saa716x_gpio_set_output(saa716x, TT_PREMIUM_GPIO_RESET_BACKEND);
@@ -1200,6 +1200,8 @@ fail5:
 
 	vfree(sti7109->iobuf);
 fail4:
+	saa716x_ff_phi_exit(saa716x);
+
 	kfree(sti7109);
 fail3:
 	saa716x_i2c_exit(saa716x);
@@ -1232,6 +1234,8 @@ static void saa716x_ff_pci_remove(struct pci_dev *pdev)
 	saa716x_gpio_write(saa716x, TT_PREMIUM_GPIO_POWER_ENABLE, 0);
 
 	vfree(sti7109->iobuf);
+
+	saa716x_ff_phi_exit(saa716x);
 
 	saa716x->priv = NULL;
 	kfree(sti7109);
@@ -1418,7 +1422,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 				length = MAX_RESULT_LEN;
 			}
 
-			saa716x_phi_read(saa716x, ADDR_CMD_DATA, sti7109->result_data, length);
+			saa716x_ff_phi_read(saa716x, ADDR_CMD_DATA, sti7109->result_data, length);
 			sti7109->result_len = length;
 			sti7109->result_avail = 1;
 			wake_up(&sti7109->result_avail_wq);
@@ -1452,7 +1456,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 				length = MAX_RESULT_LEN;
 			}
 
-			saa716x_phi_read(saa716x, ADDR_OSD_CMD_DATA, sti7109->osd_result_data, length);
+			saa716x_ff_phi_read(saa716x, ADDR_OSD_CMD_DATA, sti7109->osd_result_data, length);
 			sti7109->osd_result_len = length;
 			sti7109->osd_result_avail = 1;
 			wake_up(&sti7109->osd_result_avail_wq);
@@ -1496,7 +1500,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 		if (phiISR & ISR_AUDIO_PTS_MASK) {
 			u8 data[8];
 
-			saa716x_phi_read(saa716x, ADDR_AUDIO_PTS, data, 8);
+			saa716x_ff_phi_read(saa716x, ADDR_AUDIO_PTS, data, 8);
 			sti7109->audio_pts = (((u64) data[3] & 0x01) << 32)
 					    | ((u64) data[4] << 24)
 					    | ((u64) data[5] << 16)
@@ -1512,7 +1516,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 		if (phiISR & ISR_VIDEO_PTS_MASK) {
 			u8 data[8];
 
-			saa716x_phi_read(saa716x, ADDR_VIDEO_PTS, data, 8);
+			saa716x_ff_phi_read(saa716x, ADDR_VIDEO_PTS, data, 8);
 			sti7109->video_pts = (((u64) data[3] & 0x01) << 32)
 					    | ((u64) data[4] << 24)
 					    | ((u64) data[5] << 16)
@@ -1528,7 +1532,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 		if (phiISR & ISR_CURRENT_STC_MASK) {
 			u8 data[8];
 
-			saa716x_phi_read(saa716x, ADDR_CURRENT_STC, data, 8);
+			saa716x_ff_phi_read(saa716x, ADDR_CURRENT_STC, data, 8);
 			sti7109->current_stc = (((u64) data[3] & 0x01) << 32)
 					      | ((u64) data[4] << 24)
 					      | ((u64) data[5] << 16)
@@ -1545,13 +1549,13 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 			u8 data[4];
 			u32 remote_event;
 
-			saa716x_phi_read(saa716x, ADDR_REMOTE_EVENT, data, 4);
+			saa716x_ff_phi_read(saa716x, ADDR_REMOTE_EVENT, data, 4);
 			remote_event = (data[3] << 24)
 				     | (data[2] << 16)
 				     | (data[1] << 8)
 				     | (data[0]);
 			memset(data, 0, sizeof(data));
-			saa716x_phi_write(saa716x, ADDR_REMOTE_EVENT, data, 4);
+			saa716x_ff_phi_write(saa716x, ADDR_REMOTE_EVENT, data, 4);
 
 			phiISR &= ~ISR_REMOTE_EVENT_MASK;
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_REMOTE_EVENT_MASK);
@@ -1568,7 +1572,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 			u8 data[4];
 			u32 format;
 
-			saa716x_phi_read(saa716x, ADDR_DVO_FORMAT, data, 4);
+			saa716x_ff_phi_read(saa716x, ADDR_DVO_FORMAT, data, 4);
 			format = (data[0] << 24)
 			       | (data[1] << 16)
 			       | (data[2] << 8)
@@ -1584,7 +1588,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 		if (phiISR & ISR_LOG_MESSAGE_MASK) {
 			char message[SIZE_LOG_MESSAGE_DATA];
 
-			saa716x_phi_read(saa716x, ADDR_LOG_MESSAGE, message,
+			saa716x_ff_phi_read(saa716x, ADDR_LOG_MESSAGE, message,
 					 SIZE_LOG_MESSAGE_DATA);
 
 			phiISR &= ~ISR_LOG_MESSAGE_MASK;
