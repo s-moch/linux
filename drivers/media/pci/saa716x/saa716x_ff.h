@@ -12,6 +12,7 @@
 
 #define TT_PREMIUM_GPIO_POWER_ENABLE	27
 #define TT_PREMIUM_GPIO_RESET_BACKEND	26
+#define TT_PREMIUM_GPIO_FPGA_CS2	18
 #define TT_PREMIUM_GPIO_FPGA_CS1	17
 #define TT_PREMIUM_GPIO_FPGA_CS0	16
 #define TT_PREMIUM_GPIO_FPGA_PROGRAMN	15
@@ -108,6 +109,7 @@ struct sti7109_dev {
 	struct dvb_device	*audio_dev;
 
 	void __iomem		*mmio_wc; /* write-combining PHI1 regions */
+	int			phi_mode;
 
 	void			*iobuf;  /* memory for all buffers */
 	struct dvb_ringbuffer	tsout;   /* buffer for TS output */
