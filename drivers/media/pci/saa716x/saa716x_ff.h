@@ -107,7 +107,9 @@ struct sti7109_dev {
 	struct dvb_device	*video_dev;
 	struct dvb_device	*audio_dev;
 
-	void			*iobuf;	 /* memory for all buffers */
+	void __iomem		*mmio_wc; /* write-combining PHI1 regions */
+
+	void			*iobuf;  /* memory for all buffers */
 	struct dvb_ringbuffer	tsout;   /* buffer for TS output */
 	u32			tsout_stat;
 
