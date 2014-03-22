@@ -5,6 +5,8 @@
 #include "saa716x_phi_reg.h"
 #include "saa716x_priv.h"
 
+#include "saa716x_ff.h"
+
 
 /* phi config register values: chip_select mask, ready mask, strobe time, cycle time */
 #define PHI_CONFIG(__cs, __ready, __strobe, __cycle) \
@@ -12,12 +14,28 @@
 
 int saa716x_ff_phi_init(struct saa716x_dev *saa716x)
 {
+	struct pci_dev *pdev = saa716x->pdev;
+	struct sti7109_dev *sti7109 = saa716x->priv;
 	int err;
+
+	if (pci_resource_len(pdev, 0) < 0x80000) {
+		dprintk(SAA716x_ERROR, 1, "wrong BAR0 length");
+		err = -ENODEV;
+		goto fail0;
+	}
+
+	sti7109->mmio_wc = ioremap_wc(pci_resource_start(pdev, 0) + 0x60000,
+				      0x20000);
+	if (!sti7109->mmio_wc) {
+		dprintk(SAA716x_ERROR, 1, "Mem remap failed");
+		err = -ENODEV;
+		goto fail0;
+	}
 
 	err = saa716x_phi_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x PHI Initialization failed");
-		goto fail0;
+		goto fail1;
 	}
 
 	/* init PHI 0 to FIFO mode */
@@ -34,12 +52,19 @@ int saa716x_ff_phi_init(struct saa716x_dev *saa716x)
 
 	return 0;
 
+fail1:
+	if (sti7109->mmio_wc)
+		iounmap(sti7109->mmio_wc);
 fail0:
 	return err;
 }
 
 void saa716x_ff_phi_exit(struct saa716x_dev *saa716x)
 {
+	struct sti7109_dev *sti7109 = saa716x->priv;
+
+	if (sti7109->mmio_wc)
+		iounmap(sti7109->mmio_wc);
 }
 
 void saa716x_ff_phi_write(struct saa716x_dev *saa716x,
