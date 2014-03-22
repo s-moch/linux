@@ -5,13 +5,10 @@
 
 #include "saa716x_mod.h"
 
-#include "saa716x_phi_reg.h"
-
-#include "saa716x_phi.h"
-#include "saa716x_spi.h"
 #include "saa716x_priv.h"
 #include "saa716x_ff.h"
 #include "saa716x_ff_cmd.h"
+#include "saa716x_ff_phi.h"
 
 
 int sti7109_cmd_init(struct sti7109_dev *sti7109)
@@ -67,8 +64,8 @@ static int sti7109_do_raw_cmd(struct sti7109_dev * sti7109)
 	sti7109->cmd_ready = 0;
 	sti7109->result_len = 0;
 	sti7109->result_avail = 0;
-	saa716x_phi_write(saa716x, ADDR_CMD_DATA, sti7109->cmd_data,
-			  sti7109->cmd_len);
+	saa716x_ff_phi_write(saa716x, ADDR_CMD_DATA, sti7109->cmd_data,
+			     sti7109->cmd_len);
 	SAA716x_EPWR(PHI_1, FPGA_ADDR_PHI_ISET, ISR_CMD_MASK);
 
 	if (sti7109->result_max_len > 0) {
@@ -161,8 +158,8 @@ static int sti7109_do_raw_osd_cmd(struct sti7109_dev * sti7109)
 	sti7109->osd_cmd_ready = 0;
 	sti7109->osd_result_len = 0;
 	sti7109->osd_result_avail = 0;
-	saa716x_phi_write(saa716x, ADDR_OSD_CMD_DATA, sti7109->osd_cmd_data,
-			  sti7109->osd_cmd_len);
+	saa716x_ff_phi_write(saa716x, ADDR_OSD_CMD_DATA, sti7109->osd_cmd_data,
+			     sti7109->osd_cmd_len);
 	SAA716x_EPWR(PHI_1, FPGA_ADDR_PHI_ISET, ISR_OSD_CMD_MASK);
 
 	if (sti7109->osd_result_max_len > 0) {
@@ -293,10 +290,10 @@ static int sti7109_do_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * da
 		blockHeader[5] = (uint8_t) blockSize;
 
 		addr = ADDR_BLOCK_DATA + activeBlock * (SIZE_BLOCK_DATA / 2);
-		saa716x_phi_write(saa716x, addr, blockHeader,
-				  SIZE_BLOCK_HEADER);
-		saa716x_phi_write(saa716x, addr + SIZE_BLOCK_HEADER, blockPtr,
-				  blockSize);
+		saa716x_ff_phi_write(saa716x, addr, blockHeader,
+				     SIZE_BLOCK_HEADER);
+		saa716x_ff_phi_write(saa716x, addr + SIZE_BLOCK_HEADER,
+				     blockPtr, blockSize);
 		activeBlock = (activeBlock + 1) & 1;
 		if (blockIndex > 0) {
 			timeout = 1 * HZ;
