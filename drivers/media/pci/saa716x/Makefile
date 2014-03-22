@@ -15,8 +15,9 @@ saa716x_core-objs	:= saa716x_pci.o	\
 			   saa716x_spi.o
 
 saa716x_ff-objs		:= saa716x_ff_main.o	\
-                           saa716x_ff_cmd.o	\
-			   saa716x_ff_ir.o
+			   saa716x_ff_cmd.o	\
+			   saa716x_ff_ir.o	\
+			   saa716x_ff_phi.o
 
 obj-$(CONFIG_SAA716X_CORE)	  += saa716x_core.o
 obj-$(CONFIG_DVB_SAA716X_BUDGET)  += saa716x_budget.o
