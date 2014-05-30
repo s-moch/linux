@@ -21,9 +21,9 @@ MODULE_PARM_DESC(phi_mode, "phi access mode: 0 - default, slow single word acces
 
 #define PHI_0_0 (saa716x->mmio + PHI_0 + PHI_0_0_RW_0)
 #define PHI_1_0 (saa716x->mmio + PHI_1 + PHI_1_0_RW_0)
-#define PHI_1_1 (saa716x->mmio + PHI_1 + PHI_1_1_RW_0)
-#define PHI_1_2 (saa716x->mmio + PHI_1 + PHI_1_2_RW_0)
-#define PHI_1_3 (saa716x->mmio + PHI_1 + PHI_1_3_RW_0)
+#define PHI_1_1 (sti7109->mmio_uc)
+#define PHI_1_2 (sti7109->mmio_uc + 0x10000)
+#define PHI_1_3 (sti7109->mmio_uc + 0x20000)
 #define PHI_1_4 (sti7109->mmio_wc)
 #define PHI_1_5 (sti7109->mmio_wc + 0x10000)
 
@@ -31,6 +31,7 @@ int saa716x_ff_phi_init(struct saa716x_dev *saa716x)
 {
 	struct pci_dev *pdev = saa716x->pdev;
 	struct sti7109_dev *sti7109 = saa716x->priv;
+	resource_size_t phi1_start = pci_resource_start(pdev, 0) + PHI_1;
 	int err;
 
 	if (pci_resource_len(pdev, 0) < 0x80000) {
@@ -39,10 +40,17 @@ int saa716x_ff_phi_init(struct saa716x_dev *saa716x)
 		goto fail0;
 	}
 
-	sti7109->mmio_wc = ioremap_wc(pci_resource_start(pdev, 0) + 0x60000,
-				      0x20000);
+	/* skip first PHI window as it is already mapped */
+	sti7109->mmio_uc = ioremap_nocache(phi1_start + 0x10000, 0x30000);
+	if (!sti7109->mmio_uc) {
+		dprintk(SAA716x_ERROR, 1, "Mem PHI1 remap failed");
+		err = -ENODEV;
+		goto fail0;
+	}
+
+	sti7109->mmio_wc = ioremap_wc(phi1_start + 0x40000, 0x20000);
 	if (!sti7109->mmio_wc) {
-		dprintk(SAA716x_ERROR, 1, "Mem remap failed");
+		dprintk(SAA716x_ERROR, 1, "Mem PHI1 WC remap failed");
 		err = -ENODEV;
 		goto fail0;
 	}
@@ -88,6 +96,8 @@ int saa716x_ff_phi_init(struct saa716x_dev *saa716x)
 fail1:
 	if (sti7109->mmio_wc)
 		iounmap(sti7109->mmio_wc);
+	if (sti7109->mmio_uc)
+		iounmap(sti7109->mmio_uc);
 fail0:
 	return err;
 }
@@ -98,6 +108,8 @@ void saa716x_ff_phi_exit(struct saa716x_dev *saa716x)
 
 	if (sti7109->mmio_wc)
 		iounmap(sti7109->mmio_wc);
+	if (sti7109->mmio_uc)
+		iounmap(sti7109->mmio_uc);
 }
 
 void saa716x_ff_phi_config(struct saa716x_dev *saa716x)
