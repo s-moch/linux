@@ -52,6 +52,10 @@
 
 #define FPGA_ADDR_PIO_CTRL	0x8500 /* FPGA GPIO control register */
 
+#define FPGA_FIFO_CTRL_RESET	0x0001 /* FIFO control register, reset bit */
+#define FPGA_FIFO_CTRL_RUN	0x0002 /* FIFO control register, run bit */
+#define FPGA_FIFO_CTRL_IE	0x0004 /* FIFO control register, interrupt enable bit */
+
 #define ISR_CMD_MASK		0x0001 /* interrupt source for normal cmds (osd, fre, av, ...) */
 #define ISR_READY_MASK		0x0002 /* interrupt source for command acknowledge */
 #define ISR_BLOCK_MASK		0x0004 /* interrupt source for single block transfers and acknowledge */
