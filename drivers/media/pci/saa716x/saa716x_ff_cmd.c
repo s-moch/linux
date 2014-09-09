@@ -240,6 +240,7 @@ static int sti7109_do_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * da
 	u8 blockHeader[SIZE_BLOCK_HEADER];
 	u8 * blockPtr;
 	int activeBlock;
+	u16 blockOffset;
 
 	timeout = 1 * HZ;
 	timeout = wait_event_interruptible_timeout(sti7109->data_ready_wq,
@@ -258,6 +259,15 @@ static int sti7109_do_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * da
 
 	sti7109->data_ready = 0;
 
+	/* For firmware 0.5.0 and up the block data should be 32 byte aligned
+	 * to be able to use special DMA transfers which are a lot faster than
+	 * the usual ones.
+	 */
+	if (sti7109->fw_version >= 0x00000500)
+		blockOffset = 32;
+	else
+		blockOffset = 8;
+
 	/*
 	 * 8 bytes is the size of the block header. Block header structure is:
 	 * 16 bit - block index
@@ -266,7 +276,7 @@ static int sti7109_do_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * da
 	 * 16 bit - block handle. This is used to reference the data in the
 	 *          command that uses it.
 	 */
-	blockSize = (SIZE_BLOCK_DATA / 2) - SIZE_BLOCK_HEADER;
+	blockSize = (SIZE_BLOCK_DATA / 2) - blockOffset;
 	numBlocks = data->data_length / blockSize;
 	lastBlockSize = data->data_length % blockSize;
 	if (lastBlockSize > 0)
@@ -288,11 +298,16 @@ static int sti7109_do_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * da
 		blockHeader[1] = (uint8_t) blockIndex;
 		blockHeader[4] = (uint8_t) (blockSize >> 8);
 		blockHeader[5] = (uint8_t) blockSize;
+		/* For firmware 0.5.0 and up set the highest bit of the block
+		 * size to signal that the block data is 32 byte aligned.
+		 */
+		if (sti7109->fw_version >= 0x00000500)
+			blockHeader[4] |= 0x80;
 
 		addr = ADDR_BLOCK_DATA + activeBlock * (SIZE_BLOCK_DATA / 2);
 		saa716x_ff_phi_write(saa716x, addr, blockHeader,
 				     SIZE_BLOCK_HEADER);
-		saa716x_ff_phi_write(saa716x, addr + SIZE_BLOCK_HEADER,
+		saa716x_ff_phi_write(saa716x, addr + blockOffset,
 				     blockPtr, blockSize);
 		activeBlock = (activeBlock + 1) & 1;
 		if (blockIndex > 0) {
