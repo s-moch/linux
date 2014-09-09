@@ -177,6 +177,7 @@ struct sti7109_dev {
 	u32			last_int_ticks;
 
 	u16			fpga_version;
+	u32			fw_version;
 };
 
 #endif /* __SAA716x_FF_H */
