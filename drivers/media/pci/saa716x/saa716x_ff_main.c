@@ -978,7 +978,6 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id
 	int err = 0;
 	u32 value;
 	unsigned long timeout;
-	u32 fw_version;
 
 	saa716x = kzalloc(sizeof (struct saa716x_dev), GFP_KERNEL);
 	if (saa716x == NULL) {
@@ -1177,11 +1176,12 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id
 		goto fail9;
 	}
 
-	err = sti7109_cmd_get_fw_version(sti7109, &fw_version);
+	err = sti7109_cmd_get_fw_version(sti7109, &sti7109->fw_version);
 	if (!err) {
 		printk(KERN_INFO "SAA716x FF firmware version %d.%d.%d\n",
-			(fw_version >> 16) & 0xFF, (fw_version >> 8) & 0xFF,
-			fw_version & 0xFF);
+			(sti7109->fw_version >> 16) & 0xFF,
+			(sti7109->fw_version >> 8) & 0xFF,
+			sti7109->fw_version & 0xFF);
 	}
 
 	err = saa716x_ir_init(saa716x);
