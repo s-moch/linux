@@ -58,7 +58,6 @@ static int sti7109_do_raw_cmd(struct sti7109_dev * sti7109)
 		}
 		dprintk(SAA716x_ERROR, 1,
 			"timed out waiting for command ready");
-		return -EIO;
 	}
 
 	sti7109->cmd_ready = 0;
@@ -152,7 +151,6 @@ static int sti7109_do_raw_osd_cmd(struct sti7109_dev * sti7109)
 		}
 		dprintk(SAA716x_ERROR, 1,
 			"timed out waiting for osd command ready");
-		return -EIO;
 	}
 
 	sti7109->osd_cmd_ready = 0;
