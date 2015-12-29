@@ -561,6 +561,7 @@ static void fifo_worker(struct work_struct *work)
 	u16 fifoSize;
 	u16 fifoUsage;
 	u16 fifoFree;
+	int ringbuffer_avail;
 	int len;
 
 	if (sti7109->tsout_stat == TSOUT_STAT_RESET)
@@ -570,16 +571,22 @@ static void fifo_worker(struct work_struct *work)
 	fifoSize = (u16) (fifoStat >> 16);
 	fifoUsage = (u16) fifoStat;
 	fifoFree = fifoSize - fifoUsage;
-	len = dvb_ringbuffer_avail(&sti7109->tsout);
-	if (len > fifoFree)
-		len = fifoFree;
+	ringbuffer_avail = dvb_ringbuffer_avail(&sti7109->tsout);
 
-	if (len < fifoSize/4) {
-		msleep(10);
-	} else {
-        	len = (len / 32) * 32;
+	len = (ringbuffer_avail < fifoFree) ? ringbuffer_avail : fifoFree;
+	len = (len / 32) * 32;
+	if (len) {
 		ringbuffer_read_tofifo(&sti7109->tsout, saa716x, len);
 		wake_up(&sti7109->tsout.queue);
+	}
+
+	ringbuffer_avail = dvb_ringbuffer_avail(&sti7109->tsout);
+	if (ringbuffer_avail < TSOUT_LEVEL_LOW) {
+		spin_lock(&sti7109->tsout.lock);
+		if (sti7109->tsout_stat != TSOUT_STAT_RESET)
+			sti7109->tsout_stat = TSOUT_STAT_WAIT;
+		spin_unlock(&sti7109->tsout.lock);
+		return;
 	}
 
 	spin_lock(&sti7109->tsout.lock);
@@ -799,6 +806,7 @@ static ssize_t dvb_video_write(struct file *file, const char __user *buf,
 	struct sti7109_dev *sti7109	= dvbdev->priv;
 	struct saa716x_dev *saa716x	= sti7109->dev;
 	unsigned long todo = count;
+	int ringbuffer_avail;
 
 	if ((file->f_flags & O_ACCMODE) == O_RDONLY)
 		return -EPERM;
@@ -824,10 +832,17 @@ static ssize_t dvb_video_write(struct file *file, const char __user *buf,
 		buf += TS_SIZE;
 	}
 
+	ringbuffer_avail = dvb_ringbuffer_avail(&sti7109->tsout);
 	spin_lock(&sti7109->tsout.lock);
 	if ((sti7109->tsout_stat == TSOUT_STAT_FILL) &&
-	    (dvb_ringbuffer_avail(&sti7109->tsout) > TSOUT_LEN/3)) {
+	    (ringbuffer_avail > TSOUT_LEVEL_FILL)) {
+		sti7109->tsout_stat = TSOUT_STAT_RUN;
 		SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, FPGA_FIFO_CTRL_IE | FPGA_FIFO_CTRL_RUN);
+	}
+	else if ((sti7109->tsout_stat == TSOUT_STAT_WAIT) &&
+	         (ringbuffer_avail > TSOUT_LEVEL_HIGH)) {
+		sti7109->tsout_stat = TSOUT_STAT_RUN;
+		queue_work(sti7109->fifo_workq, &sti7109->fifo_work);
 	}
 	spin_unlock(&sti7109->tsout.lock);
 
