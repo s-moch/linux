@@ -144,6 +144,7 @@ static int saa716x_ff_fpga_init(struct saa716x_dev *saa716x)
 
 static int saa716x_ff_st7109_init(struct saa716x_dev *saa716x)
 {
+	struct sti7109_dev *sti7109 = saa716x->priv;
 	int i;
 	int length;
 	u32 requestedBlock;
@@ -157,6 +158,7 @@ static int saa716x_ff_st7109_init(struct saa716x_dev *saa716x)
 	int ret;
 	const struct firmware *fw;
 	u32 loaderVersion;
+	u32 options;
 
 	/* request the st7109 loader, this will block until someone uploads it */
 	ret = request_firmware(&fw, "dvb-ttpremium-loader-01.fw", &saa716x->pdev->dev);
@@ -250,7 +252,11 @@ static int saa716x_ff_st7109_init(struct saa716x_dev *saa716x)
 	}
 
 	/* disable frontend support through ST firmware */
-	SAA716x_EPWR(PHI_1, 0x3ff4, 1);
+	options = 0x00000001;
+	/* enable faster EMI timings in ST firmware for FPGA 1.10 and later */
+	if (sti7109->fpga_version >= 0x110)
+		options |= 0x00000002;
+	SAA716x_EPWR(PHI_1, 0x3ff4, options);
 
 	/* indicate end of transfer */
 	writtenBlock++;
