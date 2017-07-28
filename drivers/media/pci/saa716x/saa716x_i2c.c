@@ -106,7 +106,7 @@ static int saa716x_i2c_hwinit(struct saa716x_i2c *i2c, u32 I2C_DEV)
 		dprintk(SAA716x_DEBUG, 1, "Initializing Adapter %s @ 400k", adapter->name);
 		SAA716x_EPWR(I2C_DEV, I2C_CLOCK_DIVISOR_HIGH, 0x1a); /* 0.5 * 27MHz/400kHz */
 		SAA716x_EPWR(I2C_DEV, I2C_CLOCK_DIVISOR_LOW,  0x21); /* 0.5 * 27MHz/400kHz */
-		SAA716x_EPWR(I2C_DEV, I2C_SDA_HOLD, 0x19);
+		SAA716x_EPWR(I2C_DEV, I2C_SDA_HOLD, 0x10);
 		break;
 
 	case SAA716x_I2C_RATE_100:
@@ -482,7 +482,10 @@ retry:
 	}
 
 	mutex_unlock(&i2c->i2c_lock);
-	return num;
+	if (t < 3)
+		return num;
+	else
+		return -EIO;
 
 bail_out:
 	dprintk(SAA716x_ERROR, 1, "ERROR: Bailing out <%d>", err);
