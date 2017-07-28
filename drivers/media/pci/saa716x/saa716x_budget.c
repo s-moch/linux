@@ -34,6 +34,8 @@
 
 #include "stv6110x.h"
 #include "stv090x.h"
+#include "si2168.h"
+#include "si2157.h"
 
 unsigned int verbose;
 module_param(verbose, int, 0644);
@@ -90,9 +92,9 @@ static int saa716x_budget_pci_probe(struct pci_dev *pdev, const struct pci_devic
 	saa716x_gpio_init(saa716x);
 
 	/* set default port mapping */
-	SAA716x_EPWR(GREG, GREG_VI_CTRL, 0x04080FA9);
-	/* enable FGPI3 and FGPI1 for TS input from Port 2 and 6 */
-	SAA716x_EPWR(GREG, GREG_FGPI_CTRL, 0x321);
+	SAA716x_EPWR(GREG, GREG_VI_CTRL, 0x2C688F0A);
+	/* enable FGPI3, FGPI2, FGPI1 and FGPI0 for TS input from Port 2 and 6 */
+	SAA716x_EPWR(GREG, GREG_FGPI_CTRL, 0x322);
 
 	err = saa716x_dvb_init(saa716x);
 	if (err) {
@@ -354,8 +356,208 @@ static struct saa716x_config skystar2_express_hd_config = {
 	}
 };
 
+
+#define SAA716x_MODEL_TBS6281		"TurboSight TBS 6281"
+#define SAA716x_DEV_TBS6281		"DVB-T/T2/C"
+
+static int saa716x_tbs6281_frontend_attach(struct saa716x_adapter *adapter, int count)
+{
+	struct saa716x_dev *dev = adapter->saa716x;
+	struct i2c_adapter *i2cadapter;
+	struct i2c_client *client;
+	struct i2c_board_info info;
+	struct si2168_config si2168_config;
+	struct si2157_config si2157_config;
+
+	if (count > 1)
+		goto err;
+
+	/* reset */
+	saa716x_gpio_set_output(dev, count ? 2 : 16);
+	saa716x_gpio_write(dev, count ? 2 : 16, 0);
+	msleep(50);
+	saa716x_gpio_write(dev, count ? 2 : 16, 1);
+	msleep(100);
+
+	/* attach demod */
+	memset(&si2168_config, 0, sizeof(si2168_config));
+	si2168_config.i2c_adapter = &i2cadapter;
+	si2168_config.fe = &adapter->fe;
+	si2168_config.ts_mode = SI2168_TS_PARALLEL;
+	si2168_config.ts_clock_gapped = true;
+	memset(&info, 0, sizeof(struct i2c_board_info));
+	strlcpy(info.type, "si2168", I2C_NAME_SIZE);
+	info.addr = 0x64;
+	info.platform_data = &si2168_config;
+	request_module(info.type);
+	client = i2c_new_device(&dev->i2c[1 - count].i2c_adapter, &info);
+	if (client == NULL || client->dev.driver == NULL) {
+		goto err;
+	}
+	if (!try_module_get(client->dev.driver->owner)) {
+		i2c_unregister_device(client);
+		goto err;
+	}
+	adapter->i2c_client_demod = client;
+
+	/* attach tuner */
+	memset(&si2157_config, 0, sizeof(si2157_config));
+	si2157_config.fe = adapter->fe;
+	si2157_config.if_port = 1;
+	memset(&info, 0, sizeof(struct i2c_board_info));
+	strlcpy(info.type, "si2157", I2C_NAME_SIZE);
+	info.addr = 0x60;
+	info.platform_data = &si2157_config;
+	request_module(info.type);
+	client = i2c_new_device(i2cadapter, &info);
+	if (client == NULL || client->dev.driver == NULL) {
+		module_put(adapter->i2c_client_demod->dev.driver->owner);
+		i2c_unregister_device(adapter->i2c_client_demod);
+		goto err;
+	}
+	if (!try_module_get(client->dev.driver->owner)) {
+		i2c_unregister_device(client);
+		module_put(adapter->i2c_client_demod->dev.driver->owner);
+		i2c_unregister_device(adapter->i2c_client_demod);
+		goto err;
+	}
+	adapter->i2c_client_tuner = client;
+
+	dev_dbg(&dev->pdev->dev, "%s frontend %d attached\n",
+		dev->config->model_name, count);
+
+	return 0;
+err:
+	dev_err(&dev->pdev->dev, "%s frontend %d attach failed\n",
+		dev->config->model_name, count);
+	return -ENODEV;
+}
+
+static struct saa716x_config saa716x_tbs6281_config = {
+	.model_name		= SAA716x_MODEL_TBS6281,
+	.dev_type		= SAA716x_DEV_TBS6281,
+	.adapters		= 2,
+	.frontend_attach	= saa716x_tbs6281_frontend_attach,
+	.irq_handler		= saa716x_budget_pci_irq,
+	.i2c_rate		= SAA716x_I2C_RATE_400,
+	.i2c_mode		= SAA716x_I2C_MODE_POLLING,
+	.adap_config		= {
+		{
+			/* adapter 0 */
+			.ts_port = 1, /* using FGPI 1 */
+		},
+		{
+			/* adapter 1 */
+			.ts_port = 3, /* using FGPI 3 */
+		},
+	},
+};
+
+#define SAA716x_MODEL_TBS6285		"TurboSight TBS 6285"
+#define SAA716x_DEV_TBS6285		"DVB-T/T2/C"
+
+static int saa716x_tbs6285_frontend_attach(struct saa716x_adapter *adapter, int count)
+{
+	struct saa716x_dev *dev = adapter->saa716x;
+	struct i2c_adapter *i2cadapter;
+	struct i2c_client *client;
+	struct i2c_board_info info;
+	struct si2168_config si2168_config;
+	struct si2157_config si2157_config;
+
+	if (count > 3)
+		goto err;
+
+	/* attach demod */
+	memset(&si2168_config, 0, sizeof(si2168_config));
+	si2168_config.i2c_adapter = &i2cadapter;
+	si2168_config.fe = &adapter->fe;
+	si2168_config.ts_mode = SI2168_TS_SERIAL;
+	si2168_config.ts_clock_gapped = true;
+	memset(&info, 0, sizeof(struct i2c_board_info));
+	strlcpy(info.type, "si2168", I2C_NAME_SIZE);
+	info.addr = ((count == 0) || (count == 2)) ? 0x64 : 0x66;
+	info.platform_data = &si2168_config;
+	request_module(info.type);
+	client = i2c_new_device( ((count == 0) || (count == 1)) ?
+		&dev->i2c[1].i2c_adapter : &dev->i2c[0].i2c_adapter,
+		&info);
+	if (client == NULL || client->dev.driver == NULL) {
+		goto err;
+	}
+
+	if (!try_module_get(client->dev.driver->owner)) {
+		i2c_unregister_device(client);
+		goto err;
+	}
+	adapter->i2c_client_demod = client;
+
+	/* attach tuner */
+	memset(&si2157_config, 0, sizeof(si2157_config));
+	si2157_config.fe = adapter->fe;
+	si2157_config.if_port = 1;
+	memset(&info, 0, sizeof(struct i2c_board_info));
+	strlcpy(info.type, "si2157", I2C_NAME_SIZE);
+	info.addr = ((count == 0) || (count == 2)) ? 0x62 : 0x60;
+	info.platform_data = &si2157_config;
+	request_module(info.type);
+	client = i2c_new_device(i2cadapter, &info);
+	if (client == NULL || client->dev.driver == NULL) {
+		module_put(adapter->i2c_client_demod->dev.driver->owner);
+		i2c_unregister_device(adapter->i2c_client_demod);
+		goto err;
+	}
+	if (!try_module_get(client->dev.driver->owner)) {
+		i2c_unregister_device(client);
+		module_put(adapter->i2c_client_demod->dev.driver->owner);
+		i2c_unregister_device(adapter->i2c_client_demod);
+		goto err;
+	}
+	adapter->i2c_client_tuner = client;
+
+	dev_dbg(&dev->pdev->dev, "%s frontend %d attached\n",
+		dev->config->model_name, count);
+
+	return 0;
+err:
+	dev_err(&dev->pdev->dev, "%s frontend %d attach failed\n",
+		dev->config->model_name, count);
+	return -ENODEV;
+}
+
+static struct saa716x_config saa716x_tbs6285_config = {
+	.model_name		= SAA716x_MODEL_TBS6285,
+	.dev_type		= SAA716x_DEV_TBS6285,
+	.adapters		= 4,
+	.frontend_attach	= saa716x_tbs6285_frontend_attach,
+	.irq_handler		= saa716x_budget_pci_irq,
+	.i2c_rate		= SAA716x_I2C_RATE_400,
+	.i2c_mode		= SAA716x_I2C_MODE_POLLING,
+	.adap_config		= {
+		{
+			/* adapter 0 */
+			.ts_port = 3,
+		},
+		{
+			/* adapter 1 */
+			.ts_port = 2,
+		},
+		{
+			/* adapter 1 */
+			.ts_port = 1,
+		},
+		{
+			/* adapter 1 */
+			.ts_port = 0,
+		},
+	},
+};
+
+
 static const struct pci_device_id saa716x_budget_pci_table[] = {
 	MAKE_ENTRY(TECHNISAT, SKYSTAR2_EXPRESS_HD, SAA7160, &skystar2_express_hd_config),
+	MAKE_ENTRY(TURBOSIGHT_TBS6281, TBS6281,    SAA7160, &saa716x_tbs6281_config),
+	MAKE_ENTRY(TURBOSIGHT_TBS6285, TBS6285,    SAA7160, &saa716x_tbs6285_config),
 	{ }
 };
 MODULE_DEVICE_TABLE(pci, saa716x_budget_pci_table);
