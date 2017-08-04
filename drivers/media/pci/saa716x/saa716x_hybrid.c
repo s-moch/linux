@@ -689,7 +689,7 @@ static struct saa716x_config saa716x_averh788_config = {
 	.i2c_rate		= SAA716x_I2C_RATE_100,
 };
 
-static struct pci_device_id saa716x_hybrid_pci_table[] = {
+static const struct pci_device_id saa716x_hybrid_pci_table[] = {
 
 	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_6090, SAA7162, &saa716x_vp6090_config),
 	MAKE_ENTRY(AVERMEDIA, AVERMEDIA_HC82, SAA7160, &saa716x_averhc82_config),
