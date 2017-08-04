@@ -628,7 +628,7 @@ static struct saa716x_config skystar2_express_hd_config = {
 };
 
 
-static struct pci_device_id saa716x_budget_pci_table[] = {
+static const struct pci_device_id saa716x_budget_pci_table[] = {
 
 	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_1028, SAA7160, &saa716x_vp1028_config), /* VP-1028 */
 	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_3071, SAA7160, &saa716x_vp3071_config), /* VP-3071 */
