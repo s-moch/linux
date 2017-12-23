@@ -40,7 +40,7 @@ struct infrared {
 	u8			protocol;
 	u16			last_key;
 	u16			last_toggle;
-	bool			delay_timer_finished;
+	bool			keypressed;
 };
 
 #define IR_RC5		0
@@ -48,15 +48,16 @@ struct infrared {
 
 
 /* key-up timer */
-static void ir_emit_keyup(unsigned long parm)
+static void ir_emit_keyup(struct timer_list *t)
 {
-	struct infrared *ir = (struct infrared *) parm;
+	struct infrared *ir = from_timer(ir, t, keyup_timer);
 
-	if (!ir || !test_bit(ir->last_key, ir->input_dev->key))
+	if (!ir || !ir->keypressed)
 		return;
 
 	input_report_key(ir->input_dev, ir->last_key, 0);
 	input_sync(ir->input_dev);
+	ir->keypressed = false;
 }
 
 
@@ -114,29 +115,18 @@ static void ir_emit_key(unsigned long parm)
 		return;
 	}
 
-	if (timer_pending(&ir->keyup_timer)) {
-		del_timer(&ir->keyup_timer);
-		if (ir->last_key != keycode || toggle != ir->last_toggle) {
-			ir->delay_timer_finished = false;
-			input_event(ir->input_dev, EV_KEY, ir->last_key, 0);
-			input_event(ir->input_dev, EV_KEY, keycode, 1);
-			input_sync(ir->input_dev);
-		} else if (ir->delay_timer_finished) {
-			input_event(ir->input_dev, EV_KEY, keycode, 2);
-			input_sync(ir->input_dev);
-		}
-	} else {
-		ir->delay_timer_finished = false;
-		input_event(ir->input_dev, EV_KEY, keycode, 1);
-		input_sync(ir->input_dev);
-	}
+	if (ir->keypressed &&
+	    (ir->last_key != keycode || toggle != ir->last_toggle))
+		input_event(ir->input_dev, EV_KEY, ir->last_key, 0);
 
+	input_event(ir->input_dev, EV_KEY, keycode, 1);
+	input_sync(ir->input_dev);
+
+	ir->keypressed = true;
 	ir->last_key = keycode;
 	ir->last_toggle = toggle;
 
-	ir->keyup_timer.expires = jiffies + UP_TIMEOUT;
-	add_timer(&ir->keyup_timer);
-
+	mod_timer(&ir->keyup_timer, jiffies + UP_TIMEOUT);
 }
 
 
@@ -167,15 +157,6 @@ static void ir_register_keys(struct infrared *ir)
 }
 
 
-/* called by the input driver after rep[REP_DELAY] ms */
-static void ir_repeat_key(unsigned long parm)
-{
-	struct infrared *ir = (struct infrared *) parm;
-
-	ir->delay_timer_finished = true;
-}
-
-
 /* interrupt handler */
 void saa716x_ir_handler(struct saa716x_dev *saa716x, u32 ir_cmd)
 {
@@ -203,9 +184,7 @@ int saa716x_ir_init(struct saa716x_dev *saa716x)
 	if (!ir)
 		return -ENOMEM;
 
-	init_timer(&ir->keyup_timer);
-	ir->keyup_timer.function = ir_emit_keyup;
-	ir->keyup_timer.data = (unsigned long) ir;
+	timer_setup(&ir->keyup_timer, ir_emit_keyup, 0);
 
 	input_dev = input_allocate_device();
 	if (!input_dev)
@@ -229,16 +208,19 @@ int saa716x_ir_init(struct saa716x_dev *saa716x)
 	if (rc)
 		goto err;
 
+	/*
+	 * Input core's default autorepeat is 33 cps with 250 msec
+	 * delay, let's adjust to numbers more suitable for remote
+	 * control.
+	 */
+        input_enable_softrepeat(input_dev, 250, 125);
+
 	/* TODO: fix setup/keymap */
 	ir->protocol = IR_RC5;
 	ir->device_mask = 0xffffffff;
 	for (i = 0; i < ARRAY_SIZE(ir->key_map); i++)
 		ir->key_map[i] = i+1;
 	ir_register_keys(ir);
-
-	/* override repeat timer */
-	input_dev->timer.function = ir_repeat_key;
-	input_dev->timer.data = (unsigned long) ir;
 
 	tasklet_init(&ir->tasklet, ir_emit_key, (unsigned long) saa716x);
 	saa716x->ir_priv = ir;
