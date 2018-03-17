@@ -1,9 +1,9 @@
 #include <linux/bitops.h>
 
-#include "dmxdev.h"
-#include "dvbdev.h"
-#include "dvb_demux.h"
-#include "dvb_frontend.h"
+#include <media/dmxdev.h>
+#include <media/dvbdev.h>
+#include <media/dvb_demux.h>
+#include <media/dvb_frontend.h>
 
 #include "saa716x_mod.h"
 #include "saa716x_spi.h"

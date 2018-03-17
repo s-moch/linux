@@ -6,8 +6,6 @@
 #include <linux/kernel.h>
 #include <linux/pci.h>
 #include <linux/mutex.h>
-
-#include <linux/pci.h>
 #include <linux/ioport.h>
 #include <linux/i2c.h>
 #include "saa716x_i2c.h"
@@ -18,11 +16,11 @@
 #include "saa716x_spi.h"
 #include "saa716x_vip.h"
 
-#include "dvbdev.h"
-#include "dvb_demux.h"
-#include "dmxdev.h"
-#include "dvb_frontend.h"
-#include "dvb_net.h"
+#include <media/dvbdev.h>
+#include <media/dvb_demux.h>
+#include <media/dmxdev.h>
+#include <media/dvb_frontend.h>
+#include <media/dvb_net.h>
 
 #define SAA716x_ERROR		0
 #define SAA716x_NOTICE		1
