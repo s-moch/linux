@@ -29,6 +29,7 @@ Audio Function Calls
     audio-set-bypass-mode
     audio-channel-select
     audio-bilingual-channel-select
+    audio-get-pts
     audio-get-status
     audio-get-capabilities
     audio-clear-buffer
