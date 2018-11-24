@@ -42,9 +42,9 @@ unsigned int verbose;
 module_param(verbose, int, 0644);
 MODULE_PARM_DESC(verbose, "verbose startup messages, default is 1 (yes)");
 
-unsigned int int_type;
+unsigned int int_type = 1;
 module_param(int_type, int, 0644);
-MODULE_PARM_DESC(int_type, "force Interrupt Handler type: 0=INT-A, 1=MSI, 2=MSI-X. default INT-A mode");
+MODULE_PARM_DESC(int_type, "select Interrupt Handler type: 0=INT-A, 1=MSI. default: MSI mode");
 
 #define DRIVER_NAME	"SAA716x Hybrid"
 
