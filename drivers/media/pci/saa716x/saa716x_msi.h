@@ -72,16 +72,6 @@ enum saa716x_edge {
 struct saa716x_dev;
 
 extern int saa716x_msi_event(struct saa716x_dev *saa716x, u32 stat_l, u32 stat_h);
-
 extern int saa716x_msi_init(struct saa716x_dev *saa716x);
-extern void saa716x_msiint_disable(struct saa716x_dev *saa716x);
-
-extern int saa716x_add_irqvector(struct saa716x_dev *saa716x,
-				 int vector,
-				 enum saa716x_edge edge,
-				 irqreturn_t (*handler)(int irq, void *dev_id),
-				 char *desc);
-
-extern int saa716x_remove_irqvector(struct saa716x_dev *saa716x, int vector);
 
 #endif /* __SAA716x_MSI_H */
