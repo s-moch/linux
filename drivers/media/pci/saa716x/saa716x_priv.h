@@ -66,14 +66,6 @@
 #define SAA716x_EPWR(__offst, __addr, __data)	writel((__data), (saa716x->mmio + (__offst + __addr)))
 #define SAA716x_EPRD(__offst, __addr)		readl((saa716x->mmio + (__offst + __addr)))
 
-#define SAA716x_MSI_MAX_VECTORS			16
-
-struct saa716x_msix_entry {
-	int vector;
-	u8 desc[32];
-	irqreturn_t (*handler)(int irq, void *dev_id);
-};
-
 struct saa716x_dev;
 struct saa716x_adapter;
 struct saa716x_spi_config;
@@ -132,10 +124,6 @@ struct saa716x_dev {
 #define MODE_MSI	1
 	u8				int_type;
 
-	struct msix_entry		msix_entries[SAA716x_MSI_MAX_VECTORS];
-	struct saa716x_msix_entry	saa716x_msix_handler[56];
-	u8				handlers; /* no. of active handlers */
-
 	/* I2C */
 	struct saa716x_i2c		i2c[2];
 	u32				i2c_rate; /* init time */
@@ -168,12 +156,6 @@ extern void saa716x_pci_exit(struct saa716x_dev *saa716x);
 
 /* MSI */
 extern int saa716x_msi_init(struct saa716x_dev *saa716x);
-extern void saa716x_msi_exit(struct saa716x_dev *saa716x);
-extern void saa716x_msiint_disable(struct saa716x_dev *saa716x);
-
-/* DMA */
-extern int saa716x_dma_init(struct saa716x_dev *saa716x);
-extern void saa716x_dma_exit(struct saa716x_dev *saa716x);
 
 /* AUDIO */
 extern int saa716x_audio_init(struct saa716x_dev *saa716x);
