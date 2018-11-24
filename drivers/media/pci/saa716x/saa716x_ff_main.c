@@ -330,12 +330,7 @@ out:
 	return err;
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
-static int dvb_osd_ioctl(struct inode *inode, struct file *file,
-#else
-static long dvb_osd_ioctl(struct file *file,
-#endif
-			 unsigned int cmd, unsigned long arg)
+static long dvb_osd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	struct dvb_device *dvbdev = file->private_data;
 	struct sti7109_dev *sti7109 = dvbdev->priv;
@@ -389,11 +384,7 @@ out:
 
 static struct file_operations dvb_osd_fops = {
 	.owner		= THIS_MODULE,
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
-	.ioctl		= dvb_osd_ioctl,
-#else
 	.unlocked_ioctl	= dvb_osd_ioctl,
-#endif
 	.open		= dvb_generic_open,
 	.release	= dvb_generic_release,
 };
@@ -423,12 +414,8 @@ static int saa716x_ff_osd_init(struct saa716x_dev *saa716x)
 			    &sti7109->osd_dev,
 			    &dvbdev_osd,
 			    sti7109,
-			    DVB_DEVICE_OSD
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
-			    , 0
-#endif
-			    );
-
+			    DVB_DEVICE_OSD,
+			    0);
 	return 0;
 }
 
@@ -452,12 +439,7 @@ static int do_dvb_audio_ioctl(struct dvb_device *dvbdev,
 	return ret;
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
-static int dvb_audio_ioctl(struct inode *inode, struct file *file,
-#else
-static long dvb_audio_ioctl(struct file *file,
-#endif
-			   unsigned int cmd, unsigned long arg)
+static long dvb_audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	struct dvb_device *dvbdev = file->private_data;
 
@@ -469,11 +451,7 @@ static long dvb_audio_ioctl(struct file *file,
 
 static struct file_operations dvb_audio_fops = {
 	.owner		= THIS_MODULE,
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
-	.ioctl		= dvb_audio_ioctl,
-#else
 	.unlocked_ioctl	= dvb_audio_ioctl,
-#endif
 	.open		= dvb_generic_open,
 	.release	= dvb_generic_release,
 };
@@ -503,12 +481,8 @@ static int saa716x_ff_audio_init(struct saa716x_dev *saa716x)
 			    &sti7109->audio_dev,
 			    &dvbdev_audio,
 			    sti7109,
-			    DVB_DEVICE_AUDIO
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
-			    , 0
-#endif
-			    );
-
+			    DVB_DEVICE_AUDIO,
+			    0);
 	return 0;
 }
 
@@ -923,12 +897,7 @@ static int do_dvb_video_ioctl(struct dvb_device *dvbdev,
 	return ret;
 }
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
-static int dvb_video_ioctl(struct inode *inode, struct file *file,
-#else
-static long dvb_video_ioctl(struct file *file,
-#endif
-			   unsigned int cmd, unsigned long arg)
+static long dvb_video_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
 	struct dvb_device *dvbdev = file->private_data;
 
@@ -942,11 +911,7 @@ static struct file_operations dvb_video_fops = {
 	.owner		= THIS_MODULE,
 	.read		= dvb_video_read,
 	.write		= dvb_video_write,
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36) && !defined(EXPERIMENTAL_TREE)
-	.ioctl		= dvb_video_ioctl,
-#else
 	.unlocked_ioctl	= dvb_video_ioctl,
-#endif
 	.open		= dvb_generic_open,
 	.release	= dvb_generic_release,
 	.poll		= dvb_video_poll,
@@ -985,17 +950,10 @@ static int saa716x_ff_video_init(struct saa716x_dev *saa716x)
 			    &sti7109->video_dev,
 			    &dvbdev_video,
 			    sti7109,
-			    DVB_DEVICE_VIDEO
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 5, 0)
-			    , 0
-#endif
-			    );
+			    DVB_DEVICE_VIDEO,
+			    0);
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 3, 0)
-	sti7109->fifo_workq = create_singlethread_workqueue("saa716x_fifo_wq");
-#else
 	sti7109->fifo_workq = alloc_workqueue("saa716x_fifo_wq%d", WQ_UNBOUND, 1, SAA716x_DEV);
-#endif
 	INIT_WORK(&sti7109->fifo_work, fifo_worker);
 
 	if (sti7109->video_capture != VIDEO_CAPTURE_OFF)
