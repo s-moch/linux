@@ -29,7 +29,6 @@
 #include "saa716x_i2c.h"
 #include "saa716x_budget.h"
 #include "saa716x_gpio.h"
-#include "saa716x_rom.h"
 #include "saa716x_spi.h"
 #include "saa716x_priv.h"
 
@@ -90,16 +89,6 @@ static int saa716x_budget_pci_probe(struct pci_dev *pdev, const struct pci_devic
 	}
 
 	saa716x_gpio_init(saa716x);
-
-	err = saa716x_dump_eeprom(saa716x);
-	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM dump failed");
-	}
-
-	err = saa716x_eeprom_data(saa716x);
-	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM read failed");
-	}
 
 	/* set default port mapping */
 	SAA716x_EPWR(GREG, GREG_VI_CTRL, 0x04080FA9);
