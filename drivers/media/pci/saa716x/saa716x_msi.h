@@ -71,7 +71,6 @@ enum saa716x_edge {
 
 struct saa716x_dev;
 
-extern int saa716x_msi_event(struct saa716x_dev *saa716x, u32 stat_l, u32 stat_h);
 extern int saa716x_msi_init(struct saa716x_dev *saa716x);
 
 #endif /* __SAA716x_MSI_H */
