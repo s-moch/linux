@@ -199,11 +199,7 @@ int saa716x_ir_init(struct saa716x_dev *saa716x)
 	input_dev->id.version = 1;
 	input_dev->id.vendor = saa716x->pdev->subsystem_vendor;
 	input_dev->id.product = saa716x->pdev->subsystem_device;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 22)
 	input_dev->dev.parent = &saa716x->pdev->dev;
-#else
-	input_dev->cdev.dev = &saa716x->pdev->dev;
-#endif
 	rc = input_register_device(input_dev);
 	if (rc)
 		goto err;
