@@ -9,7 +9,6 @@ saa716x_core-objs	:= saa716x_pci.o	\
 			   saa716x_adap.o	\
 			   saa716x_gpio.o	\
 			   saa716x_greg.o	\
-			   saa716x_rom.o	\
 			   saa716x_spi.o
 
 saa716x_ff-objs		:= saa716x_ff_main.o	\
