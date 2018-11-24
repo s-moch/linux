@@ -273,13 +273,6 @@ static int saa716x_i2c_hwinit(struct saa716x_i2c *i2c, u32 I2C_DEV)
 		err = -EIO;
 		goto exit;
 	}
-#if 0
-	saa716x_add_irqvector(saa716x,
-				i2c_vec[i].vector,
-				i2c_vec[i].edge,
-				i2c_vec[i].handler,
-				SAA716x_I2C_ADAPTER(i));
-#endif
 	reg = SAA716x_EPRD(CGU, CGU_SCR_3);
 	dprintk(SAA716x_DEBUG, 1, "Adapter (%02x) Autowake <%d> Active <%d>",
 		I2C_DEV,
@@ -715,9 +708,6 @@ void saa716x_i2c_exit(struct saa716x_dev *saa716x)
 	for (i = 0; i < SAA716x_I2C_ADAPTERS; i++) {
 
 		adapter = &i2c->i2c_adapter;
-#if 0
-		saa716x_remove_irqvector(saa716x, i2c_vec[i].vector);
-#endif
 		saa716x_i2c_hwdeinit(i2c, SAA716x_I2C_BUS(i));
 		dprintk(SAA716x_DEBUG, 1, "Removing adapter (%d) %s", i, adapter->name);
 
