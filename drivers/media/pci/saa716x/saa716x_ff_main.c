@@ -383,7 +383,6 @@ out:
 }
 
 static struct file_operations dvb_osd_fops = {
-	.owner		= THIS_MODULE,
 	.unlocked_ioctl	= dvb_osd_ioctl,
 	.open		= dvb_generic_open,
 	.release	= dvb_generic_release,
@@ -450,7 +449,6 @@ static long dvb_audio_ioctl(struct file *file, unsigned int cmd, unsigned long a
 }
 
 static struct file_operations dvb_audio_fops = {
-	.owner		= THIS_MODULE,
 	.unlocked_ioctl	= dvb_audio_ioctl,
 	.open		= dvb_generic_open,
 	.release	= dvb_generic_release,
@@ -908,7 +906,6 @@ static long dvb_video_ioctl(struct file *file, unsigned int cmd, unsigned long a
 }
 
 static struct file_operations dvb_video_fops = {
-	.owner		= THIS_MODULE,
 	.read		= dvb_video_read,
 	.write		= dvb_video_write,
 	.unlocked_ioctl	= dvb_video_ioctl,
@@ -980,6 +977,7 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id
 	saa716x->verbose	= verbose;
 	saa716x->int_type	= int_type;
 	saa716x->pdev		= pdev;
+	saa716x->module		= THIS_MODULE;
 	saa716x->config		= (struct saa716x_config *) pci_id->driver_data;
 
 	err = saa716x_pci_init(saa716x);
