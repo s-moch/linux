@@ -24,4 +24,5 @@ obj-$(CONFIG_DVB_SAA716X_BUDGET)  += saa716x_budget.o
 obj-$(CONFIG_DVB_SAA716X_HYBRID)  += saa716x_hybrid.o
 obj-$(CONFIG_DVB_SAA716X_FF)	  += saa716x_ff.o
 
-EXTRA_CFLAGS = -Idrivers/media/dvb/dvb-core/ -Idrivers/media/dvb/frontends/ -Idrivers/media/dvb-core/ -Idrivers/media/dvb-frontends/ -Idrivers/media/tuners
+ccflags-y += -Idrivers/media/dvb-frontends/
+ccflags-y += -Idrivers/media/tuners
