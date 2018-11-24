@@ -667,7 +667,7 @@ int saa716x_i2c_init(struct saa716x_dev *saa716x)
 
 			strcpy(adapter->name, SAA716x_I2C_ADAPTER(i));
 
-			adapter->owner		= THIS_MODULE;
+			adapter->owner		= saa716x->module;
 			adapter->algo		= &saa716x_algo;
 			adapter->algo_data 	= NULL;
 			adapter->timeout	= 500; /* FIXME ! */
