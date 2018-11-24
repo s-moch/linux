@@ -177,43 +177,6 @@ static irqreturn_t saa716x_budget_pci_irq(int irq, void *dev_id)
 	if (stat_h)
 		SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_H, stat_h);
 
-	saa716x_msi_event(saa716x, stat_l, stat_h);
-#if 0
-	dprintk(SAA716x_DEBUG, 1, "VI STAT 0=<%02x> 1=<%02x>, CTL 1=<%02x> 2=<%02x>",
-		SAA716x_EPRD(VI0, INT_STATUS),
-		SAA716x_EPRD(VI1, INT_STATUS),
-		SAA716x_EPRD(VI0, INT_ENABLE),
-		SAA716x_EPRD(VI1, INT_ENABLE));
-
-	dprintk(SAA716x_DEBUG, 1, "FGPI STAT 0=<%02x> 1=<%02x>, CTL 1=<%02x> 2=<%02x>",
-		SAA716x_EPRD(FGPI0, INT_STATUS),
-		SAA716x_EPRD(FGPI1, INT_STATUS),
-		SAA716x_EPRD(FGPI0, INT_ENABLE),
-		SAA716x_EPRD(FGPI0, INT_ENABLE));
-
-	dprintk(SAA716x_DEBUG, 1, "FGPI STAT 2=<%02x> 3=<%02x>, CTL 2=<%02x> 3=<%02x>",
-		SAA716x_EPRD(FGPI2, INT_STATUS),
-		SAA716x_EPRD(FGPI3, INT_STATUS),
-		SAA716x_EPRD(FGPI2, INT_ENABLE),
-		SAA716x_EPRD(FGPI3, INT_ENABLE));
-
-	dprintk(SAA716x_DEBUG, 1, "AI STAT 0=<%02x> 1=<%02x>, CTL 0=<%02x> 1=<%02x>",
-		SAA716x_EPRD(AI0, AI_STATUS),
-		SAA716x_EPRD(AI1, AI_STATUS),
-		SAA716x_EPRD(AI0, AI_CTL),
-		SAA716x_EPRD(AI1, AI_CTL));
-
-	dprintk(SAA716x_DEBUG, 1, "I2C STAT 0=<%02x> 1=<%02x>, CTL 0=<%02x> 1=<%02x>",
-		SAA716x_EPRD(I2C_A, INT_STATUS),
-		SAA716x_EPRD(I2C_B, INT_STATUS),
-		SAA716x_EPRD(I2C_A, INT_ENABLE),
-		SAA716x_EPRD(I2C_B, INT_ENABLE));
-
-	dprintk(SAA716x_DEBUG, 1, "DCS STAT=<%02x>, CTL=<%02x>",
-		SAA716x_EPRD(DCS, DCSC_INT_STATUS),
-		SAA716x_EPRD(DCS, DCSC_INT_ENABLE));
-#endif
-
 	if (stat_l) {
 		if (stat_l & MSI_INT_TAGACK_FGPI_0) {
 			tasklet_schedule(&saa716x->fgpi[0].tasklet);
