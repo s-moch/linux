@@ -50,7 +50,7 @@ static void saa716x_free_irq(struct saa716x_dev *saa716x)
 int saa716x_pci_init(struct saa716x_dev *saa716x)
 {
 	struct pci_dev *pdev = saa716x->pdev;
-	int err = 0, ret = -ENODEV, i, use_dac, pm_cap;
+	int err = 0, ret = -ENODEV, use_dac, pm_cap;
 	u32 msi_cap;
 	u8 revision;
 
@@ -105,9 +105,6 @@ int saa716x_pci_init(struct saa716x_dev *saa716x)
 		ret = -ENODEV;
 		goto fail2;
 	}
-
-	for (i = 0; i < SAA716x_MSI_MAX_VECTORS; i++)
-		saa716x->msix_entries[i].entry = i;
 
 	err = saa716x_request_irq(saa716x);
 	if (err < 0) {
