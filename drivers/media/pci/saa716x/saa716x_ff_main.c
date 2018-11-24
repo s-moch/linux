@@ -37,7 +37,6 @@
 #include "saa716x_adap.h"
 #include "saa716x_boot.h"
 #include "saa716x_gpio.h"
-#include "saa716x_rom.h"
 #include "saa716x_spi.h"
 #include "saa716x_priv.h"
 
@@ -1095,16 +1094,6 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x FF STi7109 initialization failed");
 		goto fail5;
-	}
-
-	err = saa716x_dump_eeprom(saa716x);
-	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM dump failed");
-	}
-
-	err = saa716x_eeprom_data(saa716x);
-	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM dump failed");
 	}
 
 	/* enable FGPI2 and FGPI3 for TS inputs */
