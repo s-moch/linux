@@ -29,7 +29,6 @@
 #include "saa716x_i2c.h"
 #include "saa716x_hybrid.h"
 #include "saa716x_gpio.h"
-#include "saa716x_rom.h"
 #include "saa716x_spi.h"
 #include "saa716x_priv.h"
 
@@ -91,16 +90,6 @@ static int saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct pci_devic
 	}
 
 	saa716x_gpio_init(saa716x);
-
-	err = saa716x_dump_eeprom(saa716x);
-	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM dump failed");
-	}
-
-	err = saa716x_eeprom_data(saa716x);
-	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x EEPROM dump failed");
-	}
 
 	/* enable decoders on 7162 */
 	if (pdev->device == SAA7162) {
