@@ -130,7 +130,6 @@ struct saa716x_dev {
 
 #define MODE_INTA	0
 #define MODE_MSI	1
-#define MODE_MSI_X	2
 	u8				int_type;
 
 	struct msix_entry		msix_entries[SAA716x_MSI_MAX_VECTORS];
