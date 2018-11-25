@@ -152,9 +152,6 @@ struct saa716x_dev {
 extern int saa716x_pci_init(struct saa716x_dev *saa716x);
 extern void saa716x_pci_exit(struct saa716x_dev *saa716x);
 
-/* MSI */
-extern int saa716x_msi_init(struct saa716x_dev *saa716x);
-
 /* AUDIO */
 extern int saa716x_audio_init(struct saa716x_dev *saa716x);
 extern void saa716x_audio_exit(struct saa716x_dev *saa716x);
