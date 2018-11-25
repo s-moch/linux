@@ -992,12 +992,7 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id
 		goto fail1;
 	}
 
-	err = saa716x_core_boot(saa716x);
-	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x Core Boot failed");
-		goto fail2;
-	}
-	dprintk(SAA716x_DEBUG, 1, "SAA716x Core Boot Success");
+	saa716x_core_reset(saa716x);
 
 	err = saa716x_msi_init(saa716x);
 	if (err) {
@@ -1761,7 +1756,6 @@ static int saa716x_s26400_frontend_attach(struct saa716x_adapter *adapter, int c
 static struct saa716x_config saa716x_s26400_config = {
 	.model_name		= SAA716x_MODEL_S2_6400_DUAL,
 	.dev_type		= SAA716x_DEV_S2_6400_DUAL,
-	.boot_mode		= SAA716x_EXT_BOOT,
 	.adapters		= 2,
 	.frontend_attach	= saa716x_s26400_frontend_attach,
 	.irq_handler		= saa716x_ff_pci_irq,
