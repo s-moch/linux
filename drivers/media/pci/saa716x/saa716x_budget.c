@@ -26,7 +26,6 @@
 
 #include "saa716x_adap.h"
 #include "saa716x_i2c.h"
-#include "saa716x_msi.h"
 #include "saa716x_budget.h"
 #include "saa716x_gpio.h"
 #include "saa716x_rom.h"
@@ -79,16 +78,10 @@ static int saa716x_budget_pci_probe(struct pci_dev *pdev, const struct pci_devic
 
 	saa716x_core_reset(saa716x);
 
-	err = saa716x_msi_init(saa716x);
-	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x MSI Init failed");
-		goto fail2;
-	}
-
 	err = saa716x_jetpack_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x Jetpack core initialization failed");
-		goto fail1;
+		goto fail2;
 	}
 
 	err = saa716x_i2c_init(saa716x);
