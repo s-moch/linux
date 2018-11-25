@@ -79,8 +79,6 @@ struct saa716x_config {
 	char				*model_name;
 	char				*dev_type;
 
-	enum saa716x_boot_mode		boot_mode;
-
 	int				adapters;
 	int				frontends;
 
