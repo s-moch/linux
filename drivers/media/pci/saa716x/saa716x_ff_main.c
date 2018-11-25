@@ -34,7 +34,6 @@
 #include "saa716x_spi_reg.h"
 #include "saa716x_msi_reg.h"
 
-#include "saa716x_msi.h"
 #include "saa716x_adap.h"
 #include "saa716x_gpio.h"
 #include "saa716x_phi.h"
@@ -993,12 +992,6 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id
 	}
 
 	saa716x_core_reset(saa716x);
-
-	err = saa716x_msi_init(saa716x);
-	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x MSI Init failed");
-		goto fail2;
-	}
 
 	err = saa716x_jetpack_init(saa716x);
 	if (err) {
