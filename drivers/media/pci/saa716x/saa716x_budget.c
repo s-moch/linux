@@ -32,7 +32,6 @@
 #include "saa716x_gpio.h"
 #include "saa716x_priv.h"
 
-#include "mb86a16.h"
 #include "stv6110x.h"
 #include "stv090x.h"
 
@@ -170,96 +169,6 @@ static irqreturn_t saa716x_budget_pci_irq(int irq, void *dev_id)
 
 	return IRQ_HANDLED;
 }
-
-
-#define SAA716x_MODEL_TWINHAN_VP1028	"Twinhan/Azurewave VP-1028"
-#define SAA716x_DEV_TWINHAN_VP1028	"DVB-S"
-
-static int vp1028_dvbs_set_voltage(struct dvb_frontend *fe, enum fe_sec_voltage voltage)
-{
-	struct saa716x_dev *saa716x = fe->dvb->priv;
-
-	switch (voltage) {
-	case SEC_VOLTAGE_13:
-		dprintk(SAA716x_ERROR, 1, "Polarization=[13V]");
-		break;
-	case SEC_VOLTAGE_18:
-		dprintk(SAA716x_ERROR, 1, "Polarization=[18V]");
-		break;
-	case SEC_VOLTAGE_OFF:
-		dprintk(SAA716x_ERROR, 1, "Frontend (dummy) POWERDOWN");
-		break;
-	default:
-		dprintk(SAA716x_ERROR, 1, "Invalid = (%d)", (u32 ) voltage);
-		return -EINVAL;
-	}
-
-	return 0;
-}
-
-struct mb86a16_config vp1028_mb86a16_config = {
-	.demod_address	= 0x08,
-	.set_voltage	= vp1028_dvbs_set_voltage,
-};
-
-static int saa716x_vp1028_frontend_attach(struct saa716x_adapter *adapter, int count)
-{
-	struct saa716x_dev *saa716x = adapter->saa716x;
-	struct saa716x_i2c *i2c = &saa716x->i2c[1];
-
-	if (count == 0) {
-
-		mutex_lock(&saa716x->adap_lock);
-
-		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Power ON", count);
-		saa716x_gpio_set_output(saa716x, 10);
-		msleep(1);
-
-		/* VP-1028 has inverted power supply control */
-		saa716x_gpio_write(saa716x, 10, 1); /* set to standby */
-		saa716x_gpio_write(saa716x, 10, 0); /* switch it on */
-		msleep(100);
-
-		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Reset", count);
-		saa716x_gpio_set_output(saa716x, 12);
-		msleep(1);
-
-		/* reset demodulator (Active LOW) */
-		saa716x_gpio_write(saa716x, 12, 1);
-		msleep(100);
-		saa716x_gpio_write(saa716x, 12, 0);
-		msleep(100);
-		saa716x_gpio_write(saa716x, 12, 1);
-		msleep(100);
-
-		mutex_unlock(&saa716x->adap_lock);
-
-		dprintk(SAA716x_ERROR, 1, "Probing for MB86A16 (DVB-S/DSS)");
-		adapter->fe = mb86a16_attach(&vp1028_mb86a16_config, &i2c->i2c_adapter);
-		if (adapter->fe) {
-			dprintk(SAA716x_ERROR, 1, "found MB86A16 DVB-S/DSS frontend @0x%02x",
-				vp1028_mb86a16_config.demod_address);
-
-		} else {
-			goto exit;
-		}
-		dprintk(SAA716x_ERROR, 1, "Done!");
-	}
-
-	return 0;
-exit:
-	dprintk(SAA716x_ERROR, 1, "Frontend attach failed");
-	return -ENODEV;
-}
-
-static struct saa716x_config saa716x_vp1028_config = {
-	.model_name		= SAA716x_MODEL_TWINHAN_VP1028,
-	.dev_type		= SAA716x_DEV_TWINHAN_VP1028,
-	.adapters		= 1,
-	.frontend_attach	= saa716x_vp1028_frontend_attach,
-	.irq_handler		= saa716x_budget_pci_irq,
-	.i2c_rate		= SAA716x_I2C_RATE_100,
-};
 
 
 #define SAA716x_MODEL_SKYSTAR2_EXPRESS_HD	"SkyStar 2 eXpress HD"
@@ -446,8 +355,6 @@ static struct saa716x_config skystar2_express_hd_config = {
 };
 
 static const struct pci_device_id saa716x_budget_pci_table[] = {
-
-	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_1028, SAA7160, &saa716x_vp1028_config), /* VP-1028 */
 	MAKE_ENTRY(TECHNISAT, SKYSTAR2_EXPRESS_HD, SAA7160, &skystar2_express_hd_config),
 	{ }
 };
