@@ -1,7 +1,6 @@
 #include <linux/types.h>
 
 #include "saa716x_mod.h"
-#include "saa716x_phi.h"
 #include "saa716x_phi_reg.h"
 #include "saa716x_priv.h"
 
@@ -52,12 +51,6 @@ int saa716x_ff_phi_init(struct saa716x_dev *saa716x)
 	if (!sti7109->mmio_wc) {
 		dprintk(SAA716x_ERROR, 1, "Mem PHI1 WC remap failed");
 		err = -ENODEV;
-		goto fail0;
-	}
-
-	err = saa716x_phi_init(saa716x);
-	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x PHI Initialization failed");
 		goto fail1;
 	}
 
