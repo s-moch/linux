@@ -6,9 +6,6 @@
 #define TWINHAN_VP_1028		0x0044
 #define TWINHAN_VP_6002		0x0047
 
-#define KNC_One			0x1894
-#define KNC_Dual_S2		0x0110
-
 #define TECHNISAT		0x1AE4
 #define SKYSTAR2_EXPRESS_HD	0x0700
 
