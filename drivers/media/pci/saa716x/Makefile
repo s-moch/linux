@@ -4,7 +4,6 @@ saa716x_core-objs	:= saa716x_pci.o	\
 			   saa716x_dma.o	\
 			   saa716x_vip.o	\
 			   saa716x_aip.o	\
-			   saa716x_phi.o	\
 			   saa716x_boot.o	\
 			   saa716x_fgpi.o	\
 			   saa716x_adap.o	\
