@@ -36,7 +36,6 @@ config DVB_SAA716X_BUDGET
 config DVB_SAA716X_HYBRID
 	tristate "SAA7160/1/2 based Hybrid PCIe cards (DVB + Analog)"
 	depends on SAA716X_CORE && DVB_CORE
-	select DVB_ZL10353 if MEDIA_SUBDRV_AUTOSELECT
 	select DVB_MB86A16 if MEDIA_SUBDRV_AUTOSELECT
 	select DVB_TDA1004X if MEDIA_SUBDRV_AUTOSELECT
 	select MEDIA_TUNER_TDA827X if MEDIA_SUBDRV_AUTOSELECT
@@ -45,7 +44,6 @@ config DVB_SAA716X_HYBRID
 	  Support for the SAA7160/1/2 based Hybrid PCIe DVB cards
 	  Currently supported devices are:
 
-	  * Avermedia HC-82 (DVB-T)
 	  * NXP Reference (Atlantis) (DVB-T x2)
 	  * NXP Reference (Nemo) (DVB-T)
 	  * Twinhan/Azurewave VP-6090 (DVB-S x2, DVB-T x2)
