@@ -28,7 +28,6 @@ config DVB_SAA716X_BUDGET
 
 	  * Twinhan/Azurewave VP-1028 (DVB-S)
 	  * Twinhan/Azurewave VP-3071 (DVB-T x2)
-	  * Twinhan/Azurewave VP-6002 (DVB-S)
 
 	  Say Y if you own such a device and want to use it.
 
