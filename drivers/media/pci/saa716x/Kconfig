@@ -45,7 +45,6 @@ config DVB_SAA716X_HYBRID
 	  Support for the SAA7160/1/2 based Hybrid PCIe DVB cards
 	  Currently supported devices are:
 
-	  * Avermedia H-788 (DVB-T)
 	  * Avermedia HC-82 (DVB-T)
 	  * NXP Reference (Atlantis) (DVB-T x2)
 	  * NXP Reference (Nemo) (DVB-T)
