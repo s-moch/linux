@@ -17,7 +17,6 @@ config SAA716X_CORE
 config DVB_SAA716X_BUDGET
 	tristate "SAA7160/1/2 based Budget PCIe cards (DVB only)"
 	depends on SAA716X_CORE && DVB_CORE
-	select DVB_MB86A16 if MEDIA_SUBDRV_AUTOSELECT
 	select DVB_STV6110x if MEDIA_SUBDRV_AUTOSELECT
 	select DVB_STV090x if MEDIA_SUBDRV_AUTOSELECT
 
@@ -25,8 +24,6 @@ config DVB_SAA716X_BUDGET
 	help
 	  Support for the SAA7160/1/2 based Budget PCIe DVB cards
 	  Currently supported devices are:
-
-	  * Twinhan/Azurewave VP-1028 (DVB-S)
 
 	  Say Y if you own such a device and want to use it.
 
