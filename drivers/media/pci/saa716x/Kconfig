@@ -20,10 +20,11 @@ config DVB_SAA716X_BUDGET
 	select DVB_STV6110x if MEDIA_SUBDRV_AUTOSELECT
 	select DVB_STV090x if MEDIA_SUBDRV_AUTOSELECT
 
-
 	help
 	  Support for the SAA7160/1/2 based Budget PCIe DVB cards
 	  Currently supported devices are:
+
+	  * Technisat Skystar 2 Express HD
 
 	  Say Y if you own such a device and want to use it.
 
