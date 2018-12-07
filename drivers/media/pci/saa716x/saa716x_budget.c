@@ -284,29 +284,6 @@ static struct saa716x_config saa716x_vp1028_config = {
 };
 
 
-#define SAA716x_MODEL_TWINHAN_VP6002	"Twinhan/Azurewave VP-6002"
-#define SAA716x_DEV_TWINHAN_VP6002	"DVB-S"
-
-static int saa716x_vp6002_frontend_attach(struct saa716x_adapter *adapter, int count)
-{
-	struct saa716x_dev *saa716x = adapter->saa716x;
-
-	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
-	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
-
-	return -ENODEV;
-}
-
-static struct saa716x_config saa716x_vp6002_config = {
-	.model_name		= SAA716x_MODEL_TWINHAN_VP6002,
-	.dev_type		= SAA716x_DEV_TWINHAN_VP6002,
-	.adapters		= 1,
-	.frontend_attach	= saa716x_vp6002_frontend_attach,
-	.irq_handler		= saa716x_budget_pci_irq,
-	.i2c_rate		= SAA716x_I2C_RATE_100,
-};
-
-
 #define SAA716x_MODEL_SKYSTAR2_EXPRESS_HD	"SkyStar 2 eXpress HD"
 #define SAA716x_DEV_SKYSTAR2_EXPRESS_HD		"DVB-S/S2"
 
@@ -494,7 +471,6 @@ static const struct pci_device_id saa716x_budget_pci_table[] = {
 
 	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_1028, SAA7160, &saa716x_vp1028_config), /* VP-1028 */
 	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_3071, SAA7160, &saa716x_vp3071_config), /* VP-3071 */
-	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_6002, SAA7160, &saa716x_vp6002_config), /* VP-6002 */
 	MAKE_ENTRY(TECHNISAT, SKYSTAR2_EXPRESS_HD, SAA7160, &skystar2_express_hd_config),
 	{ }
 };
