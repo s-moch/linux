@@ -32,7 +32,6 @@
 #include "saa716x_gpio.h"
 #include "saa716x_priv.h"
 
-#include "zl10353.h"
 #include "mb86a16.h"
 #include "tda1004x.h"
 #include "tda827x.h"
@@ -515,46 +514,9 @@ static struct saa716x_config saa716x_nemo_config = {
 	}
 };
 
-
-#define SAA716x_MODEL_AVERMEDIA_HC82	"Avermedia HC82 Express-54"
-#define SAA716x_DEV_AVERMEDIA_HC82	"DVB-T + Analog"
-
-#if 0
-static struct zl10353_config saa716x_averhc82_zl10353_config = {
-	.demod_address		= 0x1f,
-	.adc_clock		= 450560,
-	.if2			= 361667,
-	.no_tuner		= 1,
-	.parallel_ts		= 1,
-};
-#endif
-
-static int saa716x_averhc82_frontend_attach(struct saa716x_adapter *adapter, int count)
-{
-	struct saa716x_dev *saa716x = adapter->saa716x;
-
-	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
-	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
-
-//	adapter->fe = zl10353_attach(&saa716x_averhc82_zl10353_config, &i2c->i2c_adapter);
-
-
-	return 0;
-}
-
-static struct saa716x_config saa716x_averhc82_config = {
-	.model_name		= SAA716x_MODEL_AVERMEDIA_HC82,
-	.dev_type		= SAA716x_DEV_AVERMEDIA_HC82,
-	.adapters		= 1,
-	.frontend_attach	= saa716x_averhc82_frontend_attach,
-	.irq_handler		= saa716x_hybrid_pci_irq,
-	.i2c_rate		= SAA716x_I2C_RATE_100,
-};
-
 static const struct pci_device_id saa716x_hybrid_pci_table[] = {
 
 	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_6090, SAA7162, &saa716x_vp6090_config),
-	MAKE_ENTRY(AVERMEDIA, AVERMEDIA_HC82, SAA7160, &saa716x_averhc82_config),
 	MAKE_ENTRY(KWORLD, KWORLD_DVB_T_PE310, SAA7162, &saa716x_atlantis_config),
 	MAKE_ENTRY(NXP_REFERENCE_BOARD, PCI_ANY_ID, SAA7162, &saa716x_atlantis_config),
 	MAKE_ENTRY(NXP_REFERENCE_BOARD, PCI_ANY_ID, SAA7160, &saa716x_nemo_config),
