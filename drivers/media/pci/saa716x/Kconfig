@@ -27,7 +27,6 @@ config DVB_SAA716X_BUDGET
 	  Currently supported devices are:
 
 	  * Twinhan/Azurewave VP-1028 (DVB-S)
-	  * Twinhan/Azurewave VP-3071 (DVB-T x2)
 
 	  Say Y if you own such a device and want to use it.
 
