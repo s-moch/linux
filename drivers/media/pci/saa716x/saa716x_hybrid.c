@@ -32,7 +32,6 @@
 #include "saa716x_gpio.h"
 #include "saa716x_priv.h"
 
-#include "mb86a16.h"
 #include "tda1004x.h"
 #include "tda827x.h"
 
@@ -187,7 +186,7 @@ static irqreturn_t saa716x_hybrid_pci_irq(int irq, void *dev_id)
 
 /*
  * Twinhan/Azurewave VP-6090
- * DVB-S Frontend: 2x MB86A16
+ * DVB-S Frontend: 2x MB86A16 - not supported yet
  * DVB-T Frontend: 2x TDA10046 + TDA8275
  */
 #define SAA716x_MODEL_TWINHAN_VP6090	"Twinhan/Azurewave VP-6090"
@@ -212,33 +211,6 @@ static struct tda1004x_config tda1004x_vp6090_config = {
 	.request_firmware	= tda1004x_vp6090_request_firmware,
 };
 
-static int vp6090_dvbs_set_voltage(struct dvb_frontend *fe, enum fe_sec_voltage voltage)
-{
-	struct saa716x_dev *saa716x = fe->dvb->priv;
-
-	switch (voltage) {
-	case SEC_VOLTAGE_13:
-		dprintk(SAA716x_ERROR, 1, "Polarization=[13V]");
-		break;
-	case SEC_VOLTAGE_18:
-		dprintk(SAA716x_ERROR, 1, "Polarization=[18V]");
-		break;
-	case SEC_VOLTAGE_OFF:
-		dprintk(SAA716x_ERROR, 1, "Frontend (dummy) POWERDOWN");
-		break;
-	default:
-		dprintk(SAA716x_ERROR, 1, "Invalid = (%d)", (u32 ) voltage);
-		return -EINVAL;
-	}
-
-	return 0;
-}
-
-struct mb86a16_config vp6090_mb86a16_config = {
-	.demod_address	= 0x08,
-	.set_voltage	= vp6090_dvbs_set_voltage,
-};
-
 static int saa716x_vp6090_frontend_attach(struct saa716x_adapter *adapter, int count)
 {
 	struct saa716x_dev *saa716x = adapter->saa716x;
@@ -254,17 +226,7 @@ static int saa716x_vp6090_frontend_attach(struct saa716x_adapter *adapter, int c
 	saa716x_gpio_write(saa716x, 11, 1);
 	saa716x_gpio_write(saa716x, 10, 1);
 	msleep(100);
-#if 0
-	dprintk(SAA716x_ERROR, 1, "Probing for MB86A16 (DVB-S/DSS)");
-	adapter->fe = mb86a16_attach(&vp6090_mb86a16_config, &i2c->i2c_adapter);
-	if (adapter->fe) {
-		dprintk(SAA716x_ERROR, 1, "found MB86A16 DVB-S/DSS frontend @0x%02x",
-			vp6090_mb86a16_config.demod_address);
 
-	} else {
-		goto exit;
-	}
-#endif
 	adapter->fe = tda10046_attach(&tda1004x_vp6090_config, &i2c->i2c_adapter);
 	if (adapter->fe == NULL) {
 		dprintk(SAA716x_ERROR, 1, "Frontend attach failed");
