@@ -34,6 +34,9 @@
 #define GREG_PMCSR_DATA_2		0x00c
 #define GREG_VI_CTRL			0x010
 #define GREG_FGPI_CTRL			0x014
+#define GREG_FGPI_CTRL_SEL(vp)		(((vp) == 2 || (vp) == 4) ? 1 : \
+					 ((vp) == 1 || (vp) == 5) ? 2 : \
+					 ((vp) == 3 || (vp) == 6) ? 4 : 0)
 
 #define GREG_RSTU_CTRL			0x018
 #define GREG_BOOT_READY			(0x00000001 << 13)
