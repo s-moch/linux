@@ -145,10 +145,6 @@ struct saa716x_dev {
 extern int saa716x_pci_init(struct saa716x_dev *saa716x);
 extern void saa716x_pci_exit(struct saa716x_dev *saa716x);
 
-/* Boot */
-extern int saa716x_core_boot(struct saa716x_dev *saa716x);
-extern int saa716x_jetpack_init(struct saa716x_dev *saa716x);
-
 /* Remote control */
 extern int saa716x_ir_init(struct saa716x_dev *saa716x);
 extern void saa716x_ir_exit(struct saa716x_dev *saa716x);
