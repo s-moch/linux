@@ -68,7 +68,8 @@ struct saa716x_dev;
 struct saa716x_adapter;
 
 struct saa716x_adap_config {
-	u32				ts_port;
+	u32				ts_vp;
+	u32				ts_fgpi;
 };
 
 struct saa716x_config {
