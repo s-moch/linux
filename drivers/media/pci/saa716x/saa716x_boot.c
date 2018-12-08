@@ -12,7 +12,6 @@
 #include "saa716x_dcs_reg.h"
 
 #include "saa716x_boot.h"
-#include "saa716x_spi.h"
 #include "saa716x_priv.h"
 
 static void saa716x_core_reset(struct saa716x_dev *saa716x)
