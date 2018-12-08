@@ -4,7 +4,6 @@
 
 #include "saa716x_greg_reg.h"
 #include "saa716x_greg.h"
-#include "saa716x_spi.h"
 #include "saa716x_priv.h"
 
 static u32 g_save[12];

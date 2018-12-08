@@ -6,7 +6,6 @@
 #include "saa716x_gpio_reg.h"
 
 #include "saa716x_gpio.h"
-#include "saa716x_spi.h"
 #include "saa716x_priv.h"
 
 void saa716x_gpio_init(struct saa716x_dev *saa716x)
