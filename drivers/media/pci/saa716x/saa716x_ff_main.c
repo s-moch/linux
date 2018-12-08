@@ -37,7 +37,6 @@
 #include "saa716x_adap.h"
 #include "saa716x_boot.h"
 #include "saa716x_gpio.h"
-#include "saa716x_spi.h"
 #include "saa716x_priv.h"
 
 #include "saa716x_ff.h"
@@ -65,6 +64,18 @@ module_param(video_capture, int, 0644);
 MODULE_PARM_DESC(video_capture, "capture digital video coming from STi7109: 0=off, 1=one-shot. default off");
 
 #define DRIVER_NAME	"SAA716x FF"
+
+static void saa716x_ff_spi_write(struct saa716x_dev *saa716x, const u8 *data, int length)
+{
+	int i, rounds;
+
+	for (i = 0; i < length; i++) {
+		SAA716x_EPWR(SPI, SPI_DATA, data[i]);
+		for (rounds = 0; rounds < 5000; rounds++)
+			if (SAA716x_EPRD(SPI, SPI_STATUS) & SPI_TRANSFER_FLAG)
+				break;
+	}
+}
 
 static int saa716x_ff_fpga_init(struct saa716x_dev *saa716x)
 {
@@ -118,7 +129,7 @@ static int saa716x_ff_fpga_init(struct saa716x_dev *saa716x)
 	fpgaDone = saa716x_gpio_read(saa716x, TT_PREMIUM_GPIO_FPGA_DONE);
 	dprintk(SAA716x_INFO, 1, "SAA716x FF FPGA DONE=%d", fpgaDone);
 	dprintk(SAA716x_INFO, 1, "SAA716x FF FPGA write bitstream");
-	saa716x_spi_write(saa716x, fw->data, fw->size);
+	saa716x_ff_spi_write(saa716x, fw->data, fw->size);
 	dprintk(SAA716x_INFO, 1, "SAA716x FF FPGA write bitstream done");
 	fpgaDone = saa716x_gpio_read(saa716x, TT_PREMIUM_GPIO_FPGA_DONE);
 	dprintk(SAA716x_INFO, 1, "SAA716x FF FPGA DONE=%d", fpgaDone);

@@ -8,7 +8,6 @@
 
 #include "saa716x_dma.h"
 #include "saa716x_fgpi.h"
-#include "saa716x_spi.h"
 #include "saa716x_priv.h"
 
 static const u32 fgpi_ch[] = {
