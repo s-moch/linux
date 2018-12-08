@@ -71,7 +71,6 @@ struct saa716x_spi_config;
 
 struct saa716x_adap_config {
 	u32				ts_port;
-	void				(*worker)(unsigned long);
 };
 
 struct saa716x_config {
