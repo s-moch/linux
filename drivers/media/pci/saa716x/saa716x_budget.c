@@ -91,11 +91,6 @@ static int saa716x_budget_pci_probe(struct pci_dev *pdev, const struct pci_devic
 
 	saa716x_gpio_init(saa716x);
 
-	/* set default port mapping */
-	SAA716x_EPWR(GREG, GREG_VI_CTRL, 0x2C688F0A);
-	/* enable FGPI3, FGPI2, FGPI1 and FGPI0 for TS input from Port 2 and 6 */
-	SAA716x_EPWR(GREG, GREG_FGPI_CTRL, 0x322);
-
 	err = saa716x_dvb_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x DVB initialization failed");
@@ -351,7 +346,8 @@ static struct saa716x_config skystar2_express_hd_config = {
 	.adap_config		= {
 		{
 			/* Adapter 0 */
-			.ts_port = 1, /* using FGPI 1 */
+			.ts_vp   = 6,
+			.ts_fgpi = 1
 		}
 	}
 };
@@ -444,11 +440,13 @@ static struct saa716x_config saa716x_tbs6281_config = {
 	.adap_config		= {
 		{
 			/* adapter 0 */
-			.ts_port = 1, /* using FGPI 1 */
+			.ts_vp   = 6,
+			.ts_fgpi = 1
 		},
 		{
 			/* adapter 1 */
-			.ts_port = 3, /* using FGPI 3 */
+			.ts_vp   = 2,
+			.ts_fgpi = 3
 		},
 	},
 };
@@ -536,19 +534,23 @@ static struct saa716x_config saa716x_tbs6285_config = {
 	.adap_config		= {
 		{
 			/* adapter 0 */
-			.ts_port = 3,
+			.ts_vp   = 2,
+			.ts_fgpi = 3
 		},
 		{
 			/* adapter 1 */
-			.ts_port = 2,
+			.ts_vp   = 3,
+			.ts_fgpi = 2
 		},
 		{
-			/* adapter 1 */
-			.ts_port = 1,
+			/* adapter 2 */
+			.ts_vp   = 6,
+			.ts_fgpi = 1
 		},
 		{
-			/* adapter 1 */
-			.ts_port = 0,
+			/* adapter 3 */
+			.ts_vp   = 5,
+			.ts_fgpi = 0
 		},
 	},
 };
