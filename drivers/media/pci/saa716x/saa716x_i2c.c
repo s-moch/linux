@@ -13,7 +13,6 @@
 #include "saa716x_cgu_reg.h"
 
 #include "saa716x_i2c.h"
-#include "saa716x_spi.h"
 #include "saa716x_priv.h"
 
 #define SAA716x_I2C_TXFAIL	(I2C_ERROR_IBE		| \
