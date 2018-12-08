@@ -1228,54 +1228,6 @@ static void saa716x_ff_pci_remove(struct pci_dev *pdev)
 	kfree(saa716x);
 }
 
-static void demux_worker(unsigned long data)
-{
-	struct saa716x_fgpi_stream_port *fgpi_entry = (struct saa716x_fgpi_stream_port *)data;
-	struct saa716x_dev *saa716x = fgpi_entry->saa716x;
-	struct dvb_demux *demux;
-	u32 fgpi_index;
-	u32 i;
-	u32 write_index;
-
-	fgpi_index = fgpi_entry->dma_channel - 6;
-	demux = NULL;
-	for (i = 0; i < saa716x->config->adapters; i++) {
-		if (saa716x->config->adap_config[i].ts_port == fgpi_index) {
-			demux = &saa716x->saa716x_adap[i].demux;
-			break;
-		}
-	}
-	if (demux == NULL) {
-		printk(KERN_ERR "%s: unexpected channel %u\n",
-		       __func__, fgpi_entry->dma_channel);
-		return;
-	}
-
-	write_index = saa716x_fgpi_get_write_index(saa716x, fgpi_index);
-	if (write_index < 0)
-		return;
-
-	dprintk(SAA716x_DEBUG, 1, "dma buffer = %d", write_index);
-
-	if (write_index == fgpi_entry->read_index) {
-		printk(KERN_DEBUG "%s: called but nothing to do\n", __func__);
-		return;
-	}
-
-	do {
-		u8 *data = (u8 *)fgpi_entry->dma_buf[fgpi_entry->read_index].mem_virt;
-
-		pci_dma_sync_sg_for_cpu(saa716x->pdev,
-			fgpi_entry->dma_buf[fgpi_entry->read_index].sg_list,
-			fgpi_entry->dma_buf[fgpi_entry->read_index].list_len,
-			PCI_DMA_FROMDEVICE);
-
-		dvb_dmx_swfilter(demux, data, 348 * 188);
-
-		fgpi_entry->read_index = (fgpi_entry->read_index + 1) & 7;
-	} while (write_index != fgpi_entry->read_index);
-}
-
 static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 {
 	struct saa716x_dev *saa716x	= (struct saa716x_dev *) dev_id;
@@ -1759,11 +1711,9 @@ static struct saa716x_config saa716x_s26400_config = {
 		{
 			/* Adapter 0 */
 			.ts_port = 2,
-			.worker = demux_worker
 		},{
 			/* Adapter 1 */
 			.ts_port = 3,
-			.worker = demux_worker
 		}
 	}
 };
