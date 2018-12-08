@@ -23,7 +23,6 @@
 #include <linux/types.h>
 #include <linux/input.h>
 
-#include "saa716x_spi.h"
 #include "saa716x_priv.h"
 #include "saa716x_ff.h"
 
