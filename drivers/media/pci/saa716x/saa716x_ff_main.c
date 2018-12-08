@@ -964,8 +964,12 @@ static int saa716x_ff_video_init(struct saa716x_dev *saa716x)
 	sti7109->fifo_workq = alloc_workqueue("saa716x_fifo_wq%d", WQ_UNBOUND, 1, SAA716x_DEV);
 	INIT_WORK(&sti7109->fifo_work, fifo_worker);
 
-	if (sti7109->video_capture != VIDEO_CAPTURE_OFF)
+	if (sti7109->video_capture != VIDEO_CAPTURE_OFF) {
+		/* enable FGPI0 for video capture inputs */
+		SAA716x_EPWR(GREG, GREG_VI_CTRL, 0x2C689F04);
+		SAA716x_EPWR(GREG, GREG_VIDEO_IN_CTRL, 0xC0);
 		saa716x_vip_init(saa716x, 0, video_vip_worker);
+	}
 
 	return 0;
 }
@@ -1108,11 +1112,6 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id
 		dprintk(SAA716x_ERROR, 1, "SAA716x FF STi7109 initialization failed");
 		goto fail5;
 	}
-
-	/* enable FGPI2 and FGPI3 for TS inputs */
-	SAA716x_EPWR(GREG, GREG_VI_CTRL, 0x0689F04);
-	SAA716x_EPWR(GREG, GREG_FGPI_CTRL, 0x280);
-	SAA716x_EPWR(GREG, GREG_VIDEO_IN_CTRL, 0xC0);
 
 	err = saa716x_dvb_init(saa716x);
 	if (err) {
@@ -1712,10 +1711,12 @@ static struct saa716x_config saa716x_s26400_config = {
 	.adap_config		= {
 		{
 			/* Adapter 0 */
-			.ts_port = 2,
+			.ts_vp   = 1,
+			.ts_fgpi = 2
 		},{
 			/* Adapter 1 */
-			.ts_port = 3,
+			.ts_vp   = 2,
+			.ts_fgpi = 3
 		}
 	}
 };
