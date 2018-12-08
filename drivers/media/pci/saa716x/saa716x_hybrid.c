@@ -103,11 +103,6 @@ static int saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct pci_devic
 		saa716x_gpio_write(saa716x, 25, 1);
 	}
 
-	/* set default port mapping */
-	SAA716x_EPWR(GREG, GREG_VI_CTRL, 0x2C688F44);
-	/* enable FGPI3 and FGPI0 for TS input from Port 3 and 6 */
-	SAA716x_EPWR(GREG, GREG_FGPI_CTRL, 0x894);
-
 	err = saa716x_dvb_init(saa716x);
 	if (err) {
 		dprintk(SAA716x_ERROR, 1, "SAA716x DVB initialization failed");
@@ -363,11 +358,13 @@ static struct saa716x_config saa716x_atlantis_config = {
 	.adap_config		= {
 		{
 			/* Adapter 0 */
-			.ts_port = 3, /* using FGPI 3 */
+			.ts_vp   = 3,
+			.ts_fgpi = 3
 		},
 		{
 			/* Adapter 1 */
-			.ts_port = 0, /* using FGPI 0 */
+			.ts_vp   = 6,
+			.ts_fgpi = 0
 		}
 	}
 };
@@ -471,7 +468,8 @@ static struct saa716x_config saa716x_nemo_config = {
 	.adap_config		= {
 		{
 			/* Adapter 0 */
-			.ts_port = 3, /* using FGPI 3 */
+			.ts_vp   = 3,
+			.ts_fgpi = 3
 		}
 	}
 };
