@@ -3,7 +3,6 @@
 #include "saa716x_mod.h"
 
 #include "saa716x_cgu_reg.h"
-#include "saa716x_spi.h"
 #include "saa716x_priv.h"
 
 u32 cgu_clk[14] = {
