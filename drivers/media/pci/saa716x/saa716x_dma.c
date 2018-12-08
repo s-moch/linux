@@ -6,7 +6,6 @@
 #include <asm/pgtable.h>
 
 #include "saa716x_dma.h"
-#include "saa716x_spi.h"
 #include "saa716x_priv.h"
 
 /*  Allocates one page of memory, which is stores the data of one
