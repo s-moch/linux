@@ -29,7 +29,6 @@
 #include "saa716x_i2c.h"
 #include "saa716x_budget.h"
 #include "saa716x_gpio.h"
-#include "saa716x_spi.h"
 #include "saa716x_priv.h"
 
 #include "mb86a16.h"
