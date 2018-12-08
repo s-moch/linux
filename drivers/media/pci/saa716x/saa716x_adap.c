@@ -5,6 +5,8 @@
 #include <media/dvb_demux.h>
 #include <media/dvb_frontend.h>
 
+#include "saa716x_greg_reg.h"
+
 #include "saa716x_mod.h"
 #include "saa716x_adap.h"
 #include "saa716x_i2c.h"
@@ -31,14 +33,14 @@ void saa716x_dma_start(struct saa716x_dev *saa716x, u8 adapter)
 	params.stream_type	= FGPI_TRANSPORT_STREAM;
 	params.stream_flags	= 0;
 
-	saa716x_fgpi_start(saa716x, saa716x->config->adap_config[adapter].ts_port, &params);
+	saa716x_fgpi_start(saa716x, saa716x->config->adap_config[adapter].ts_fgpi, &params);
 }
 
 void saa716x_dma_stop(struct saa716x_dev *saa716x, u8 adapter)
 {
 	dprintk(SAA716x_DEBUG, 1, "SAA716x Stop DMA engine for Adapter:%d", adapter);
 
-	saa716x_fgpi_stop(saa716x, saa716x->config->adap_config[adapter].ts_port);
+	saa716x_fgpi_stop(saa716x, saa716x->config->adap_config[adapter].ts_fgpi);
 }
 
 static int saa716x_dvb_start_feed(struct dvb_demux_feed *dvbdmxfeed)
@@ -96,7 +98,7 @@ static void saa716x_demux_worker(unsigned long data)
 	fgpi_index = fgpi_entry->dma_channel - 6;
 	demux = NULL;
 	for (i = 0; i < saa716x->config->adapters; i++) {
-		if (saa716x->config->adap_config[i].ts_port == fgpi_index) {
+		if (saa716x->config->adap_config[i].ts_fgpi == fgpi_index) {
 			demux = &saa716x->saa716x_adap[i].demux;
 			break;
 		}
@@ -139,6 +141,10 @@ int saa716x_dvb_init(struct saa716x_dev *saa716x)
 	int result, i;
 
 	mutex_init(&saa716x->adap_lock);
+
+	/* all video input ports use their own clocks */
+	SAA716x_EPWR(GREG, GREG_VI_CTRL, 0x2C688000);
+	SAA716x_EPWR(GREG, GREG_FGPI_CTRL, 0);
 
 	for (i = 0; i < config->adapters; i++) {
 
@@ -237,7 +243,11 @@ int saa716x_dvb_init(struct saa716x_dev *saa716x)
 			dprintk(SAA716x_ERROR, 1, "Frontend attach = NULL");
 		}
 
-		saa716x_fgpi_init(saa716x, config->adap_config[i].ts_port,
+		/* assign video port to fgpi */
+		SAA716x_EPWR(GREG, GREG_FGPI_CTRL, SAA716x_EPRD(GREG, GREG_FGPI_CTRL) |
+		             (GREG_FGPI_CTRL_SEL(config->adap_config[i].ts_vp) << (config->adap_config[i].ts_fgpi * 3)));
+
+		saa716x_fgpi_init(saa716x, config->adap_config[i].ts_fgpi,
 				  SAA716X_TS_DMA_BUF_SIZE,
 				  saa716x_demux_worker);
 
@@ -273,7 +283,7 @@ void saa716x_dvb_exit(struct saa716x_dev *saa716x)
 
 	for (i = 0; i < saa716x->config->adapters; i++) {
 
-		saa716x_fgpi_exit(saa716x, saa716x->config->adap_config[i].ts_port);
+		saa716x_fgpi_exit(saa716x, saa716x->config->adap_config[i].ts_fgpi);
 
 		/* remove I2C tuner */
 		client = saa716x_adap->i2c_client_tuner;
