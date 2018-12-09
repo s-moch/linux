@@ -76,7 +76,6 @@ struct saa716x_config {
 	char				*dev_type;
 
 	int				adapters;
-	int				frontends;
 
 	int (*frontend_attach)(struct saa716x_adapter *adapter, int count);
 	irqreturn_t (*irq_handler)(int irq, void *dev_id);
@@ -120,7 +119,6 @@ struct saa716x_dev {
 
 	/* I2C */
 	struct saa716x_i2c		i2c[2];
-	u32				i2c_rate; /* init time */
 	u32				I2C_DEV[2];
 
 	struct saa716x_adapter		saa716x_adap[SAA716x_MAX_ADAPTERS];
@@ -133,8 +131,6 @@ struct saa716x_dev {
 	struct saa716x_fgpi_stream_port	fgpi[4];
 	struct saa716x_vip_stream_port	vip[2];
 
-	u32				id_offst;
-	u32				id_len;
 	void				*priv;
 
 	/* remote control */
