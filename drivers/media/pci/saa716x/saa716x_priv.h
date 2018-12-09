@@ -9,7 +9,6 @@
 #include <linux/ioport.h>
 #include <linux/i2c.h>
 #include "saa716x_i2c.h"
-#include "saa716x_boot.h"
 #include "saa716x_cgu.h"
 #include "saa716x_dma.h"
 #include "saa716x_fgpi.h"
