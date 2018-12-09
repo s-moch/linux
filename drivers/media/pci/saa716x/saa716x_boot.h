@@ -7,6 +7,5 @@
 struct saa716x_dev;
 
 extern int saa716x_jetpack_init(struct saa716x_dev *saa716x);
-extern void saa716x_core_reset(struct saa716x_dev *saa716x);
 
 #endif /* __SAA716x_BOOT_H */
