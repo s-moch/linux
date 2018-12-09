@@ -3,7 +3,6 @@
 #include "saa716x_mod.h"
 
 #include "saa716x_greg_reg.h"
-#include "saa716x_cgu_reg.h"
 #include "saa716x_vip_reg.h"
 #include "saa716x_aip_reg.h"
 #include "saa716x_msi_reg.h"
@@ -15,6 +14,40 @@
 #include "saa716x_boot.h"
 #include "saa716x_spi.h"
 #include "saa716x_priv.h"
+
+static void saa716x_core_reset(struct saa716x_dev *saa716x)
+{
+	dprintk(SAA716x_DEBUG, 1, "RESET Modules");
+
+	/* GREG */
+	SAA716x_EPWR(GREG, GREG_SW_RST, GREG_SW_RESET);
+
+	/* VIP */
+	SAA716x_EPWR(VI0, VI_MODE, SOFT_RESET);
+	SAA716x_EPWR(VI1, VI_MODE, SOFT_RESET);
+
+	/* FGPI */
+	SAA716x_EPWR(FGPI0, FGPI_SOFT_RESET, FGPI_SOFTWARE_RESET);
+	SAA716x_EPWR(FGPI1, FGPI_SOFT_RESET, FGPI_SOFTWARE_RESET);
+	SAA716x_EPWR(FGPI2, FGPI_SOFT_RESET, FGPI_SOFTWARE_RESET);
+	SAA716x_EPWR(FGPI3, FGPI_SOFT_RESET, FGPI_SOFTWARE_RESET);
+
+	/* AIP */
+	SAA716x_EPWR(AI0, AI_CTL, AI_RESET);
+	SAA716x_EPWR(AI1, AI_CTL, AI_RESET);
+
+	/* GPIO */
+	SAA716x_EPWR(GPIO, GPIO_SW_RST, GPIO_SW_RESET);
+
+	/* BAM */
+	SAA716x_EPWR(BAM, BAM_SW_RST, BAM_SW_RESET);
+
+	/* MMU */
+	SAA716x_EPWR(MMU, MMU_SW_RST, MMU_SW_RESET);
+
+	/* MSI */
+	SAA716x_EPWR(MSI, MSI_SW_RST, MSI_SW_RESET);
+}
 
 static void saa716x_bus_report(struct pci_dev *pdev, int enable)
 {
@@ -34,6 +67,9 @@ static void saa716x_bus_report(struct pci_dev *pdev, int enable)
 
 int saa716x_jetpack_init(struct saa716x_dev *saa716x)
 {
+	saa716x_core_reset(saa716x);
+	SAA716x_EPWR(GREG, GREG_RSTU_CTRL, GREG_BOOT_READY);
+
 	/*
 	 * configure PHY through config space not to report
 	 * non-fatal error messages to avoid problems with
@@ -46,11 +82,6 @@ int saa716x_jetpack_init(struct saa716x_dev *saa716x)
 	 * helps with lower bitrates on FGPI
 	 */
 	SAA716x_EPWR(DCS, DCSC_CTRL, ENABLE_TIMEOUT);
-
-	/* Reset all blocks */
-	SAA716x_EPWR(MSI, MSI_SW_RST, MSI_SW_RESET);
-	SAA716x_EPWR(MMU, MMU_SW_RST, MMU_SW_RESET);
-	SAA716x_EPWR(BAM, BAM_SW_RST, BAM_SW_RESET);
 
 	switch (saa716x->pdev->device) {
 	case SAA7162:
@@ -82,32 +113,3 @@ int saa716x_jetpack_init(struct saa716x_dev *saa716x)
 	return 0;
 }
 EXPORT_SYMBOL(saa716x_jetpack_init);
-
-void saa716x_core_reset(struct saa716x_dev *saa716x)
-{
-	dprintk(SAA716x_DEBUG, 1, "RESET Modules");
-
-	/* VIP */
-	SAA716x_EPWR(VI0, VI_MODE, SOFT_RESET);
-	SAA716x_EPWR(VI1, VI_MODE, SOFT_RESET);
-
-	/* FGPI */
-	SAA716x_EPWR(FGPI0, FGPI_SOFT_RESET, FGPI_SOFTWARE_RESET);
-	SAA716x_EPWR(FGPI1, FGPI_SOFT_RESET, FGPI_SOFTWARE_RESET);
-	SAA716x_EPWR(FGPI2, FGPI_SOFT_RESET, FGPI_SOFTWARE_RESET);
-	SAA716x_EPWR(FGPI3, FGPI_SOFT_RESET, FGPI_SOFTWARE_RESET);
-
-	/* AIP */
-	SAA716x_EPWR(AI0, AI_CTL, AI_RESET);
-	SAA716x_EPWR(AI1, AI_CTL, AI_RESET);
-
-	/* BAM */
-	SAA716x_EPWR(BAM, BAM_SW_RST, BAM_SW_RESET);
-
-	/* MMU */
-	SAA716x_EPWR(MMU, MMU_SW_RST, MMU_SW_RESET);
-
-	/* MSI */
-	SAA716x_EPWR(MSI, MSI_SW_RST, MSI_SW_RESET);
-}
-EXPORT_SYMBOL_GPL(saa716x_core_reset);
