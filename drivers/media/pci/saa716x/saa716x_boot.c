@@ -98,7 +98,6 @@ int saa716x_jetpack_init(struct saa716x_dev *saa716x)
 		SAA716x_EPWR(GPIO, GPIO_WR,  0x01000000); /* Enable decoder */
 		break;
 	case SAA7160:
-		saa716x->i2c_rate = SAA716x_I2C_RATE_100;
 		break;
 	default:
 		dprintk(SAA716x_ERROR, 1, "Unknown device (0x%02x)", saa716x->pdev->device);
