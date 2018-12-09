@@ -25,6 +25,7 @@
 #include "saa716x_msi_reg.h"
 
 #include "saa716x_adap.h"
+#include "saa716x_boot.h"
 #include "saa716x_i2c.h"
 #include "saa716x_budget.h"
 #include "saa716x_gpio.h"
@@ -75,8 +76,6 @@ static int saa716x_budget_pci_probe(struct pci_dev *pdev, const struct pci_devic
 		dprintk(SAA716x_ERROR, 1, "SAA716x CGU Init failed");
 		goto fail1;
 	}
-
-	saa716x_core_reset(saa716x);
 
 	err = saa716x_jetpack_init(saa716x);
 	if (err) {
