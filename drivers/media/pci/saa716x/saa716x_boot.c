@@ -82,28 +82,6 @@ int saa716x_jetpack_init(struct saa716x_dev *saa716x)
 	 */
 	SAA716x_EPWR(DCS, DCSC_CTRL, ENABLE_TIMEOUT);
 
-	switch (saa716x->pdev->device) {
-	case SAA7162:
-		dprintk(SAA716x_DEBUG, 1, "SAA%02x Decoder disable", saa716x->pdev->device);
-		SAA716x_EPWR(GPIO, GPIO_OEN, 0xfcffffff);
-		SAA716x_EPWR(GPIO, GPIO_WR,  0x00000000); /* Disable decoders */
-		msleep(10);
-		SAA716x_EPWR(GPIO, GPIO_WR,  0x03000000); /* Enable decoders */
-		break;
-	case SAA7161:
-		dprintk(SAA716x_DEBUG, 1, "SAA%02x Decoder disable", saa716x->pdev->device);
-		SAA716x_EPWR(GPIO, GPIO_OEN, 0xfeffffff);
-		SAA716x_EPWR(GPIO, GPIO_WR,  0x00000000); /* Disable decoders */
-		msleep(10);
-		SAA716x_EPWR(GPIO, GPIO_WR,  0x01000000); /* Enable decoder */
-		break;
-	case SAA7160:
-		break;
-	default:
-		dprintk(SAA716x_ERROR, 1, "Unknown device (0x%02x)", saa716x->pdev->device);
-		return -ENODEV;
-	}
-
 	/* General setup for MMU */
 	SAA716x_EPWR(MMU, MMU_MODE, 0x14);
 	dprintk(SAA716x_DEBUG, 1, "SAA%02x Jetpack Successfully initialized", saa716x->pdev->device);
