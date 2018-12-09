@@ -36,11 +36,13 @@
 
 #include "saa716x_adap.h"
 #include "saa716x_boot.h"
+#include "saa716x_pci.h"
 #include "saa716x_gpio.h"
 #include "saa716x_priv.h"
 
 #include "saa716x_ff.h"
 #include "saa716x_ff_cmd.h"
+#include "saa716x_ff_ir.h"
 #include "saa716x_ff_phi.h"
 
 #include "stv6110x.h"
