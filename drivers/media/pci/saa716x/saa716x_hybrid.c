@@ -27,6 +27,7 @@
 #include "saa716x_adap.h"
 #include "saa716x_boot.h"
 #include "saa716x_i2c.h"
+#include "saa716x_pci.h"
 #include "saa716x_hybrid.h"
 #include "saa716x_gpio.h"
 #include "saa716x_priv.h"
