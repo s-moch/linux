@@ -3,8 +3,8 @@
 
 #define SAA716x_PAGE_SIZE	4096
 
-#define PTA_LSB(__mem)		((u32 ) (__mem))
-#define PTA_MSB(__mem)		((u32 ) ((u64)(__mem) >> 32))
+#define PTA_LSB(__mem)		((u32) (__mem))
+#define PTA_MSB(__mem)		((u32) ((u64)(__mem) >> 32))
 
 #define BAM_DMA_BUF_MODE_BASE		0x00
 #define BAM_DMA_BUF_MODE_OFFSET		0x24
