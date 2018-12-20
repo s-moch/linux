@@ -52,7 +52,7 @@ static int saa716x_budget_pci_probe(struct pci_dev *pdev, const struct pci_devic
 	struct saa716x_dev *saa716x;
 	int err = 0;
 
-	saa716x = kzalloc(sizeof (struct saa716x_dev), GFP_KERNEL);
+	saa716x = kzalloc(sizeof(struct saa716x_dev), GFP_KERNEL);
 	if (saa716x == NULL) {
 		printk(KERN_ERR "saa716x_budget_pci_probe ERROR: out of memory\n");
 		err = -ENOMEM;
@@ -477,7 +477,7 @@ static int saa716x_tbs6285_frontend_attach(struct saa716x_adapter *adapter, int 
 	info.addr = ((count == 0) || (count == 2)) ? 0x64 : 0x66;
 	info.platform_data = &si2168_config;
 	request_module(info.type);
-	client = i2c_new_device( ((count == 0) || (count == 1)) ?
+	client = i2c_new_device(((count == 0) || (count == 1)) ?
 		&dev->i2c[1].i2c_adapter : &dev->i2c[0].i2c_adapter,
 		&info);
 	if (client == NULL || client->dev.driver == NULL) {
