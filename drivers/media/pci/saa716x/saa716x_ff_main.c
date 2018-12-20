@@ -307,7 +307,7 @@ static int saa716x_usercopy(struct dvb_device *dvbdev,
 			parg = sbuf;
 		} else {
 			/* too big to allocate from stack */
-			mbuf = kmalloc(_IOC_SIZE(cmd),GFP_KERNEL);
+			mbuf = kmalloc(_IOC_SIZE(cmd), GFP_KERNEL);
 			if (NULL == mbuf)
 				return -ENOMEM;
 			parg = mbuf;
@@ -456,7 +456,7 @@ static long dvb_audio_ioctl(struct file *file, unsigned int cmd, unsigned long a
 	if (!dvbdev)
 		return -ENODEV;
 
-	return saa716x_usercopy (dvbdev, cmd, arg, do_dvb_audio_ioctl);
+	return saa716x_usercopy(dvbdev, cmd, arg, do_dvb_audio_ioctl);
 }
 
 static struct file_operations dvb_audio_fops = {
@@ -913,7 +913,7 @@ static long dvb_video_ioctl(struct file *file, unsigned int cmd, unsigned long a
 	if (!dvbdev)
 		return -ENODEV;
 
-	return saa716x_usercopy (dvbdev, cmd, arg, do_dvb_video_ioctl);
+	return saa716x_usercopy(dvbdev, cmd, arg, do_dvb_video_ioctl);
 }
 
 static struct file_operations dvb_video_fops = {
@@ -982,7 +982,7 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id
 	u32 value;
 	unsigned long timeout;
 
-	saa716x = kzalloc(sizeof (struct saa716x_dev), GFP_KERNEL);
+	saa716x = kzalloc(sizeof(struct saa716x_dev), GFP_KERNEL);
 	if (saa716x == NULL) {
 		printk(KERN_ERR "saa716x_budget_pci_probe ERROR: out of memory\n");
 		err = -ENOMEM;
@@ -1713,7 +1713,8 @@ static struct saa716x_config saa716x_s26400_config = {
 			/* Adapter 0 */
 			.ts_vp   = 1,
 			.ts_fgpi = 2
-		},{
+		},
+		{
 			/* Adapter 1 */
 			.ts_vp   = 2,
 			.ts_fgpi = 3
