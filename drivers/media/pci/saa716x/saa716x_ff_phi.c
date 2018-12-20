@@ -153,7 +153,7 @@ void saa716x_ff_phi_config(struct saa716x_dev *saa716x)
 }
 
 void saa716x_ff_phi_write(struct saa716x_dev *saa716x,
-			  u32 address, const u8 * data, int length)
+			  u32 address, const u8 *data, int length)
 {
 	struct sti7109_dev *sti7109 = saa716x->priv;
 	int i;
@@ -175,7 +175,7 @@ void saa716x_ff_phi_write(struct saa716x_dev *saa716x,
 }
 
 void saa716x_ff_phi_read(struct saa716x_dev *saa716x,
-			 u32 address, u8 * data, int length)
+			 u32 address, u8 *data, int length)
 {
 	struct sti7109_dev *sti7109 = saa716x->priv;
 	int i;
@@ -197,7 +197,7 @@ void saa716x_ff_phi_read(struct saa716x_dev *saa716x,
 }
 
 void saa716x_ff_phi_write_fifo(struct saa716x_dev *saa716x,
-			       const u8 * data, int length)
+			       const u8 *data, int length)
 {
 	struct sti7109_dev *sti7109 = saa716x->priv;
 	int i;
