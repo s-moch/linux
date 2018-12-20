@@ -1,7 +1,7 @@
 #ifndef __SAA716x_GPIO_H
 #define __SAA716x_GPIO_H
 
-#define BOOT_MODE	GPIO_31 | GPIO_30
+#define BOOT_MODE	(GPIO_31 | GPIO_30)
 #define AV_UNIT_B	GPIO_25
 #define AV_UNIT_A	GPIO_24
 #define AV_INTR_B	GPIO_01
