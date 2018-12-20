@@ -502,7 +502,7 @@ static ssize_t ringbuffer_write_user(struct dvb_ringbuffer *rbuf, const u8 __use
 	split = (rbuf->pwrite + len > rbuf->size) ? rbuf->size - rbuf->pwrite : 0;
 
 	if (split > 0) {
-        	if (copy_from_user(rbuf->data+rbuf->pwrite, buf, split)) {
+		if (copy_from_user(rbuf->data+rbuf->pwrite, buf, split)) {
 			return -EFAULT;
 		}
 		buf += split;
@@ -625,46 +625,46 @@ static int video_vip_get_stream_params(struct vip_stream_params *params,
 				       u32 mode)
 {
 	switch (mode) {
-		case 4:  /* 1280x720p60 */
-		case 19: /* 1280x720p50 */
-			params->bits		= 16;
-			params->samples		= 1280;
-			params->lines		= 720;
-			params->pitch		= 1280 * 2;
-			params->offset_x	= 32;
-			params->offset_y	= 30;
-			params->stream_flags	= VIP_HD;
-			break;
+	case 4:  /* 1280x720p60 */
+	case 19: /* 1280x720p50 */
+		params->bits		= 16;
+		params->samples		= 1280;
+		params->lines		= 720;
+		params->pitch		= 1280 * 2;
+		params->offset_x	= 32;
+		params->offset_y	= 30;
+		params->stream_flags	= VIP_HD;
+		break;
 
-		case 5:  /* 1920x1080i60 */
-		case 20: /* 1920x1080i50 */
-			params->bits		= 16;
-			params->samples		= 1920;
-			params->lines		= 1080;
-			params->pitch		= 1920 * 2;
-			params->offset_x	= 0;
-			params->offset_y	= 20;
-			params->stream_flags	= VIP_ODD_FIELD
-						| VIP_EVEN_FIELD
-						| VIP_INTERLACED
-						| VIP_HD
-						| VIP_NO_SCALER;
-			break;
+	case 5:  /* 1920x1080i60 */
+	case 20: /* 1920x1080i50 */
+		params->bits		= 16;
+		params->samples		= 1920;
+		params->lines		= 1080;
+		params->pitch		= 1920 * 2;
+		params->offset_x	= 0;
+		params->offset_y	= 20;
+		params->stream_flags	= VIP_ODD_FIELD
+					| VIP_EVEN_FIELD
+					| VIP_INTERLACED
+					| VIP_HD
+					| VIP_NO_SCALER;
+		break;
 
-		case 32: /* 1920x1080p24 */
-		case 33: /* 1920x1080p25 */
-		case 34: /* 1920x1080p30 */
-			params->bits		= 16;
-			params->samples		= 1920;
-			params->lines		= 1080;
-			params->pitch		= 1920 * 2;
-			params->offset_x	= 0;
-			params->offset_y	= 0;
-			params->stream_flags	= VIP_HD;
-			break;
+	case 32: /* 1920x1080p24 */
+	case 33: /* 1920x1080p25 */
+	case 34: /* 1920x1080p30 */
+		params->bits		= 16;
+		params->samples		= 1920;
+		params->lines		= 1080;
+		params->pitch		= 1920 * 2;
+		params->offset_x	= 0;
+		params->offset_y	= 0;
+		params->stream_flags	= VIP_HD;
+		break;
 
-		default:
-			return -1;
+	default:
+		return -1;
 	}
 	return 0;
 }
@@ -815,12 +815,10 @@ static ssize_t dvb_video_write(struct file *file, const char __user *buf,
 
 	ringbuffer_avail = dvb_ringbuffer_avail(&sti7109->tsout);
 	spin_lock(&sti7109->tsout.lock);
-	if ((sti7109->tsout_stat == TSOUT_STAT_FILL) &&
-	    (ringbuffer_avail > TSOUT_LEVEL_FILL)) {
+	if ((sti7109->tsout_stat == TSOUT_STAT_FILL) && (ringbuffer_avail > TSOUT_LEVEL_FILL)) {
 		sti7109->tsout_stat = TSOUT_STAT_RUN;
 		SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, FPGA_FIFO_CTRL_IE | FPGA_FIFO_CTRL_RUN);
-	} else if ((sti7109->tsout_stat == TSOUT_STAT_WAIT) &&
-	         (ringbuffer_avail > TSOUT_LEVEL_HIGH)) {
+	} else if ((sti7109->tsout_stat == TSOUT_STAT_WAIT) && (ringbuffer_avail > TSOUT_LEVEL_HIGH)) {
 		sti7109->tsout_stat = TSOUT_STAT_RUN;
 		queue_work(sti7109->fifo_workq, &sti7109->fifo_work);
 	}
@@ -881,7 +879,7 @@ static int do_dvb_video_ioctl(struct dvb_device *dvbdev,
 		spin_lock(&sti7109->tsout.lock);
 		SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, 0);
 		sti7109->tsout.pread = sti7109->tsout.pwrite = 0;//dvb_ringbuffer_reset(&sti7109->tsout);
-        	sti7109->tsout_stat = TSOUT_STAT_FILL;
+		sti7109->tsout_stat = TSOUT_STAT_FILL;
 		spin_unlock(&sti7109->tsout.lock);
 		wake_up(&sti7109->tsout.queue);
 		break;
