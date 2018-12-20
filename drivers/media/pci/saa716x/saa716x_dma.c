@@ -108,7 +108,7 @@ static int saa716x_dmabuf_sgalloc(struct saa716x_dmabuf *dmabuf, void *buf, int 
 		pages = size / SAA716x_PAGE_SIZE;
 
 	/* Allocate memory for SG list */
-	dmabuf->sg_list = kzalloc(sizeof (struct scatterlist) * pages, GFP_KERNEL);
+	dmabuf->sg_list = kzalloc(sizeof(struct scatterlist) * pages, GFP_KERNEL);
 	if (dmabuf->sg_list == NULL) {
 		dprintk(SAA716x_ERROR, 1, "Failed to allocate memory for scatterlist.");
 		return -ENOMEM;
@@ -128,7 +128,7 @@ static int saa716x_dmabuf_sgalloc(struct saa716x_dmabuf *dmabuf, void *buf, int 
 		memset(dmabuf->mem_virt_noalign, 0, (pages + 1) * SAA716x_PAGE_SIZE);
 
 		/* align memory to page */
-		dmabuf->mem_virt = (void *) PAGE_ALIGN (((unsigned long) dmabuf->mem_virt_noalign));
+		dmabuf->mem_virt = (void *) PAGE_ALIGN(((unsigned long) dmabuf->mem_virt_noalign));
 
 		BUG_ON(!((((unsigned long) dmabuf->mem_virt) % SAA716x_PAGE_SIZE) == 0));
 	} else {
@@ -193,16 +193,16 @@ static void saa716x_dmabuf_sgpagefill(struct saa716x_dmabuf *dmabuf, struct scat
 			addr = ((u64)sg_dma_address(sg_cur)) + (j * SAA716x_PAGE_SIZE) - sg_cur->offset;
 
 			BUG_ON(addr == 0);
-			page[k * 2] = (u32 )addr; /* Low */
-			page[k * 2 + 1] = (u32 )(((u64) addr) >> 32); /* High */
+			page[k * 2] = (u32)addr; /* Low */
+			page[k * 2 + 1] = (u32)(((u64) addr) >> 32); /* High */
 			BUG_ON(page[k * 2] % SAA716x_PAGE_SIZE);
 			k++;
 		}
 	}
 
 	for (; k < (SAA716x_PAGE_SIZE / 8); k++) {
-		page[k * 2] = (u32 ) addr;
-		page[k * 2 + 1] = (u32 ) (((u64 ) addr) >> 32);
+		page[k * 2] = (u32) addr;
+		page[k * 2 + 1] = (u32) (((u64) addr) >> 32);
 	}
 
 	/* make "page table" page writable for the PC */
@@ -251,7 +251,7 @@ int saa716x_dmabuf_alloc(struct saa716x_dev *saa716x, struct saa716x_dmabuf *dma
 
 	BUG_ON(saa716x == NULL);
 	BUG_ON(dmabuf == NULL);
-	BUG_ON(! (size > 0));
+	BUG_ON(!(size > 0));
 
 	dmabuf->dma_type		= SAA716x_DMABUF_INT;
 
