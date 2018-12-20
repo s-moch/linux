@@ -174,7 +174,8 @@ int saa716x_dvb_init(struct saa716x_dev *saa716x)
 		saa716x_adap->demux.write_to_decoder	= NULL;
 
 		dprintk(SAA716x_DEBUG, 1, "dvb_dmx_init");
-		if ((result = dvb_dmx_init(&saa716x_adap->demux)) < 0) {
+		result = dvb_dmx_init(&saa716x_adap->demux);
+		if (result < 0) {
 			dprintk(SAA716x_ERROR, 1, "dvb_dmx_init failed, ERROR=%d", result);
 			goto err0;
 		}
@@ -184,33 +185,27 @@ int saa716x_dvb_init(struct saa716x_dev *saa716x)
 		saa716x_adap->dmxdev.capabilities	= 0;
 
 		dprintk(SAA716x_DEBUG, 1, "dvb_dmxdev_init");
-		if ((result = dvb_dmxdev_init(&saa716x_adap->dmxdev,
-					      &saa716x_adap->dvb_adapter)) < 0) {
-
+		result = dvb_dmxdev_init(&saa716x_adap->dmxdev, &saa716x_adap->dvb_adapter);
+		if (result < 0) {
 			dprintk(SAA716x_ERROR, 1, "dvb_dmxdev_init failed, ERROR=%d", result);
 			goto err1;
 		}
 
 		saa716x_adap->fe_hw.source = DMX_FRONTEND_0;
-
-		if ((result = saa716x_adap->demux.dmx.add_frontend(&saa716x_adap->demux.dmx,
-								   &saa716x_adap->fe_hw)) < 0) {
-
+		result = saa716x_adap->demux.dmx.add_frontend(&saa716x_adap->demux.dmx, &saa716x_adap->fe_hw);
+		if (result < 0) {
 			dprintk(SAA716x_ERROR, 1, "dvb_dmx_init failed, ERROR=%d", result);
 			goto err2;
 		}
 
 		saa716x_adap->fe_mem.source = DMX_MEMORY_FE;
-
-		if ((result = saa716x_adap->demux.dmx.add_frontend(&saa716x_adap->demux.dmx,
-								   &saa716x_adap->fe_mem)) < 0) {
+		result = saa716x_adap->demux.dmx.add_frontend(&saa716x_adap->demux.dmx, &saa716x_adap->fe_mem);
+		if (result < 0) {
 			dprintk(SAA716x_ERROR, 1, "dvb_dmx_init failed, ERROR=%d", result);
 			goto err3;
 		}
-
-		if ((result = saa716x_adap->demux.dmx.connect_frontend(&saa716x_adap->demux.dmx,
-								       &saa716x_adap->fe_hw)) < 0) {
-
+		result = saa716x_adap->demux.dmx.connect_frontend(&saa716x_adap->demux.dmx, &saa716x_adap->fe_hw);
+		if (result < 0) {
 			dprintk(SAA716x_ERROR, 1, "dvb_dmx_init failed, ERROR=%d", result);
 			goto err4;
 		}
