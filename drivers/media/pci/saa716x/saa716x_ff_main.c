@@ -320,7 +320,8 @@ static int saa716x_usercopy(struct dvb_device *dvbdev,
 	}
 
 	/* call driver */
-	if ((err = func(dvbdev, cmd, parg)) == -ENOIOCTLCMD)
+	err = func(dvbdev, cmd, parg);
+	if (err == -ENOIOCTLCMD)
 		err = -EINVAL;
 
 	if (err < 0)
