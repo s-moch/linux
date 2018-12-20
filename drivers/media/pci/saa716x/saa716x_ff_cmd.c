@@ -40,9 +40,9 @@ int sti7109_cmd_init(struct sti7109_dev *sti7109)
 	return 0;
 }
 
-static int sti7109_do_raw_cmd(struct sti7109_dev * sti7109)
+static int sti7109_do_raw_cmd(struct sti7109_dev *sti7109)
 {
-	struct saa716x_dev * saa716x = sti7109->dev;
+	struct saa716x_dev *saa716x = sti7109->dev;
 	unsigned long timeout;
 
 	timeout = 1 * HZ;
@@ -96,9 +96,9 @@ static int sti7109_do_raw_cmd(struct sti7109_dev * sti7109)
 	return 0;
 }
 
-int sti7109_raw_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
+int sti7109_raw_cmd(struct sti7109_dev *sti7109, osd_raw_cmd_t *cmd)
 {
-	struct saa716x_dev * saa716x = sti7109->dev;
+	struct saa716x_dev *saa716x = sti7109->dev;
 	int err;
 
 	if (cmd->cmd_len > SIZE_CMD_DATA) {
@@ -133,9 +133,9 @@ out:
 	return err;
 }
 
-static int sti7109_do_raw_osd_cmd(struct sti7109_dev * sti7109)
+static int sti7109_do_raw_osd_cmd(struct sti7109_dev *sti7109)
 {
-	struct saa716x_dev * saa716x = sti7109->dev;
+	struct saa716x_dev *saa716x = sti7109->dev;
 	unsigned long timeout;
 
 	timeout = 1 * HZ;
@@ -190,9 +190,9 @@ static int sti7109_do_raw_osd_cmd(struct sti7109_dev * sti7109)
 	return 0;
 }
 
-int sti7109_raw_osd_cmd(struct sti7109_dev * sti7109, osd_raw_cmd_t * cmd)
+int sti7109_raw_osd_cmd(struct sti7109_dev *sti7109, osd_raw_cmd_t *cmd)
 {
-	struct saa716x_dev * saa716x = sti7109->dev;
+	struct saa716x_dev *saa716x = sti7109->dev;
 	int err;
 
 	if (cmd->cmd_len > SIZE_OSD_CMD_DATA) {
@@ -227,16 +227,16 @@ out:
 	return err;
 }
 
-static int sti7109_do_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
+static int sti7109_do_raw_data(struct sti7109_dev *sti7109, osd_raw_data_t *data)
 {
-	struct saa716x_dev * saa716x = sti7109->dev;
+	struct saa716x_dev *saa716x = sti7109->dev;
 	unsigned long timeout;
 	u16 blockSize;
 	u16 lastBlockSize;
 	u16 numBlocks;
 	u16 blockIndex;
 	u8 blockHeader[SIZE_BLOCK_HEADER];
-	u8 * blockPtr;
+	u8 *blockPtr;
 	int activeBlock;
 	u16 blockOffset;
 
@@ -347,9 +347,9 @@ static int sti7109_do_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * da
 	return 0;
 }
 
-int sti7109_raw_data(struct sti7109_dev * sti7109, osd_raw_data_t * data)
+int sti7109_raw_data(struct sti7109_dev *sti7109, osd_raw_data_t *data)
 {
-	struct saa716x_dev * saa716x = sti7109->dev;
+	struct saa716x_dev *saa716x = sti7109->dev;
 	int err;
 
 	if (data->data_length > MAX_DATA_LEN) {
