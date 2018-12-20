@@ -50,7 +50,7 @@ static int saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct pci_devic
 	struct saa716x_dev *saa716x;
 	int err = 0;
 
-	saa716x = kzalloc(sizeof (struct saa716x_dev), GFP_KERNEL);
+	saa716x = kzalloc(sizeof(struct saa716x_dev), GFP_KERNEL);
 	if (saa716x == NULL) {
 		printk(KERN_ERR "saa716x_hybrid_pci_probe ERROR: out of memory\n");
 		err = -ENOMEM;
