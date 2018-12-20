@@ -358,11 +358,9 @@ int saa716x_vip_init(struct saa716x_dev *saa716x, int port,
 	/* reset VI */
 	SAA716x_EPWR(vi_ch[port], VI_MODE, SOFT_RESET);
 
-	for (n = 0; n < 2; n++)
-	{
+	for (n = 0; n < 2; n++) {
 		saa716x->vip[port].dma_channel[n] = port * 3 + n;
-		for (i = 0; i < VIP_BUFFERS; i++)
-		{
+		for (i = 0; i < VIP_BUFFERS; i++) {
 			ret = saa716x_dmabuf_alloc(
 					saa716x,
 					&saa716x->vip[port].dma_buf[n][i],
@@ -388,13 +386,9 @@ int saa716x_vip_exit(struct saa716x_dev *saa716x, int port)
 
 	tasklet_kill(&saa716x->vip[port].tasklet);
 	for (n = 0; n < 2; n++)
-	{
 		for (i = 0; i < VIP_BUFFERS; i++)
-		{
 			saa716x_dmabuf_free(
 				saa716x, &saa716x->vip[port].dma_buf[n][i]);
-		}
-	}
 
 	return 0;
 }
