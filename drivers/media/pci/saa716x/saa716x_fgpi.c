@@ -352,8 +352,7 @@ int saa716x_fgpi_init(struct saa716x_dev *saa716x, int port, int dma_buf_size,
 	int ret;
 
 	saa716x->fgpi[port].dma_channel = port + 6;
-	for (i = 0; i < FGPI_BUFFERS; i++)
-	{
+	for (i = 0; i < FGPI_BUFFERS; i++) {
 		ret = saa716x_dmabuf_alloc(saa716x,
 					   &saa716x->fgpi[port].dma_buf[i],
 					   dma_buf_size);
@@ -376,9 +375,7 @@ int saa716x_fgpi_exit(struct saa716x_dev *saa716x, int port)
 
 	tasklet_kill(&saa716x->fgpi[port].tasklet);
 	for (i = 0; i < FGPI_BUFFERS; i++)
-	{
 		saa716x_dmabuf_free(saa716x, &saa716x->fgpi[port].dma_buf[i]);
-	}
 
 	return 0;
 }
