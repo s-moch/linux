@@ -64,7 +64,7 @@ int saa716x_fgpi_get_write_index(struct saa716x_dev *saa716x, u32 fgpi_index)
 	u32 buf_mode_reg;
 	u32 buf_mode;
 
- 	switch (fgpi_index) {
+	switch (fgpi_index) {
 	case 0: /* FGPI_0 */
 		fgpi_base = FGPI0;
 		buf_mode_reg = BAM_FGPI0_DMA_BUF_MODE;

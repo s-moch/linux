@@ -239,8 +239,10 @@ int saa716x_dvb_init(struct saa716x_dev *saa716x)
 		}
 
 		/* assign video port to fgpi */
-		SAA716x_EPWR(GREG, GREG_FGPI_CTRL, SAA716x_EPRD(GREG, GREG_FGPI_CTRL) |
-		             (GREG_FGPI_CTRL_SEL(config->adap_config[i].ts_vp) << (config->adap_config[i].ts_fgpi * 3)));
+		SAA716x_EPWR(GREG, GREG_FGPI_CTRL,
+				 SAA716x_EPRD(GREG, GREG_FGPI_CTRL) |
+				 (GREG_FGPI_CTRL_SEL(config->adap_config[i].ts_vp) <<
+				  (config->adap_config[i].ts_fgpi * 3)));
 
 		saa716x_fgpi_init(saa716x, config->adap_config[i].ts_fgpi,
 				  SAA716X_TS_DMA_BUF_SIZE,
