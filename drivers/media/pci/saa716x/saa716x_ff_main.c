@@ -622,7 +622,7 @@ static void video_vip_worker(unsigned long data)
 	} while (write_index != vip_entry->read_index);
 }
 
-static int video_vip_get_stream_params(struct vip_stream_params * params,
+static int video_vip_get_stream_params(struct vip_stream_params *params,
 				       u32 mode)
 {
 	switch (mode)
@@ -672,7 +672,7 @@ static int video_vip_get_stream_params(struct vip_stream_params * params,
 }
 
 static ssize_t video_vip_read(struct sti7109_dev *sti7109,
-			      struct vip_stream_params * stream_params,
+			      struct vip_stream_params *stream_params,
 			      char __user *buf, size_t count)
 {
 	struct saa716x_dev *saa716x = sti7109->dev;
