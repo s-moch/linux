@@ -68,7 +68,7 @@ int saa716x_getbootscript_setup(struct saa716x_dev *saa716x)
 		M = ((cgu->clk_boot_div[i] >>  3) & 0xff) + N;
 
 		if (M)
-			cgu->clk_freq[i] = (u32 ) N * PLL_FREQ / (u32 ) M;
+			cgu->clk_freq[i] = (u32) N * PLL_FREQ / (u32) M;
 		else
 			cgu->clk_freq[i] = 0;
 
@@ -341,7 +341,7 @@ int saa716x_get_clk(struct saa716x_dev *saa716x,
 		break;
 
 	case CLK_DOMAIN_VI1VBI:
-		*frequency =cgu->clk_freq[CLK_DOMAIN_VI1];
+		*frequency = cgu->clk_freq[CLK_DOMAIN_VI1];
 		break;
 	default:
 		dprintk(SAA716x_ERROR, 1, "Error Clock domain <%02x>", domain);
