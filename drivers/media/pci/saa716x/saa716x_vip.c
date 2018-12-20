@@ -39,8 +39,8 @@ EXPORT_SYMBOL_GPL(saa716x_vipint_disable);
 
 void saa716x_vip_disable(struct saa716x_dev *saa716x)
 {
-       SAA716x_EPWR(VI0, VIP_POWER_DOWN, VI_PWR_DWN);
-       SAA716x_EPWR(VI1, VIP_POWER_DOWN, VI_PWR_DWN);
+	SAA716x_EPWR(VI0, VIP_POWER_DOWN, VI_PWR_DWN);
+	SAA716x_EPWR(VI1, VIP_POWER_DOWN, VI_PWR_DWN);
 }
 EXPORT_SYMBOL_GPL(saa716x_vip_disable);
 
