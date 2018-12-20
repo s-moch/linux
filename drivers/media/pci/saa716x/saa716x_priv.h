@@ -25,8 +25,8 @@
 #define SAA716x_INFO		2
 #define SAA716x_DEBUG		3
 
-#define SAA716x_DEV		(saa716x)->num
-#define SAA716x_VERBOSE		(saa716x)->verbose
+#define SAA716x_DEV		((saa716x)->num)
+#define SAA716x_VERBOSE		((saa716x)->verbose)
 #define SAA716x_MAX_ADAPTERS	4
 
 #define dprintk(__x, __y, __fmt, __arg...) do {								\
