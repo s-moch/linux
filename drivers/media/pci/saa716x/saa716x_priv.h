@@ -32,18 +32,18 @@
 #define dprintk(__x, __y, __fmt, __arg...) do {								\
 	if (__y) {											\
 		if	((SAA716x_VERBOSE > SAA716x_ERROR) && (SAA716x_VERBOSE > __x))			\
-			printk(KERN_ERR "%s (%d): " __fmt "\n" , __func__ , SAA716x_DEV , ##__arg);	\
+			printk(KERN_ERR "%s (%d): " __fmt "\n", __func__, SAA716x_DEV, ##__arg);	\
 		else if	((SAA716x_VERBOSE > SAA716x_NOTICE) && (SAA716x_VERBOSE > __x))			\
-			printk(KERN_NOTICE "%s (%d): " __fmt "\n" , __func__ , SAA716x_DEV , ##__arg);	\
+			printk(KERN_NOTICE "%s (%d): " __fmt "\n", __func__, SAA716x_DEV, ##__arg);	\
 		else if ((SAA716x_VERBOSE > SAA716x_INFO) && (SAA716x_VERBOSE > __x))			\
-			printk(KERN_INFO "%s (%d): " __fmt "\n" , __func__ , SAA716x_DEV , ##__arg);	\
+			printk(KERN_INFO "%s (%d): " __fmt "\n", __func__, SAA716x_DEV, ##__arg);	\
 		else if ((SAA716x_VERBOSE > SAA716x_DEBUG) && (SAA716x_VERBOSE > __x))			\
-			printk(KERN_DEBUG "%s (%d): " __fmt "\n" , __func__ , SAA716x_DEV , ##__arg);	\
+			printk(KERN_DEBUG "%s (%d): " __fmt "\n", __func__, SAA716x_DEV, ##__arg);	\
 	} else {											\
 		if (SAA716x_VERBOSE > __x)								\
-			printk(__fmt , ##__arg);							\
+			printk(__fmt, ##__arg);							\
 	}												\
-} while(0)
+} while (0)
 
 
 #define NXP_SEMICONDUCTOR	0x1131
