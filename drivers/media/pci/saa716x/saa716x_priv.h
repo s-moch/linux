@@ -112,7 +112,7 @@ struct saa716x_dev {
 	int				num; /* device count */
 	int				verbose;
 
-	u8 				revision;
+	u8				revision;
 
 	/* PCI */
 	void __iomem			*mmio;
