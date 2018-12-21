@@ -37,10 +37,6 @@
 #include "si2168.h"
 #include "si2157.h"
 
-unsigned int verbose;
-module_param(verbose, int, 0644);
-MODULE_PARM_DESC(verbose, "verbose startup messages, default is 1 (yes)");
-
 unsigned int int_type = 1;
 module_param(int_type, int, 0644);
 MODULE_PARM_DESC(int_type, "select Interrupt Handler type: 0=INT-A, 1=MSI. default: MSI mode");
@@ -54,12 +50,10 @@ static int saa716x_budget_pci_probe(struct pci_dev *pdev, const struct pci_devic
 
 	saa716x = kzalloc(sizeof(struct saa716x_dev), GFP_KERNEL);
 	if (saa716x == NULL) {
-		printk(KERN_ERR "saa716x_budget_pci_probe ERROR: out of memory\n");
 		err = -ENOMEM;
 		goto fail0;
 	}
 
-	saa716x->verbose	= verbose;
 	saa716x->int_type	= int_type;
 	saa716x->pdev		= pdev;
 	saa716x->module		= THIS_MODULE;
@@ -67,25 +61,25 @@ static int saa716x_budget_pci_probe(struct pci_dev *pdev, const struct pci_devic
 
 	err = saa716x_pci_init(saa716x);
 	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x PCI Initialization failed");
+		pci_err(saa716x->pdev, "PCI Initialization failed");
 		goto fail1;
 	}
 
 	err = saa716x_cgu_init(saa716x);
 	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x CGU Init failed");
+		pci_err(saa716x->pdev, "CGU Init failed");
 		goto fail1;
 	}
 
 	err = saa716x_jetpack_init(saa716x);
 	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x Jetpack core initialization failed");
+		pci_err(saa716x->pdev, "Jetpack core initialization failed");
 		goto fail2;
 	}
 
 	err = saa716x_i2c_init(saa716x);
 	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x I2C Initialization failed");
+		pci_err(saa716x->pdev, "I2C Initialization failed");
 		goto fail3;
 	}
 
@@ -93,7 +87,7 @@ static int saa716x_budget_pci_probe(struct pci_dev *pdev, const struct pci_devic
 
 	err = saa716x_dvb_init(saa716x);
 	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x DVB initialization failed");
+		pci_err(saa716x->pdev, "DVB initialization failed");
 		goto fail4;
 	}
 
@@ -127,17 +121,12 @@ static irqreturn_t saa716x_budget_pci_irq(int irq, void *dev_id)
 
 	u32 stat_h, stat_l, mask_h, mask_l;
 
-	if (unlikely(saa716x == NULL)) {
-		printk("%s: saa716x=NULL", __func__);
-		return IRQ_NONE;
-	}
-
 	stat_l = SAA716x_EPRD(MSI, MSI_INT_STATUS_L);
 	stat_h = SAA716x_EPRD(MSI, MSI_INT_STATUS_H);
 	mask_l = SAA716x_EPRD(MSI, MSI_INT_ENA_L);
 	mask_h = SAA716x_EPRD(MSI, MSI_INT_ENA_H);
 
-	dprintk(SAA716x_DEBUG, 1, "MSI STAT L=<%02x> H=<%02x>, CTL L=<%02x> H=<%02x>",
+	pci_dbg(saa716x->pdev, "MSI STAT L=<%02x> H=<%02x>, CTL L=<%02x> H=<%02x>",
 		stat_l, stat_h, mask_l, mask_h);
 
 	if (!((stat_l & mask_l) || (stat_h & mask_h)))
@@ -268,9 +257,9 @@ static int skystar2_express_hd_frontend_attach(struct saa716x_adapter *adapter,
 	struct stv6110x_devctl *ctl;
 
 	if (count < saa716x->config->adapters) {
-		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init",
+		pci_dbg(saa716x->pdev, "Adapter (%d) SAA716x frontend Init",
 			count);
-		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count,
+		pci_dbg(saa716x->pdev, "Adapter (%d) Device ID=%02x", count,
 			saa716x->pdev->subsystem_device);
 
 		saa716x_gpio_set_output(saa716x, 26);
@@ -288,12 +277,8 @@ static int skystar2_express_hd_frontend_attach(struct saa716x_adapter *adapter,
 					 &i2c->i2c_adapter,
 					 STV090x_DEMODULATOR_0);
 
-		if (adapter->fe) {
-			dprintk(SAA716x_NOTICE, 1, "found STV0903 @0x%02x",
-				skystar2_stv090x_config.address);
-		} else {
+		if (!adapter->fe)
 			goto exit;
-		}
 
 		adapter->fe->ops.set_voltage = skystar2_set_voltage;
 		adapter->fe->ops.enable_high_lnb_voltage = skystar2_voltage_boost;
@@ -304,9 +289,6 @@ static int skystar2_express_hd_frontend_attach(struct saa716x_adapter *adapter,
 				 &i2c->i2c_adapter);
 
 		if (ctl) {
-			dprintk(SAA716x_NOTICE, 1, "found STV6110(A) @0x%02x",
-				skystar2_stv6110x_config.addr);
-
 			skystar2_stv090x_config.tuner_init	    = ctl->tuner_init;
 			skystar2_stv090x_config.tuner_sleep	    = ctl->tuner_sleep;
 			skystar2_stv090x_config.tuner_set_mode	    = ctl->tuner_set_mode;
@@ -328,11 +310,11 @@ static int skystar2_express_hd_frontend_attach(struct saa716x_adapter *adapter,
 			goto exit;
 		}
 
-		dprintk(SAA716x_ERROR, 1, "Done!");
+		pci_dbg(saa716x->pdev, "Done!");
 		return 0;
 	}
 exit:
-	dprintk(SAA716x_ERROR, 1, "Frontend attach failed");
+	pci_err(saa716x->pdev, "Frontend attach failed");
 	return -ENODEV;
 }
 
@@ -419,12 +401,12 @@ static int saa716x_tbs6281_frontend_attach(struct saa716x_adapter *adapter, int 
 	}
 	adapter->i2c_client_tuner = client;
 
-	dev_dbg(&dev->pdev->dev, "%s frontend %d attached\n",
+	pci_dbg(dev->pdev, "%s frontend %d attached",
 		dev->config->model_name, count);
 
 	return 0;
 err:
-	dev_err(&dev->pdev->dev, "%s frontend %d attach failed\n",
+	pci_err(dev->pdev, "%s frontend %d attach failed",
 		dev->config->model_name, count);
 	return -ENODEV;
 }
@@ -513,12 +495,12 @@ static int saa716x_tbs6285_frontend_attach(struct saa716x_adapter *adapter, int 
 	}
 	adapter->i2c_client_tuner = client;
 
-	dev_dbg(&dev->pdev->dev, "%s frontend %d attached\n",
+	pci_dbg(dev->pdev, "%s frontend %d attached",
 		dev->config->model_name, count);
 
 	return 0;
 err:
-	dev_err(&dev->pdev->dev, "%s frontend %d attach failed\n",
+	pci_err(dev->pdev, "%s frontend %d attach failed",
 		dev->config->model_name, count);
 	return -ENODEV;
 }
