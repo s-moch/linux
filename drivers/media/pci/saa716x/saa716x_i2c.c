@@ -539,7 +539,7 @@ int saa716x_i2c_init(struct saa716x_dev *saa716x)
 
 			adapter->owner		= saa716x->module;
 			adapter->algo		= &saa716x_algo;
-			adapter->algo_data 	= NULL;
+			adapter->algo_data	= NULL;
 			adapter->timeout	= 500; /* FIXME ! */
 			adapter->retries	= 3; /* FIXME ! */
 			adapter->dev.parent	= &pdev->dev;
