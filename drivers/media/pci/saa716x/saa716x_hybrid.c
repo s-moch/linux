@@ -35,10 +35,6 @@
 #include "tda1004x.h"
 #include "tda827x.h"
 
-unsigned int verbose;
-module_param(verbose, int, 0644);
-MODULE_PARM_DESC(verbose, "verbose startup messages, default is 1 (yes)");
-
 unsigned int int_type = 1;
 module_param(int_type, int, 0644);
 MODULE_PARM_DESC(int_type, "select Interrupt Handler type: 0=INT-A, 1=MSI. default: MSI mode");
@@ -52,12 +48,10 @@ static int saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct pci_devic
 
 	saa716x = kzalloc(sizeof(struct saa716x_dev), GFP_KERNEL);
 	if (saa716x == NULL) {
-		printk(KERN_ERR "saa716x_hybrid_pci_probe ERROR: out of memory\n");
 		err = -ENOMEM;
 		goto fail0;
 	}
 
-	saa716x->verbose	= verbose;
 	saa716x->int_type	= int_type;
 	saa716x->pdev		= pdev;
 	saa716x->module		= THIS_MODULE;
@@ -65,25 +59,25 @@ static int saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct pci_devic
 
 	err = saa716x_pci_init(saa716x);
 	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x PCI Initialization failed");
+		pci_err(saa716x->pdev, "PCI Initialization failed");
 		goto fail1;
 	}
 
 	err = saa716x_cgu_init(saa716x);
 	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x CGU Init failed");
+		pci_err(saa716x->pdev, "CGU Init failed");
 		goto fail1;
 	}
 
 	err = saa716x_jetpack_init(saa716x);
 	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x Jetpack core Initialization failed");
+		pci_err(saa716x->pdev, "Jetpack core Initialization failed");
 		goto fail2;
 	}
 
 	err = saa716x_i2c_init(saa716x);
 	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x I2C Initialization failed");
+		pci_err(saa716x->pdev, "I2C Initialization failed");
 		goto fail3;
 	}
 
@@ -105,7 +99,7 @@ static int saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct pci_devic
 
 	err = saa716x_dvb_init(saa716x);
 	if (err) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x DVB initialization failed");
+		pci_err(saa716x->pdev, "DVB initialization failed");
 		goto fail4;
 	}
 
@@ -139,17 +133,12 @@ static irqreturn_t saa716x_hybrid_pci_irq(int irq, void *dev_id)
 
 	u32 stat_h, stat_l, mask_h, mask_l;
 
-	if (unlikely(saa716x == NULL)) {
-		printk("%s: saa716x=NULL", __func__);
-		return IRQ_NONE;
-	}
-
 	stat_l = SAA716x_EPRD(MSI, MSI_INT_STATUS_L);
 	stat_h = SAA716x_EPRD(MSI, MSI_INT_STATUS_H);
 	mask_l = SAA716x_EPRD(MSI, MSI_INT_ENA_L);
 	mask_h = SAA716x_EPRD(MSI, MSI_INT_ENA_H);
 
-	dprintk(SAA716x_DEBUG, 1, "MSI STAT L=<%02x> H=<%02x>, CTL L=<%02x> H=<%02x>",
+	pci_dbg(saa716x->pdev, "MSI STAT L=<%02x> H=<%02x>, CTL L=<%02x> H=<%02x>",
 		stat_l, stat_h, mask_l, mask_h);
 
 	if (!((stat_l & mask_l) || (stat_h & mask_h)))
@@ -211,10 +200,9 @@ static int saa716x_vp6090_frontend_attach(struct saa716x_adapter *adapter, int c
 	struct saa716x_dev *saa716x = adapter->saa716x;
 	struct saa716x_i2c *i2c = &saa716x->i2c[count];
 
-	dprintk(SAA716x_ERROR, 1, "Adapter (%d) SAA716x frontend Init", count);
-	dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
-
-	dprintk(SAA716x_ERROR, 1, "Adapter (%d) Power ON", count);
+	pci_dbg(saa716x->pdev, "Adapter (%d) SAA716x frontend Init", count);
+	pci_dbg(saa716x->pdev, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
+	pci_dbg(saa716x->pdev, "Adapter (%d) Power ON", count);
 
 	saa716x_gpio_set_output(saa716x, 11);
 	saa716x_gpio_set_output(saa716x, 10);
@@ -224,10 +212,10 @@ static int saa716x_vp6090_frontend_attach(struct saa716x_adapter *adapter, int c
 
 	adapter->fe = tda10046_attach(&tda1004x_vp6090_config, &i2c->i2c_adapter);
 	if (adapter->fe == NULL) {
-		dprintk(SAA716x_ERROR, 1, "Frontend attach failed");
+		pci_err(saa716x->pdev, "Frontend attach failed");
 		return -ENODEV;
 	} else {
-		dprintk(SAA716x_ERROR, 1, "Done!");
+		pci_dbg(saa716x->pdev, "Done!");
 		return 0;
 	}
 
@@ -295,9 +283,9 @@ static int saa716x_atlantis_frontend_attach(struct saa716x_adapter *adapter,
 	if (count < saa716x->config->adapters) {
 		u32 reset_gpio;
 
-		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init",
+		pci_dbg(saa716x->pdev, "Adapter (%d) SAA716x frontend Init",
 			count);
-		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count,
+		pci_dbg(saa716x->pdev, "Adapter (%d) Device ID=%02x", count,
 			saa716x->pdev->subsystem_device);
 
 		if (count == 0) {
@@ -326,25 +314,25 @@ static int saa716x_atlantis_frontend_attach(struct saa716x_adapter *adapter,
 		if (adapter->fe == NULL)
 			goto exit;
 
-		dprintk(SAA716x_ERROR, 1,
+		pci_dbg(saa716x->pdev,
 			"found TDA10046 DVB-T frontend @0x%02x",
 			tda1004x_atlantis_config.demod_address);
 
 		if (dvb_attach(tda827x_attach, adapter->fe,
 			       tda1004x_atlantis_config.tuner_address,
 			       &i2c->i2c_adapter, &tda827x_atlantis_config)) {
-			dprintk(SAA716x_ERROR, 1, "found TDA8275 tuner @0x%02x",
+			pci_dbg(saa716x->pdev, "found TDA8275 tuner @0x%02x",
 				tda1004x_atlantis_config.tuner_address);
 		} else {
 			goto exit;
 		}
 
-		dprintk(SAA716x_ERROR, 1, "Done!");
+		pci_dbg(saa716x->pdev, "Done!");
 		return 0;
 	}
 
 exit:
-	dprintk(SAA716x_ERROR, 1, "Frontend attach failed");
+	pci_err(saa716x->pdev, "Frontend attach failed");
 	return -ENODEV;
 }
 
@@ -413,9 +401,9 @@ static int saa716x_nemo_frontend_attach(struct saa716x_adapter *adapter, int cou
 
 
 	if (count  == 0) {
-		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) SAA716x frontend Init", count);
-		dprintk(SAA716x_DEBUG, 1, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
-		dprintk(SAA716x_ERROR, 1, "Adapter (%d) Power ON", count);
+		pci_dbg(saa716x->pdev, "Adapter (%d) SAA716x frontend Init", count);
+		pci_dbg(saa716x->pdev, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
+		pci_dbg(saa716x->pdev, "Adapter (%d) Power ON", count);
 
 		/* GPIO 26 controls a +15dB gain */
 		saa716x_gpio_set_output(saa716x, 26);
@@ -434,7 +422,7 @@ static int saa716x_nemo_frontend_attach(struct saa716x_adapter *adapter, int cou
 		adapter->fe = tda10046_attach(&tda1004x_nemo_config,
 					      &demod_i2c->i2c_adapter);
 		if (adapter->fe) {
-			dprintk(SAA716x_ERROR, 1, "found TDA10046 DVB-T frontend @0x%02x",
+			pci_dbg(saa716x->pdev, "found TDA10046 DVB-T frontend @0x%02x",
 				tda1004x_nemo_config.demod_address);
 
 		} else {
@@ -443,17 +431,17 @@ static int saa716x_nemo_frontend_attach(struct saa716x_adapter *adapter, int cou
 		if (dvb_attach(tda827x_attach, adapter->fe,
 			       tda1004x_nemo_config.tuner_address,
 			       &tuner_i2c->i2c_adapter, &tda827x_nemo_config)) {
-			dprintk(SAA716x_ERROR, 1, "found TDA8275 tuner @0x%02x",
+			pci_dbg(saa716x->pdev, "found TDA8275 tuner @0x%02x",
 				tda1004x_nemo_config.tuner_address);
 		} else {
 			goto exit;
 		}
-		dprintk(SAA716x_ERROR, 1, "Done!");
+		pci_dbg(saa716x->pdev, "Done!");
 	}
 
 	return 0;
 exit:
-	dprintk(SAA716x_ERROR, 1, "Frontend attach failed");
+	pci_err(saa716x->pdev, "Frontend attach failed");
 	return -ENODEV;
 }
 
