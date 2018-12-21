@@ -254,7 +254,7 @@ exit:
 	return err;
 }
 
-static struct stv6110x_config skystar2_stv6110x_config = {
+static const struct stv6110x_config skystar2_stv6110x_config = {
 	.addr			= 0x60,
 	.refclk			= 16000000,
 	.clk_div		= 2,
@@ -336,7 +336,7 @@ exit:
 	return -ENODEV;
 }
 
-static struct saa716x_config skystar2_express_hd_config = {
+static const struct saa716x_config skystar2_express_hd_config = {
 	.model_name		= SAA716x_MODEL_SKYSTAR2_EXPRESS_HD,
 	.dev_type		= SAA716x_DEV_SKYSTAR2_EXPRESS_HD,
 	.adapters		= 1,
@@ -429,7 +429,7 @@ err:
 	return -ENODEV;
 }
 
-static struct saa716x_config saa716x_tbs6281_config = {
+static const struct saa716x_config saa716x_tbs6281_config = {
 	.model_name		= SAA716x_MODEL_TBS6281,
 	.dev_type		= SAA716x_DEV_TBS6281,
 	.adapters		= 2,
@@ -523,7 +523,7 @@ err:
 	return -ENODEV;
 }
 
-static struct saa716x_config saa716x_tbs6285_config = {
+static const struct saa716x_config saa716x_tbs6285_config = {
 	.model_name		= SAA716x_MODEL_TBS6285,
 	.dev_type		= SAA716x_DEV_TBS6285,
 	.adapters		= 4,
