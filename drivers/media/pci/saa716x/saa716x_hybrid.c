@@ -196,7 +196,7 @@ static int tda1004x_vp6090_request_firmware(struct dvb_frontend *fe,
 	return request_firmware(fw, name, &adapter->saa716x->pdev->dev);
 }
 
-static struct tda1004x_config tda1004x_vp6090_config = {
+static const struct tda1004x_config tda1004x_vp6090_config = {
 	.demod_address		= 0x8,
 	.invert			= 0,
 	.invert_oclk		= 0,
@@ -234,7 +234,7 @@ static int saa716x_vp6090_frontend_attach(struct saa716x_adapter *adapter, int c
 	return 0;
 }
 
-static struct saa716x_config saa716x_vp6090_config = {
+static const struct saa716x_config saa716x_vp6090_config = {
 	.model_name		= SAA716x_MODEL_TWINHAN_VP6090,
 	.dev_type		= SAA716x_DEV_TWINHAN_VP6090,
 	.adapters		= 1,
@@ -260,7 +260,7 @@ static int tda1004x_atlantis_request_firmware(struct dvb_frontend *fe,
 	return request_firmware(fw, name, &adapter->saa716x->pdev->dev);
 }
 
-static struct tda1004x_config tda1004x_atlantis_config = {
+static const struct tda1004x_config tda1004x_atlantis_config = {
 	.demod_address		= 0x8,
 	.invert			= 0,
 	.invert_oclk		= 0,
@@ -348,7 +348,7 @@ exit:
 	return -ENODEV;
 }
 
-static struct saa716x_config saa716x_atlantis_config = {
+static const struct saa716x_config saa716x_atlantis_config = {
 	.model_name		= SAA716x_MODEL_NXP_ATLANTIS,
 	.dev_type		= SAA716x_DEV_NXP_ATLANTIS,
 	.adapters		= 2,
@@ -386,7 +386,7 @@ static int tda1004x_nemo_request_firmware(struct dvb_frontend *fe,
 	return request_firmware(fw, name, &adapter->saa716x->pdev->dev);
 }
 
-static struct tda1004x_config tda1004x_nemo_config = {
+static const struct tda1004x_config tda1004x_nemo_config = {
 	.demod_address		= 0x8,
 	.invert			= 0,
 	.invert_oclk		= 0,
@@ -457,7 +457,7 @@ exit:
 	return -ENODEV;
 }
 
-static struct saa716x_config saa716x_nemo_config = {
+static const struct saa716x_config saa716x_nemo_config = {
 	.model_name		= SAA716x_MODEL_NXP_NEMO,
 	.dev_type		= SAA716x_DEV_NXP_NEMO,
 	.adapters		= 1,
