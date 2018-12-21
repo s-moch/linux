@@ -35,7 +35,7 @@ int saa716x_ff_phi_init(struct saa716x_dev *saa716x)
 	int err;
 
 	if (pci_resource_len(pdev, 0) < 0x80000) {
-		dprintk(SAA716x_ERROR, 1, "wrong BAR0 length");
+		pci_err(saa716x->pdev, "wrong BAR0 length");
 		err = -ENODEV;
 		goto fail0;
 	}
@@ -43,14 +43,14 @@ int saa716x_ff_phi_init(struct saa716x_dev *saa716x)
 	/* skip first PHI window as it is already mapped */
 	sti7109->mmio_uc = ioremap_nocache(phi1_start + 0x10000, 0x30000);
 	if (!sti7109->mmio_uc) {
-		dprintk(SAA716x_ERROR, 1, "Mem PHI1 remap failed");
+		pci_err(saa716x->pdev, "Mem PHI1 remap failed");
 		err = -ENODEV;
 		goto fail0;
 	}
 
 	sti7109->mmio_wc = ioremap_wc(phi1_start + 0x40000, 0x20000);
 	if (!sti7109->mmio_wc) {
-		dprintk(SAA716x_ERROR, 1, "Mem PHI1 WC remap failed");
+		pci_err(saa716x->pdev, "Mem PHI1 WC remap failed");
 		err = -ENODEV;
 		goto fail1;
 	}
