@@ -53,10 +53,10 @@ static int sti7109_do_raw_cmd(struct sti7109_dev *sti7109)
 	if (timeout == -ERESTARTSYS || sti7109->cmd_ready == 0) {
 		if (timeout == -ERESTARTSYS) {
 			/* a signal arrived */
-			dprintk(SAA716x_ERROR, 1, "cmd ERESTARTSYS");
+			pci_err(saa716x->pdev, "cmd ERESTARTSYS");
 			return -ERESTARTSYS;
 		}
-		dprintk(SAA716x_ERROR, 1,
+		pci_err(saa716x->pdev,
 			"timed out waiting for command ready");
 	}
 
@@ -78,17 +78,17 @@ static int sti7109_do_raw_cmd(struct sti7109_dev *sti7109)
 			sti7109->result_len = 0;
 			if (timeout == -ERESTARTSYS) {
 				/* a signal arrived */
-				dprintk(SAA716x_ERROR, 1, "result ERESTARTSYS");
+				pci_err(saa716x->pdev, "result ERESTARTSYS");
 				return -ERESTARTSYS;
 			}
-			dprintk(SAA716x_ERROR, 1,
+			pci_err(saa716x->pdev,
 				"timed out waiting for command result");
 			return -EIO;
 		}
 
 		if (sti7109->result_len > sti7109->result_max_len) {
 			sti7109->result_len = sti7109->result_max_len;
-			dprintk(SAA716x_NOTICE, 1,
+			pci_err(saa716x->pdev,
 				"not enough space in result buffer");
 		}
 	}
@@ -102,7 +102,7 @@ int sti7109_raw_cmd(struct sti7109_dev *sti7109, osd_raw_cmd_t *cmd)
 	int err;
 
 	if (cmd->cmd_len > SIZE_CMD_DATA) {
-		dprintk(SAA716x_ERROR, 1, "command too long");
+		pci_err(saa716x->pdev, "command too long");
 		return -EFAULT;
 	}
 
@@ -146,10 +146,10 @@ static int sti7109_do_raw_osd_cmd(struct sti7109_dev *sti7109)
 	if (timeout == -ERESTARTSYS || sti7109->osd_cmd_ready == 0) {
 		if (timeout == -ERESTARTSYS) {
 			/* a signal arrived */
-			dprintk(SAA716x_ERROR, 1, "osd cmd ERESTARTSYS");
+			pci_err(saa716x->pdev, "osd cmd ERESTARTSYS");
 			return -ERESTARTSYS;
 		}
-		dprintk(SAA716x_ERROR, 1,
+		pci_err(saa716x->pdev,
 			"timed out waiting for osd command ready");
 	}
 
@@ -171,18 +171,18 @@ static int sti7109_do_raw_osd_cmd(struct sti7109_dev *sti7109)
 			sti7109->osd_result_len = 0;
 			if (timeout == -ERESTARTSYS) {
 				/* a signal arrived */
-				dprintk(SAA716x_ERROR, 1,
+				pci_err(saa716x->pdev,
 					"osd result ERESTARTSYS");
 				return -ERESTARTSYS;
 			}
-			dprintk(SAA716x_ERROR, 1,
+			pci_err(saa716x->pdev,
 				"timed out waiting for osd command result");
 			return -EIO;
 		}
 
 		if (sti7109->osd_result_len > sti7109->osd_result_max_len) {
 			sti7109->osd_result_len = sti7109->osd_result_max_len;
-			dprintk(SAA716x_NOTICE, 1,
+			pci_err(saa716x->pdev,
 				"not enough space in result buffer");
 		}
 	}
@@ -196,7 +196,7 @@ int sti7109_raw_osd_cmd(struct sti7109_dev *sti7109, osd_raw_cmd_t *cmd)
 	int err;
 
 	if (cmd->cmd_len > SIZE_OSD_CMD_DATA) {
-		dprintk(SAA716x_ERROR, 1, "command too long");
+		pci_err(saa716x->pdev, "command too long");
 		return -EFAULT;
 	}
 
@@ -248,10 +248,10 @@ static int sti7109_do_raw_data(struct sti7109_dev *sti7109, osd_raw_data_t *data
 	if (timeout == -ERESTARTSYS || sti7109->data_ready == 0) {
 		if (timeout == -ERESTARTSYS) {
 			/* a signal arrived */
-			dprintk(SAA716x_ERROR, 1, "data ERESTARTSYS");
+			pci_err(saa716x->pdev, "data ERESTARTSYS");
 			return -ERESTARTSYS;
 		}
-		dprintk(SAA716x_ERROR, 1, "timed out waiting for data ready");
+		pci_err(saa716x->pdev, "timed out waiting for data ready");
 		return -EIO;
 	}
 
@@ -315,7 +315,7 @@ static int sti7109_do_raw_data(struct sti7109_dev *sti7109, osd_raw_data_t *data
 						     timeout);
 
 			if (sti7109->block_done == 0) {
-				dprintk(SAA716x_ERROR, 1,
+				pci_err(saa716x->pdev,
 					"timed out waiting for block done");
 				/* send a data interrupt to cancel the transfer
 				   and reset the data handling */
@@ -334,7 +334,7 @@ static int sti7109_do_raw_data(struct sti7109_dev *sti7109, osd_raw_data_t *data
 				     timeout);
 
 	if (sti7109->block_done == 0) {
-		dprintk(SAA716x_ERROR, 1, "timed out waiting for block done");
+		pci_err(saa716x->pdev, "timed out waiting for block done");
 		/* send a data interrupt to cancel the transfer and reset the
 		   data handling */
 		SAA716x_EPWR(PHI_1, FPGA_ADDR_PHI_ISET, ISR_DATA_MASK);
@@ -353,7 +353,7 @@ int sti7109_raw_data(struct sti7109_dev *sti7109, osd_raw_data_t *data)
 	int err;
 
 	if (data->data_length > MAX_DATA_LEN) {
-		dprintk(SAA716x_ERROR, 1, "data too big");
+		pci_err(saa716x->pdev, "data too big");
 		return -EFAULT;
 	}
 
