@@ -392,13 +392,13 @@ out:
 	return err;
 }
 
-static struct file_operations dvb_osd_fops = {
+static const struct file_operations dvb_osd_fops = {
 	.unlocked_ioctl	= dvb_osd_ioctl,
 	.open		= dvb_generic_open,
 	.release	= dvb_generic_release,
 };
 
-static struct dvb_device dvbdev_osd = {
+static const struct dvb_device dvbdev_osd = {
 	.priv		= NULL,
 	.users		= 2,
 	.writers	= 2,
@@ -458,13 +458,13 @@ static long dvb_audio_ioctl(struct file *file, unsigned int cmd, unsigned long a
 	return saa716x_usercopy(dvbdev, cmd, arg, do_dvb_audio_ioctl);
 }
 
-static struct file_operations dvb_audio_fops = {
+static const struct file_operations dvb_audio_fops = {
 	.unlocked_ioctl	= dvb_audio_ioctl,
 	.open		= dvb_generic_open,
 	.release	= dvb_generic_release,
 };
 
-static struct dvb_device dvbdev_audio = {
+static const struct dvb_device dvbdev_audio = {
 	.priv		= NULL,
 	.users		= 1,
 	.writers	= 1,
@@ -911,7 +911,7 @@ static long dvb_video_ioctl(struct file *file, unsigned int cmd, unsigned long a
 	return saa716x_usercopy(dvbdev, cmd, arg, do_dvb_video_ioctl);
 }
 
-static struct file_operations dvb_video_fops = {
+static const struct file_operations dvb_video_fops = {
 	.read		= dvb_video_read,
 	.write		= dvb_video_write,
 	.unlocked_ioctl	= dvb_video_ioctl,
@@ -920,7 +920,7 @@ static struct file_operations dvb_video_fops = {
 	.poll		= dvb_video_poll,
 };
 
-static struct dvb_device dvbdev_video = {
+static const struct dvb_device dvbdev_video = {
 	.priv		= NULL,
 	.users		= 5,
 	.readers	= 5,
@@ -1616,13 +1616,13 @@ static struct stv090x_config tt6400_stv090x_config = {
 	.tuner_get_status	= NULL,
 };
 
-static struct stv6110x_config tt6400_stv6110x_config = {
+static const struct stv6110x_config tt6400_stv6110x_config = {
 	.addr			= 0x60,
 	.refclk			= 27000000,
 	.clk_div		= 2,
 };
 
-static struct isl6423_config tt6400_isl6423_config[2] = {
+static const struct isl6423_config tt6400_isl6423_config[2] = {
 	{
 		.current_max		= SEC_CURRENT_515m,
 		.curlim			= SEC_CURRENT_LIM_ON,
@@ -1694,7 +1694,7 @@ static int saa716x_s26400_frontend_attach(struct saa716x_adapter *adapter, int c
 	return 0;
 }
 
-static struct saa716x_config saa716x_s26400_config = {
+static const struct saa716x_config saa716x_s26400_config = {
 	.model_name		= SAA716x_MODEL_S2_6400_DUAL,
 	.dev_type		= SAA716x_DEV_S2_6400_DUAL,
 	.adapters		= 2,
