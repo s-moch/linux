@@ -89,7 +89,7 @@ static void ir_emit_key(unsigned long parm)
 			break;
 
 		default:
-			printk(KERN_ERR "%s: invalid protocol %x\n",
+			pci_err(saa716x->pdev, "%s: invalid protocol %x",
 				__func__, ir->protocol);
 			return;
 		}
@@ -100,8 +100,8 @@ static void ir_emit_key(unsigned long parm)
 
 	keycode = ir->key_map[data];
 
-	dprintk(SAA716x_DEBUG, 0,
-		"%s: code %08x -> addr %i data 0x%02x -> keycode %i\n",
+	pci_dbg(saa716x->pdev,
+		"%s: code %08x -> addr %i data 0x%02x -> keycode %i",
 		__func__, ircom, addr, data, keycode);
 
 	/* check device address */
@@ -109,7 +109,7 @@ static void ir_emit_key(unsigned long parm)
 		return;
 
 	if (!keycode) {
-		printk(KERN_WARNING "%s: code %08x -> addr %i data 0x%02x -> unknown key!\n",
+		pci_warn(saa716x->pdev, "%s: code %08x -> addr %i data 0x%02x -> unknown key!",
 			__func__, ircom, addr, data);
 		return;
 	}
