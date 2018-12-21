@@ -1,70 +1,55 @@
 menuconfig SAA716X_SUPPORT
-	bool "Support for SAA716x family from NXP/Philips"
-	depends on PCI && I2C
+	bool "Support for SAA7160/1/2 family from NXP/Philips"
+	depends on PCI && I2C && DVB_CORE
 	help
-	  support for saa716x
+	  Support for PCIe cards based on the SAA7160/SAA7161/SAA7162
+	  PCI Express bridge from NXP/Philips.
+	  There are budget, hybrid, and full-featured cards.
+	  Say Y if you own such a device and want to use it.
 
 if SAA716X_SUPPORT
 config SAA716X_CORE
-	tristate "SAA7160/1/2 PCI Express bridge based devices"
-	depends on PCI && I2C
-
-	help
-	  Support for PCI cards based on the SAA7160/1/2 PCI Express bridge.
-
-	  Say Y if you own such a device and want to use it.
+	tristate
 
 config DVB_SAA716X_BUDGET
 	tristate "SAA7160/1/2 based Budget PCIe cards (DVB only)"
-	depends on SAA716X_CORE && DVB_CORE
+	select SAA716X_CORE
 	select I2C_MUX
 	select DVB_STV6110x if MEDIA_SUBDRV_AUTOSELECT
 	select DVB_STV090x if MEDIA_SUBDRV_AUTOSELECT
 	select DVB_SI2168 if MEDIA_SUBDRV_AUTOSELECT
 	select MEDIA_TUNER_SI2157 if MEDIA_SUBDRV_AUTOSELECT
-
 	help
 	  Support for the SAA7160/1/2 based Budget PCIe DVB cards
 	  Currently supported devices are:
-
 	  * Technisat Skystar 2 Express HD
 	  * TurboSight 6281 (DVB-T/T2/C)
 	  * TurboSight 6285 (DVB-T/T2/C)
 
-	  Say Y if you own such a device and want to use it.
-
 config DVB_SAA716X_HYBRID
 	tristate "SAA7160/1/2 based Hybrid PCIe cards (DVB + Analog)"
-	depends on SAA716X_CORE && DVB_CORE
+	select SAA716X_CORE
 	select DVB_TDA1004X if MEDIA_SUBDRV_AUTOSELECT
 	select MEDIA_TUNER_TDA827X if MEDIA_SUBDRV_AUTOSELECT
-
 	help
 	  Support for the SAA7160/1/2 based Hybrid PCIe DVB cards
 	  Currently supported devices are:
-
 	  * NXP Reference (Atlantis) (DVB-T x2)
 	  * NXP Reference (Nemo) (DVB-T)
 	  * Twinhan/Azurewave VP-6090 (DVB-S x2, DVB-T x2)
 
-	  Say Y if you own such a device and want to use it.
-
 config DVB_SAA716X_FF
-	tristate "SAA7160/1/2 based Full Fledged PCIe cards"
-	depends on SAA716X_CORE && DVB_CORE
+	tristate "SAA7160/1/2 based Full-Featured PCIe cards"
 	depends on INPUT # IR
+	select SAA716X_CORE
 	select DVB_STV6110x if MEDIA_SUBDRV_AUTOSELECT
 	select DVB_STV090x if MEDIA_SUBDRV_AUTOSELECT
 	select DVB_ISL6423 if MEDIA_SUBDRV_AUTOSELECT
-
 	help
-	  Support for the SAA7160/1/2 based  Full fledged PCIe DVB cards
-	  These cards do feature a hardware MPEG decoder and other
-	  peripherals. Also known as Premium cards.
+	  Support for the SAA7160/1/2 based Full-Featured PCIe DVB cards
+	  These cards feature a hardware MPEG decoder and other peripherals.
+	  Also known as Premium cards.
 	  Currently supported devices are:
-
 	  * Technotrend S2 6400 Dual S2 HD (DVB-S/S2 x2)
-
-	  Say Y if you own such a device and want to use it.
 
 endif # SAA716X_SUPPORT
