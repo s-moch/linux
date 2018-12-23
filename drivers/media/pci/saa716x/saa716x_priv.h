@@ -1,13 +1,7 @@
 #ifndef __SAA716x_PRIV_H
 #define __SAA716x_PRIV_H
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/kernel.h>
 #include <linux/pci.h>
-#include <linux/mutex.h>
-#include <linux/ioport.h>
-#include <linux/i2c.h>
 #include "saa716x_i2c.h"
 #include "saa716x_cgu.h"
 #include "saa716x_dma.h"
