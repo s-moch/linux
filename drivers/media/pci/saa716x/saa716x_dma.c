@@ -17,11 +17,11 @@ static int saa716x_allocate_ptable(struct saa716x_dmabuf *dmabuf)
 	struct saa716x_dev *saa716x	= dmabuf->saa716x;
 	struct pci_dev *pdev		= saa716x->pdev;
 
-	dprintk(SAA716x_DEBUG, 1, "SG Page table allocate");
+	pci_dbg(saa716x->pdev, "SG Page table allocate");
 	dmabuf->mem_ptab_virt = (void *) __get_free_page(GFP_KERNEL);
 
 	if (dmabuf->mem_ptab_virt == NULL) {
-		dprintk(SAA716x_ERROR, 1, "ERROR: Out of pages !");
+		pci_err(saa716x->pdev, "ERROR: Out of pages !");
 		return -ENOMEM;
 	}
 
@@ -31,7 +31,7 @@ static int saa716x_allocate_ptable(struct saa716x_dmabuf *dmabuf)
 						DMA_TO_DEVICE);
 
 	if (dmabuf->mem_ptab_phys == 0) {
-		dprintk(SAA716x_ERROR, 1, "ERROR: map memory failed !");
+		pci_err(saa716x->pdev, "ERROR: map memory failed !");
 		return -ENOMEM;
 	}
 
@@ -46,7 +46,7 @@ static void saa716x_free_ptable(struct saa716x_dmabuf *dmabuf)
 	struct pci_dev *pdev		= saa716x->pdev;
 
 	BUG_ON(dmabuf == NULL);
-	dprintk(SAA716x_DEBUG, 1, "SG Page table free");
+	pci_dbg(saa716x->pdev, "SG Page table free");
 
 	/* free physical PCI memory */
 	if (dmabuf->mem_ptab_phys != 0) {
@@ -70,7 +70,7 @@ static void saa716x_dmabuf_sgfree(struct saa716x_dmabuf *dmabuf)
 	struct saa716x_dev *saa716x = dmabuf->saa716x;
 
 	BUG_ON(dmabuf == NULL);
-	dprintk(SAA716x_DEBUG, 1, "SG free");
+	pci_dbg(saa716x->pdev, "SG free");
 
 	dmabuf->mem_virt = NULL;
 	if (dmabuf->mem_virt_noalign != NULL) {
@@ -100,7 +100,7 @@ static int saa716x_dmabuf_sgalloc(struct saa716x_dmabuf *dmabuf, void *buf, int 
 
 	BUG_ON(!(size > 0));
 	BUG_ON(dmabuf == NULL);
-	dprintk(SAA716x_DEBUG, 1, "SG allocate");
+	pci_dbg(saa716x->pdev, "SG allocate");
 
 	if ((size % SAA716x_PAGE_SIZE) != 0) /* calculate required pages */
 		pages = size / SAA716x_PAGE_SIZE + 1;
@@ -110,11 +110,11 @@ static int saa716x_dmabuf_sgalloc(struct saa716x_dmabuf *dmabuf, void *buf, int 
 	/* Allocate memory for SG list */
 	dmabuf->sg_list = kzalloc(sizeof(struct scatterlist) * pages, GFP_KERNEL);
 	if (dmabuf->sg_list == NULL) {
-		dprintk(SAA716x_ERROR, 1, "Failed to allocate memory for scatterlist.");
+		pci_err(saa716x->pdev, "Failed to allocate memory for scatterlist.");
 		return -ENOMEM;
 	}
 
-	dprintk(SAA716x_DEBUG, 1, "Initializing SG table");
+	pci_dbg(saa716x->pdev, "Initializing SG table");
 	sg_init_table(dmabuf->sg_list, pages);
 
 	if (buf == NULL) {
@@ -122,7 +122,7 @@ static int saa716x_dmabuf_sgalloc(struct saa716x_dmabuf *dmabuf, void *buf, int 
 		/* allocate memory, unaligned */
 		dmabuf->mem_virt_noalign = vmalloc((pages + 1) * SAA716x_PAGE_SIZE);
 		if (dmabuf->mem_virt_noalign == NULL) {
-			dprintk(SAA716x_ERROR, 1, "Failed to allocate memory for buffer");
+			pci_err(saa716x->pdev, "Failed to allocate memory for buffer");
 			return -ENOMEM;
 		}
 		memset(dmabuf->mem_virt_noalign, 0, (pages + 1) * SAA716x_PAGE_SIZE);
@@ -138,7 +138,7 @@ static int saa716x_dmabuf_sgalloc(struct saa716x_dmabuf *dmabuf, void *buf, int 
 	dmabuf->list_len = pages; /* scatterlist length */
 	list = dmabuf->sg_list;
 
-	dprintk(SAA716x_DEBUG, 1, "Allocating SG pages");
+	pci_dbg(saa716x->pdev, "Allocating SG pages");
 	for (i = 0; i < pages; i++) {
 		if (buf == NULL)
 			pg = vmalloc_to_page(dmabuf->mem_virt + i * SAA716x_PAGE_SIZE);
@@ -149,7 +149,7 @@ static int saa716x_dmabuf_sgalloc(struct saa716x_dmabuf *dmabuf, void *buf, int 
 		sg_set_page(&list[i], pg, SAA716x_PAGE_SIZE, 0);
 	}
 
-	dprintk(SAA716x_DEBUG, 1, "Done!");
+	pci_dbg(saa716x->pdev, "Done!");
 	return 0;
 }
 
@@ -167,7 +167,7 @@ static void saa716x_dmabuf_sgpagefill(struct saa716x_dmabuf *dmabuf, struct scat
 	BUG_ON(dmabuf == NULL);
 	BUG_ON(sg_list == NULL);
 	BUG_ON(pages == 0);
-	dprintk(SAA716x_DEBUG, 1, "SG page fill");
+	pci_dbg(saa716x->pdev, "SG page fill");
 
 	/* make page writable for the PC */
 	dma_sync_single_for_cpu(&pdev->dev, dmabuf->mem_ptab_phys, SAA716x_PAGE_SIZE, DMA_TO_DEVICE);
@@ -218,7 +218,7 @@ void saa716x_dmabufsync_dev(struct saa716x_dmabuf *dmabuf)
 	struct saa716x_dev *saa716x	= dmabuf->saa716x;
 	struct pci_dev *pdev		= saa716x->pdev;
 
-	dprintk(SAA716x_DEBUG, 1, "DMABUF sync DEVICE");
+	pci_dbg(saa716x->pdev, "DMABUF sync DEVICE");
 	BUG_ON(dmabuf->sg_list == NULL);
 
 	dma_sync_sg_for_device(&pdev->dev,
@@ -233,7 +233,7 @@ void saa716x_dmabufsync_cpu(struct saa716x_dmabuf *dmabuf)
 	struct saa716x_dev *saa716x	= dmabuf->saa716x;
 	struct pci_dev *pdev		= saa716x->pdev;
 
-	dprintk(SAA716x_DEBUG, 1, "DMABUF sync CPU");
+	pci_dbg(saa716x->pdev, "DMABUF sync CPU");
 	BUG_ON(dmabuf->sg_list == NULL);
 
 	dma_sync_sg_for_cpu(&pdev->dev,
@@ -266,20 +266,20 @@ int saa716x_dmabuf_alloc(struct saa716x_dev *saa716x, struct saa716x_dmabuf *dma
 	/* Allocate page table */
 	ret = saa716x_allocate_ptable(dmabuf);
 	if (ret < 0) {
-		dprintk(SAA716x_ERROR, 1, "PT alloc failed, Out of memory");
+		pci_err(saa716x->pdev, "PT alloc failed, Out of memory");
 		goto err1;
 	}
 
 	/* Allocate buffer as SG */
 	ret = saa716x_dmabuf_sgalloc(dmabuf, NULL, size);
 	if (ret < 0) {
-		dprintk(SAA716x_ERROR, 1, "SG alloc failed");
+		pci_err(saa716x->pdev, "SG alloc failed");
 		goto err2;
 	}
 
 	ret = dma_map_sg(&pdev->dev, dmabuf->sg_list, dmabuf->list_len, DMA_FROM_DEVICE);
 	if (ret < 0) {
-		dprintk(SAA716x_ERROR, 1, "SG map failed");
+		pci_err(saa716x->pdev, "SG map failed");
 		goto err3;
 	}
 
