@@ -171,15 +171,6 @@ struct sti7109_dev {
 	u32			video_capture;
 	u32			video_format;
 
-	u32			int_count_enable;
-	u32			total_int_count;
-	u32			vi_int_count[2];
-	u32			fgpi_int_count[4];
-	u32			i2c_int_count[2];
-	u32			ext_int_total_count;
-	u32			ext_int_source_count[16];
-	u32			last_int_ticks;
-
 	u16			fpga_version;
 	u32			fw_version;
 };
