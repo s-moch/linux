@@ -194,11 +194,8 @@ static int saa716x_vp6090_frontend_attach(struct saa716x_adapter *adapter, int c
 	if (adapter->fe == NULL) {
 		pci_err(saa716x->pdev, "Frontend attach failed");
 		return -ENODEV;
-	} else {
-		pci_dbg(saa716x->pdev, "Done!");
-		return 0;
 	}
-
+	pci_dbg(saa716x->pdev, "Done!");
 	return 0;
 }
 
