@@ -38,8 +38,6 @@ static void saa716x_term_xfer(struct saa716x_i2c *i2c, u32 I2C_DEV)
 	SAA716x_EPWR(I2C_DEV, I2C_CONTROL, 0x80);
 	msleep(10);
 	SAA716x_EPWR(I2C_DEV, I2C_CONTROL, 0xc0);
-
-	return;
 }
 
 static void saa716x_i2c_hwdeinit(struct saa716x_i2c *i2c, u32 I2C_DEV)
