@@ -20,13 +20,13 @@ static int saa716x_request_irq(struct saa716x_dev *saa716x)
 
 	mode = PCI_IRQ_LEGACY; /* legacy fallback mode */
 	if (saa716x->int_type != MODE_INTA) {
-		dprintk(SAA716x_DEBUG, 1, "Enabling MSI mode");
+		pci_dbg(saa716x->pdev, "Enabling MSI mode");
 		mode |= PCI_IRQ_MSI;
 	}
 
 	ret = pci_alloc_irq_vectors(pdev, 1, 1, mode);
 	if (ret < 0) {
-		dprintk(SAA716x_ERROR, 1, "IRQ vector registration failed");
+		pci_err(saa716x->pdev, "IRQ vector registration failed");
 		return ret;
 	}
 	ret = request_irq(pci_irq_vector(pdev, 0),
@@ -52,12 +52,12 @@ int saa716x_pci_init(struct saa716x_dev *saa716x)
 	u32 msi_cap;
 	u8 revision;
 
-	dprintk(SAA716x_ERROR, 1, "found a %s PCIe card", saa716x->config->model_name);
+	pci_info(saa716x->pdev, "found a %s PCIe card", saa716x->config->model_name);
 
 	err = pci_enable_device(pdev);
 	if (err != 0) {
 		ret = -ENODEV;
-		dprintk(SAA716x_ERROR, 1, "ERROR: PCI enable failed (%i)", err);
+		pci_err(saa716x->pdev, "ERROR: PCI enable failed (%i)", err);
 		goto fail0;
 	}
 
@@ -65,13 +65,13 @@ int saa716x_pci_init(struct saa716x_dev *saa716x)
 		use_dac = 1;
 		err = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(64));
 		if (err) {
-			dprintk(SAA716x_ERROR, 1, "Unable to obtain 64bit DMA");
+			pci_err(saa716x->pdev, "Unable to obtain 64bit DMA");
 			goto fail1;
 		}
 	} else {
 		err = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(32));
 		if (err) {
-			dprintk(SAA716x_ERROR, 1, "Unable to obtain 32bit DMA");
+			pci_err(saa716x->pdev, "Unable to obtain 32bit DMA");
 			goto fail1;
 		}
 	}
@@ -80,7 +80,7 @@ int saa716x_pci_init(struct saa716x_dev *saa716x)
 
 	pm_cap = pci_find_capability(pdev, PCI_CAP_ID_PM);
 	if (pm_cap == 0) {
-		dprintk(SAA716x_ERROR, 1, "Cannot find Power Management Capability");
+		pci_err(saa716x->pdev, "Cannot find Power Management Capability");
 		err = -EIO;
 		goto fail1;
 	}
@@ -89,27 +89,27 @@ int saa716x_pci_init(struct saa716x_dev *saa716x)
 				pci_resource_len(pdev, 0),
 				DRIVER_NAME)) {
 
-		dprintk(SAA716x_ERROR, 1, "BAR0 Request failed");
+		pci_err(saa716x->pdev, "BAR0 Request failed");
 		ret = -ENODEV;
 		goto fail1;
 	}
 
 	if (pci_resource_len(pdev, 0) < 0x30000) {
-		dprintk(SAA716x_ERROR, 1, "wrong BAR0 length");
+		pci_err(saa716x->pdev, "wrong BAR0 length");
 		ret = -ENODEV;
 		goto fail2;
 	}
 
 	saa716x->mmio = ioremap_nocache(pci_resource_start(pdev, 0), 0x30000);
 	if (!saa716x->mmio) {
-		dprintk(SAA716x_ERROR, 1, "Mem 0 remap failed");
+		pci_err(saa716x->pdev, "Mem 0 remap failed");
 		ret = -ENODEV;
 		goto fail2;
 	}
 
 	err = saa716x_request_irq(saa716x);
 	if (err < 0) {
-		dprintk(SAA716x_ERROR, 1, "SAA716x IRQ registration failed, err=%d", err);
+		pci_err(saa716x->pdev, "IRQ registration failed, err=%d", err);
 		ret = -ENODEV;
 		goto fail3;
 	}
@@ -119,30 +119,27 @@ int saa716x_pci_init(struct saa716x_dev *saa716x)
 
 	saa716x->revision	= revision;
 
-	dprintk(SAA716x_ERROR, 0, " SAA%x Rev %d [%04x:%04x], irq: %d%s, mmio: 0x%p",
+	pci_info(saa716x->pdev, " SAA%x Rev %d, irq: %d%s",
 		saa716x->pdev->device,
 		revision,
-		saa716x->pdev->subsystem_vendor,
-		saa716x->pdev->subsystem_device,
 		saa716x->pdev->irq,
-		(((msi_cap >> 16) & 0x01) == 1 ? " (MSI)" : ""),
-		saa716x->mmio);
+		(((msi_cap >> 16) & 0x01) == 1 ? " (MSI)" : ""));
 
 	pci_set_drvdata(pdev, saa716x);
 
 	return 0;
 
 fail3:
-	dprintk(SAA716x_ERROR, 1, "Err: IO Unmap");
+	pci_err(saa716x->pdev, "Err: IO Unmap");
 	if (saa716x->mmio)
 		iounmap(saa716x->mmio);
 fail2:
-	dprintk(SAA716x_ERROR, 1, "Err: Release regions");
+	pci_err(saa716x->pdev, "Err: Release regions");
 	release_mem_region(pci_resource_start(pdev, 0),
 			   pci_resource_len(pdev, 0));
 
 fail1:
-	dprintk(SAA716x_ERROR, 1, "Err: Disabling device");
+	pci_err(saa716x->pdev, "Err: Disabling device");
 	pci_disable_device(pdev);
 
 fail0:
@@ -156,10 +153,6 @@ void saa716x_pci_exit(struct saa716x_dev *saa716x)
 	struct pci_dev *pdev = saa716x->pdev;
 
 	saa716x_free_irq(saa716x);
-
-	dprintk(SAA716x_NOTICE, 1, "SAA%02x mem0: 0x%p",
-		saa716x->pdev->device,
-		saa716x->mmio);
 
 	if (saa716x->mmio) {
 		iounmap(saa716x->mmio);
