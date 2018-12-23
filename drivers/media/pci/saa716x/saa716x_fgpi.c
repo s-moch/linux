@@ -86,7 +86,7 @@ int saa716x_fgpi_get_write_index(struct saa716x_dev *saa716x, u32 fgpi_index)
 		break;
 
 	default:
-		printk(KERN_ERR "%s: unexpected fgpi %u\n",
+		pci_err(saa716x->pdev, "%s: unexpected fgpi %u",
 		       __func__, fgpi_index);
 		return -1;
 	}
@@ -190,7 +190,7 @@ int saa716x_fgpi_setparams(struct saa716x_dmabuf *dmabuf,
 	}
 
 	if (val) {
-		dprintk(SAA716x_ERROR, 1, "Error: BAM FGPI Reset failed!");
+		pci_err(saa716x->pdev, "Error: BAM FGPI Reset failed!");
 		return -EIO;
 	}
 
@@ -210,7 +210,7 @@ int saa716x_fgpi_setparams(struct saa716x_dmabuf *dmabuf,
 	/* get module ID */
 	mid = SAA716x_EPRD(fgpi_port, FGPI_MODULE_ID);
 	if (mid != 0x14b0100)
-		dprintk(SAA716x_ERROR, 1, "FGPI Id<%04x> is not supported", mid);
+		pci_err(saa716x->pdev, "FGPI Id<%04x> is not supported", mid);
 
 	/* Initialize FGPI block */
 	SAA716x_EPWR(fgpi_port, FGPI_REC_SIZE, stream_params->samples * (stream_params->bits / 8));
@@ -309,7 +309,7 @@ int saa716x_fgpi_start(struct saa716x_dev *saa716x, int port,
 	}
 
 	if (!(val & 0x80)) {
-		dprintk(SAA716x_ERROR, 1, "Error: PTE pre-fetch failed!");
+		pci_err(saa716x->pdev, "Error: PTE pre-fetch failed!");
 		return -EIO;
 	}
 
