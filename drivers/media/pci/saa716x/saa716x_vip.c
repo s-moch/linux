@@ -146,7 +146,7 @@ static int saa716x_vip_setparams(struct saa716x_dev *saa716x, int port,
 	/* get module ID */
 	mid = SAA716x_EPRD(vi_port, VI_MODULE_ID);
 	if (mid != 0x11A5100) {
-		dprintk(SAA716x_ERROR, 1, "VIP Id<%04x> is not supported", mid);
+		pci_err(saa716x->pdev, "VIP Id<%04x> is not supported", mid);
 		return -1;
 	}
 
@@ -225,7 +225,7 @@ static int saa716x_vip_setparams(struct saa716x_dev *saa716x, int port,
 		i++;
 	}
 	if (val) {
-		dprintk(SAA716x_ERROR, 1, "Error: BAM VIP Reset failed!");
+		pci_err(saa716x->pdev, "Error: BAM VIP Reset failed!");
 		return -EIO;
 	}
 
@@ -301,7 +301,7 @@ int saa716x_vip_start(struct saa716x_dev *saa716x, int port, int one_shot,
 	}
 
 	if (!(val & 0x80)) {
-		dprintk(SAA716x_ERROR, 1, "Error: PTE pre-fetch failed!");
+		pci_err(saa716x->pdev, "PTE pre-fetch failed!");
 		return -EIO;
 	}
 
