@@ -1,6 +1,8 @@
 #ifndef __SAA716x_I2C_H
 #define __SAA716x_I2C_H
 
+#include <linux/i2c.h>
+
 #define SAA716x_I2C_ADAPTERS	2
 
 #define SAA716x_I2C_ADAPTER(__dev) ((	\
