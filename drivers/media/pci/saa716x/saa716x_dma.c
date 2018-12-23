@@ -86,11 +86,8 @@ static void saa716x_dmabuf_sgfree(struct saa716x_dmabuf *dmabuf)
 	}
 }
 
-/*
- * Create a SG, when an allocated buffer is passed to it,
- * otherwise the needed memory gets allocated by itself
- */
-static int saa716x_dmabuf_sgalloc(struct saa716x_dmabuf *dmabuf, void *buf, int size)
+/* Create a SG, the needed memory gets allocated */
+static int saa716x_dmabuf_sgalloc(struct saa716x_dmabuf *dmabuf, int size)
 {
 	struct saa716x_dev *saa716x	= dmabuf->saa716x;
 	struct scatterlist *list;
@@ -109,42 +106,28 @@ static int saa716x_dmabuf_sgalloc(struct saa716x_dmabuf *dmabuf, void *buf, int 
 
 	/* Allocate memory for SG list */
 	dmabuf->sg_list = kcalloc(pages, sizeof(struct scatterlist), GFP_KERNEL);
-	if (dmabuf->sg_list == NULL) {
-		pci_err(saa716x->pdev, "Failed to allocate memory for scatterlist.");
+	if (dmabuf->sg_list == NULL)
 		return -ENOMEM;
-	}
 
 	pci_dbg(saa716x->pdev, "Initializing SG table");
 	sg_init_table(dmabuf->sg_list, pages);
 
-	if (buf == NULL) {
+	/* allocate memory, unaligned */
+	dmabuf->mem_virt_noalign = vzalloc((pages + 1) * SAA716x_PAGE_SIZE);
+	if (dmabuf->mem_virt_noalign == NULL)
+		return -ENOMEM;
 
-		/* allocate memory, unaligned */
-		dmabuf->mem_virt_noalign = vmalloc((pages + 1) * SAA716x_PAGE_SIZE);
-		if (dmabuf->mem_virt_noalign == NULL) {
-			pci_err(saa716x->pdev, "Failed to allocate memory for buffer");
-			return -ENOMEM;
-		}
-		memset(dmabuf->mem_virt_noalign, 0, (pages + 1) * SAA716x_PAGE_SIZE);
+	/* align memory to page */
+	dmabuf->mem_virt = (void *) PAGE_ALIGN(((unsigned long) dmabuf->mem_virt_noalign));
 
-		/* align memory to page */
-		dmabuf->mem_virt = (void *) PAGE_ALIGN(((unsigned long) dmabuf->mem_virt_noalign));
-
-		BUG_ON(!((((unsigned long) dmabuf->mem_virt) % SAA716x_PAGE_SIZE) == 0));
-	} else {
-		dmabuf->mem_virt = buf;
-	}
+	BUG_ON(!((((unsigned long) dmabuf->mem_virt) % SAA716x_PAGE_SIZE) == 0));
 
 	dmabuf->list_len = pages; /* scatterlist length */
 	list = dmabuf->sg_list;
 
 	pci_dbg(saa716x->pdev, "Allocating SG pages");
 	for (i = 0; i < pages; i++) {
-		if (buf == NULL)
-			pg = vmalloc_to_page(dmabuf->mem_virt + i * SAA716x_PAGE_SIZE);
-		else
-			pg = virt_to_page(dmabuf->mem_virt + i * SAA716x_PAGE_SIZE);
-
+		pg = vmalloc_to_page(dmabuf->mem_virt + i * SAA716x_PAGE_SIZE);
 		BUG_ON(pg == NULL);
 		sg_set_page(&list[i], pg, SAA716x_PAGE_SIZE, 0);
 	}
@@ -271,7 +254,7 @@ int saa716x_dmabuf_alloc(struct saa716x_dev *saa716x, struct saa716x_dmabuf *dma
 	}
 
 	/* Allocate buffer as SG */
-	ret = saa716x_dmabuf_sgalloc(dmabuf, NULL, size);
+	ret = saa716x_dmabuf_sgalloc(dmabuf, size);
 	if (ret < 0) {
 		pci_err(saa716x->pdev, "SG alloc failed");
 		goto err2;
