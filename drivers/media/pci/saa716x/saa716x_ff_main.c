@@ -1,25 +1,4 @@
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include <linux/mutex.h>
-
-#include <asm/io.h>
-#include <asm/pgtable.h>
-#include <asm/page.h>
-#include <asm/byteorder.h>
-#include <linux/kmod.h>
-#include <linux/vmalloc.h>
-#include <linux/init.h>
-#include <linux/device.h>
 #include <linux/firmware.h>
-
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/interrupt.h>
-
-#include <linux/i2c.h>
-
 #include <linux/videodev2.h>
 #include <linux/dvb/video.h>
 #include <linux/dvb/audio.h>
