@@ -265,7 +265,7 @@ static int saa716x_usercopy(struct dvb_device *dvbdev,
 		} else {
 			/* too big to allocate from stack */
 			mbuf = kmalloc(_IOC_SIZE(cmd), GFP_KERNEL);
-			if (NULL == mbuf)
+			if (!mbuf)
 				return -ENOMEM;
 			parg = mbuf;
 		}
