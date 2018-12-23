@@ -108,7 +108,7 @@ static int saa716x_dmabuf_sgalloc(struct saa716x_dmabuf *dmabuf, void *buf, int 
 		pages = size / SAA716x_PAGE_SIZE;
 
 	/* Allocate memory for SG list */
-	dmabuf->sg_list = kzalloc(sizeof(struct scatterlist) * pages, GFP_KERNEL);
+	dmabuf->sg_list = kcalloc(pages, sizeof(struct scatterlist), GFP_KERNEL);
 	if (dmabuf->sg_list == NULL) {
 		pci_err(saa716x->pdev, "Failed to allocate memory for scatterlist.");
 		return -ENOMEM;
