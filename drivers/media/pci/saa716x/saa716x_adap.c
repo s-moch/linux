@@ -313,7 +313,5 @@ void saa716x_dvb_exit(struct saa716x_dev *saa716x)
 
 		saa716x_adap++;
 	}
-
-	return;
 }
 EXPORT_SYMBOL(saa716x_dvb_exit);
