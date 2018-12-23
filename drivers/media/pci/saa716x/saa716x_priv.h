@@ -99,7 +99,6 @@ struct saa716x_dev {
 	u32				I2C_DEV[2];
 
 	struct saa716x_adapter		saa716x_adap[SAA716x_MAX_ADAPTERS];
-	struct mutex			adap_lock;
 	struct saa716x_cgu		cgu;
 
 	spinlock_t			gpio_lock;
