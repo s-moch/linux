@@ -20,31 +20,7 @@
 #include <media/dvb_frontend.h>
 #include <media/dvb_net.h>
 
-#define SAA716x_ERROR		0
-#define SAA716x_NOTICE		1
-#define SAA716x_INFO		2
-#define SAA716x_DEBUG		3
-
-#define SAA716x_DEV		((saa716x)->num)
-#define SAA716x_VERBOSE		((saa716x)->verbose)
 #define SAA716x_MAX_ADAPTERS	4
-
-#define dprintk(__x, __y, __fmt, __arg...) do {								\
-	if (__y) {											\
-		if	((SAA716x_VERBOSE > SAA716x_ERROR) && (SAA716x_VERBOSE > __x))			\
-			printk(KERN_ERR "%s (%d): " __fmt "\n", __func__, SAA716x_DEV, ##__arg);	\
-		else if	((SAA716x_VERBOSE > SAA716x_NOTICE) && (SAA716x_VERBOSE > __x))			\
-			printk(KERN_NOTICE "%s (%d): " __fmt "\n", __func__, SAA716x_DEV, ##__arg);	\
-		else if ((SAA716x_VERBOSE > SAA716x_INFO) && (SAA716x_VERBOSE > __x))			\
-			printk(KERN_INFO "%s (%d): " __fmt "\n", __func__, SAA716x_DEV, ##__arg);	\
-		else if ((SAA716x_VERBOSE > SAA716x_DEBUG) && (SAA716x_VERBOSE > __x))			\
-			printk(KERN_DEBUG "%s (%d): " __fmt "\n", __func__, SAA716x_DEV, ##__arg);	\
-	} else {											\
-		if (SAA716x_VERBOSE > __x)								\
-			printk(__fmt, ##__arg);							\
-	}												\
-} while (0)
-
 
 #define NXP_SEMICONDUCTOR	0x1131
 #define SAA7160			0x7160
@@ -108,9 +84,6 @@ struct saa716x_dev {
 	struct saa716x_config		*config;
 	struct pci_dev			*pdev;
 	struct module			*module;
-
-	int				num; /* device count */
-	int				verbose;
 
 	u8				revision;
 
