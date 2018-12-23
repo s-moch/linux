@@ -140,8 +140,6 @@ int saa716x_dvb_init(struct saa716x_dev *saa716x)
 	struct saa716x_config *config = saa716x->config;
 	int result, i;
 
-	mutex_init(&saa716x->adap_lock);
-
 	/* all video input ports use their own clocks */
 	SAA716x_EPWR(GREG, GREG_VI_CTRL, 0x2C688000);
 	SAA716x_EPWR(GREG, GREG_FGPI_CTRL, 0);
