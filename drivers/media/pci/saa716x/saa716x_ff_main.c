@@ -53,10 +53,6 @@ unsigned int int_type = 1;
 module_param(int_type, int, 0644);
 MODULE_PARM_DESC(int_type, "select Interrupt Handler type: 0=INT-A, 1=MSI. default: MSI mode");
 
-unsigned int int_count_enable;
-module_param(int_count_enable, int, 0644);
-MODULE_PARM_DESC(int_count_enable, "enable counting of interrupts");
-
 unsigned int video_capture;
 module_param(video_capture, int, 0644);
 MODULE_PARM_DESC(video_capture, "capture digital video coming from STi7109: 0=off, 1=one-shot. default off");
@@ -1021,15 +1017,6 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id
 	sti7109->video_capture = video_capture;
 	mutex_init(&sti7109->video_lock);
 
-	sti7109->int_count_enable = int_count_enable;
-	sti7109->total_int_count = 0;
-	memset(sti7109->vi_int_count, 0, sizeof(sti7109->vi_int_count));
-	memset(sti7109->fgpi_int_count, 0, sizeof(sti7109->fgpi_int_count));
-	memset(sti7109->i2c_int_count, 0, sizeof(sti7109->i2c_int_count));
-	sti7109->ext_int_total_count = 0;
-	memset(sti7109->ext_int_source_count, 0, sizeof(sti7109->ext_int_source_count));
-	sti7109->last_int_ticks = jiffies;
-
 	saa716x_gpio_set_output(saa716x, TT_PREMIUM_GPIO_POWER_ENABLE);
 	saa716x_gpio_set_output(saa716x, TT_PREMIUM_GPIO_RESET_BACKEND);
 	saa716x_gpio_set_output(saa716x, TT_PREMIUM_GPIO_FPGA_CS0);
@@ -1212,41 +1199,23 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 	u32 msiStatusH;
 	u32 phiISR;
 
-	if (sti7109->int_count_enable)
-		sti7109->total_int_count++;
-
 	msiStatusL = SAA716x_EPRD(MSI, MSI_INT_STATUS_L);
 	SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_L, msiStatusL);
 	msiStatusH = SAA716x_EPRD(MSI, MSI_INT_STATUS_H);
 	SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_H, msiStatusH);
 
-	if (msiStatusL) {
-		if (msiStatusL & MSI_INT_TAGACK_VI0_0) {
-			if (sti7109->int_count_enable)
-				sti7109->vi_int_count[0]++;
-			tasklet_schedule(&saa716x->vip[0].tasklet);
-		}
-		if (msiStatusL & MSI_INT_TAGACK_FGPI_2) {
-			if (sti7109->int_count_enable)
-				sti7109->fgpi_int_count[2]++;
-			tasklet_schedule(&saa716x->fgpi[2].tasklet);
-		}
-		if (msiStatusL & MSI_INT_TAGACK_FGPI_3) {
-			if (sti7109->int_count_enable)
-				sti7109->fgpi_int_count[3]++;
-			tasklet_schedule(&saa716x->fgpi[3].tasklet);
-		}
-	}
+	if (msiStatusL & MSI_INT_TAGACK_VI0_0)
+		tasklet_schedule(&saa716x->vip[0].tasklet);
+	if (msiStatusL & MSI_INT_TAGACK_FGPI_2)
+		tasklet_schedule(&saa716x->fgpi[2].tasklet);
+	if (msiStatusL & MSI_INT_TAGACK_FGPI_3)
+		tasklet_schedule(&saa716x->fgpi[3].tasklet);
 
 	if (msiStatusH & MSI_INT_I2CINT_0) {
-		if (sti7109->int_count_enable)
-			sti7109->i2c_int_count[0]++;
 		saa716x->i2c[0].i2c_op = 0;
 		wake_up(&saa716x->i2c[0].i2c_wq);
 	}
 	if (msiStatusH & MSI_INT_I2CINT_1) {
-		if (sti7109->int_count_enable)
-			sti7109->i2c_int_count[1]++;
 		saa716x->i2c[1].i2c_op = 0;
 		wake_up(&saa716x->i2c[1].i2c_wq);
 	}
@@ -1254,14 +1223,6 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 	if (msiStatusH & MSI_INT_EXTINT_0) {
 
 		phiISR = SAA716x_EPRD(PHI_1, FPGA_ADDR_EMI_ISR);
-		if (sti7109->int_count_enable) {
-			int i;
-			sti7109->ext_int_total_count++;
-			for (i = 0; i < 16; i++)
-				if (phiISR & (1 << i))
-					sti7109->ext_int_source_count[i]++;
-		}
-
 		if (phiISR & ISR_CMD_MASK) {
 
 			u32 value;
@@ -1451,46 +1412,6 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 		}
 	}
 
-	if (sti7109->int_count_enable) {
-		if (jiffies - sti7109->last_int_ticks >= HZ) {
-			pci_dbg(saa716x->pdev,
-				"int count: t: %d, v: %d %d, f:%d %d %d %d, i:%d %d,"
-				"e: %d (%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d)",
-				sti7109->total_int_count,
-				sti7109->vi_int_count[0],
-				sti7109->vi_int_count[1],
-				sti7109->fgpi_int_count[0],
-				sti7109->fgpi_int_count[1],
-				sti7109->fgpi_int_count[2],
-				sti7109->fgpi_int_count[3],
-				sti7109->i2c_int_count[0],
-				sti7109->i2c_int_count[1],
-				sti7109->ext_int_total_count,
-				sti7109->ext_int_source_count[0],
-				sti7109->ext_int_source_count[1],
-				sti7109->ext_int_source_count[2],
-				sti7109->ext_int_source_count[3],
-				sti7109->ext_int_source_count[4],
-				sti7109->ext_int_source_count[5],
-				sti7109->ext_int_source_count[6],
-				sti7109->ext_int_source_count[7],
-				sti7109->ext_int_source_count[8],
-				sti7109->ext_int_source_count[9],
-				sti7109->ext_int_source_count[10],
-				sti7109->ext_int_source_count[11],
-				sti7109->ext_int_source_count[12],
-				sti7109->ext_int_source_count[13],
-				sti7109->ext_int_source_count[14],
-				sti7109->ext_int_source_count[15]);
-			sti7109->total_int_count = 0;
-			memset(sti7109->vi_int_count, 0, sizeof(sti7109->vi_int_count));
-			memset(sti7109->fgpi_int_count, 0, sizeof(sti7109->fgpi_int_count));
-			memset(sti7109->i2c_int_count, 0, sizeof(sti7109->i2c_int_count));
-			sti7109->ext_int_total_count = 0;
-			memset(sti7109->ext_int_source_count, 0, sizeof(sti7109->ext_int_source_count));
-			sti7109->last_int_ticks = jiffies;
-		}
-	}
 	return IRQ_HANDLED;
 }
 
