@@ -22,7 +22,7 @@ void saa716x_dma_start(struct saa716x_dev *saa716x, u8 adapter)
 {
 	struct fgpi_stream_params params;
 
-	dprintk(SAA716x_DEBUG, 1, "SAA716x Start DMA engine for Adapter:%d", adapter);
+	pci_dbg(saa716x->pdev, "Start DMA engine for Adapter:%d", adapter);
 
 	params.bits		= 8;
 	params.samples		= 188;
@@ -38,7 +38,7 @@ void saa716x_dma_start(struct saa716x_dev *saa716x, u8 adapter)
 
 void saa716x_dma_stop(struct saa716x_dev *saa716x, u8 adapter)
 {
-	dprintk(SAA716x_DEBUG, 1, "SAA716x Stop DMA engine for Adapter:%d", adapter);
+	pci_dbg(saa716x->pdev, "Stop DMA engine for Adapter:%d", adapter);
 
 	saa716x_fgpi_stop(saa716x, saa716x->config->adap_config[adapter].ts_fgpi);
 }
@@ -49,17 +49,17 @@ static int saa716x_dvb_start_feed(struct dvb_demux_feed *dvbdmxfeed)
 	struct saa716x_adapter *saa716x_adap	= dvbdmx->priv;
 	struct saa716x_dev *saa716x		= saa716x_adap->saa716x;
 
-	dprintk(SAA716x_DEBUG, 1, "SAA716x DVB Start feed");
+	pci_dbg(saa716x->pdev, "DVB Start feed");
 	if (!dvbdmx->dmx.frontend) {
-		dprintk(SAA716x_DEBUG, 1, "no frontend ?");
+		pci_dbg(saa716x->pdev, "no frontend ?");
 		return -EINVAL;
 	}
 	saa716x_adap->feeds++;
-	dprintk(SAA716x_DEBUG, 1, "SAA716x start feed, feeds=%d",
+	pci_dbg(saa716x->pdev, "start feed, feeds=%d",
 		saa716x_adap->feeds);
 
 	if (saa716x_adap->feeds == 1) {
-		dprintk(SAA716x_DEBUG, 1, "SAA716x start feed & dma");
+		pci_dbg(saa716x->pdev, "start feed & dma");
 		saa716x_dma_start(saa716x, saa716x_adap->count);
 	}
 
@@ -72,14 +72,14 @@ static int saa716x_dvb_stop_feed(struct dvb_demux_feed *dvbdmxfeed)
 	struct saa716x_adapter *saa716x_adap	= dvbdmx->priv;
 	struct saa716x_dev *saa716x		= saa716x_adap->saa716x;
 
-	dprintk(SAA716x_DEBUG, 1, "SAA716x DVB Stop feed");
+	pci_dbg(saa716x->pdev, "DVB Stop feed");
 	if (!dvbdmx->dmx.frontend) {
-		dprintk(SAA716x_DEBUG, 1, "no frontend ?");
+		pci_dbg(saa716x->pdev, "no frontend ?");
 		return -EINVAL;
 	}
 	saa716x_adap->feeds--;
 	if (saa716x_adap->feeds == 0) {
-		dprintk(SAA716x_DEBUG, 1, "saa716x stop feed and dma");
+		pci_dbg(saa716x->pdev, "stop feed and dma");
 		saa716x_dma_stop(saa716x, saa716x_adap->count);
 	}
 
@@ -104,7 +104,7 @@ static void saa716x_demux_worker(unsigned long data)
 		}
 	}
 	if (demux == NULL) {
-		printk(KERN_ERR "%s: unexpected channel %u\n",
+		pci_err(saa716x->pdev, "%s: unexpected channel %u",
 		       __func__, fgpi_entry->dma_channel);
 		return;
 	}
@@ -113,10 +113,10 @@ static void saa716x_demux_worker(unsigned long data)
 	if (write_index < 0)
 		return;
 
-	dprintk(SAA716x_DEBUG, 1, "dma buffer = %d", write_index);
+	pci_dbg(saa716x->pdev, "dma buffer = %d", write_index);
 
 	if (write_index == fgpi_entry->read_index) {
-		printk(KERN_DEBUG "%s: called but nothing to do\n", __func__);
+		pci_dbg(saa716x->pdev, "%s: called but nothing to do", __func__);
 		return;
 	}
 
@@ -148,14 +148,14 @@ int saa716x_dvb_init(struct saa716x_dev *saa716x)
 
 	for (i = 0; i < config->adapters; i++) {
 
-		dprintk(SAA716x_DEBUG, 1, "dvb_register_adapter");
+		pci_dbg(saa716x->pdev, "dvb_register_adapter");
 		if (dvb_register_adapter(&saa716x_adap->dvb_adapter,
 					 "SAA716x dvb adapter",
 					 saa716x->module,
 					 &saa716x->pdev->dev,
 					 adapter_nr) < 0) {
 
-			dprintk(SAA716x_ERROR, 1, "Error registering adapter");
+			pci_err(saa716x->pdev, "Error registering adapter");
 			return -ENODEV;
 		}
 
@@ -173,10 +173,10 @@ int saa716x_dvb_init(struct saa716x_dev *saa716x)
 		saa716x_adap->demux.stop_feed		= saa716x_dvb_stop_feed;
 		saa716x_adap->demux.write_to_decoder	= NULL;
 
-		dprintk(SAA716x_DEBUG, 1, "dvb_dmx_init");
+		pci_dbg(saa716x->pdev, "dvb_dmx_init");
 		result = dvb_dmx_init(&saa716x_adap->demux);
 		if (result < 0) {
-			dprintk(SAA716x_ERROR, 1, "dvb_dmx_init failed, ERROR=%d", result);
+			pci_dbg(saa716x->pdev, "dvb_dmx_init failed, ERROR=%d", result);
 			goto err0;
 		}
 
@@ -184,44 +184,44 @@ int saa716x_dvb_init(struct saa716x_dev *saa716x)
 		saa716x_adap->dmxdev.demux		= &saa716x_adap->demux.dmx;
 		saa716x_adap->dmxdev.capabilities	= 0;
 
-		dprintk(SAA716x_DEBUG, 1, "dvb_dmxdev_init");
+		pci_dbg(saa716x->pdev, "dvb_dmxdev_init");
 		result = dvb_dmxdev_init(&saa716x_adap->dmxdev, &saa716x_adap->dvb_adapter);
 		if (result < 0) {
-			dprintk(SAA716x_ERROR, 1, "dvb_dmxdev_init failed, ERROR=%d", result);
+			pci_err(saa716x->pdev, "dvb_dmxdev_init failed, ERROR=%d", result);
 			goto err1;
 		}
 
 		saa716x_adap->fe_hw.source = DMX_FRONTEND_0;
 		result = saa716x_adap->demux.dmx.add_frontend(&saa716x_adap->demux.dmx, &saa716x_adap->fe_hw);
 		if (result < 0) {
-			dprintk(SAA716x_ERROR, 1, "dvb_dmx_init failed, ERROR=%d", result);
+			pci_err(saa716x->pdev, "dvb_dmx_init failed, ERROR=%d", result);
 			goto err2;
 		}
 
 		saa716x_adap->fe_mem.source = DMX_MEMORY_FE;
 		result = saa716x_adap->demux.dmx.add_frontend(&saa716x_adap->demux.dmx, &saa716x_adap->fe_mem);
 		if (result < 0) {
-			dprintk(SAA716x_ERROR, 1, "dvb_dmx_init failed, ERROR=%d", result);
+			pci_err(saa716x->pdev, "dvb_dmx_init failed, ERROR=%d", result);
 			goto err3;
 		}
 		result = saa716x_adap->demux.dmx.connect_frontend(&saa716x_adap->demux.dmx, &saa716x_adap->fe_hw);
 		if (result < 0) {
-			dprintk(SAA716x_ERROR, 1, "dvb_dmx_init failed, ERROR=%d", result);
+			pci_err(saa716x->pdev, "dvb_dmx_init failed, ERROR=%d", result);
 			goto err4;
 		}
 
 		dvb_net_init(&saa716x_adap->dvb_adapter, &saa716x_adap->dvb_net, &saa716x_adap->demux.dmx);
 //		tasklet_init(&saa716x_adap->tasklet, saa716x_dma_xfer, (unsigned long) saa716x);
-		dprintk(SAA716x_DEBUG, 1, "Frontend Init");
+		pci_dbg(saa716x->pdev, "Frontend Init");
 		saa716x_adap->saa716x = saa716x;
 
 		if (config->frontend_attach) {
 			result = config->frontend_attach(saa716x_adap, i);
 			if (result < 0)
-				dprintk(SAA716x_ERROR, 1, "SAA716x frontend attach failed");
+				pci_err(saa716x->pdev, "frontend attach failed");
 
 			if (saa716x_adap->fe == NULL) {
-				dprintk(SAA716x_ERROR, 1, "A frontend driver was not found for [%04x:%04x] subsystem [%04x:%04x]\n",
+				pci_err(saa716x->pdev, "A frontend driver was not found for [%04x:%04x] subsystem [%04x:%04x]",
 					saa716x->pdev->vendor,
 					saa716x->pdev->device,
 					saa716x->pdev->subsystem_vendor,
@@ -229,13 +229,13 @@ int saa716x_dvb_init(struct saa716x_dev *saa716x)
 			} else {
 				result = dvb_register_frontend(&saa716x_adap->dvb_adapter, saa716x_adap->fe);
 				if (result < 0) {
-					dprintk(SAA716x_ERROR, 1, "SAA716x register frontend failed");
+					pci_err(saa716x->pdev, "register frontend failed");
 					goto err6;
 				}
 			}
 
 		} else {
-			dprintk(SAA716x_ERROR, 1, "Frontend attach = NULL");
+			pci_err(saa716x->pdev, "Frontend attach = NULL");
 		}
 
 		/* assign video port to fgpi */
@@ -308,7 +308,7 @@ void saa716x_dvb_exit(struct saa716x_dev *saa716x)
 		dvb_dmxdev_release(&saa716x_adap->dmxdev);
 		dvb_dmx_release(&saa716x_adap->demux);
 
-		dprintk(SAA716x_DEBUG, 1, "dvb_unregister_adapter");
+		pci_dbg(saa716x->pdev, "dvb_unregister_adapter");
 		dvb_unregister_adapter(&saa716x_adap->dvb_adapter);
 
 		saa716x_adap++;
