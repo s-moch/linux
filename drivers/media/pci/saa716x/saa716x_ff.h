@@ -5,6 +5,9 @@
 #include <linux/workqueue.h>
 #include <media/dvb_ringbuffer.h>
 
+#include "saa716x_ff_ir.h"
+#include "saa716x_priv.h"
+
 #define TECHNOTREND			0x13c2
 #define S2_6400_DUAL_S2_PREMIUM_DEVEL	0x3009
 #define S2_6400_DUAL_S2_PREMIUM_PROD	0x300A
@@ -111,7 +114,6 @@
 
 /* place to store all the necessary device information */
 struct sti7109_dev {
-	struct saa716x_dev	*dev;
 	struct dvb_device	*osd_dev;
 	struct dvb_device	*video_dev;
 	struct dvb_device	*audio_dev;
@@ -173,6 +175,12 @@ struct sti7109_dev {
 
 	u16			fpga_version;
 	u32			fw_version;
+};
+
+struct saa716x_ff_dev {
+	struct saa716x_dev	saa716x;
+	struct sti7109_dev	sti7109;
+	struct infrared		ir;
 };
 
 #endif /* __SAA716x_FF_H */
