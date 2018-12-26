@@ -21,7 +21,6 @@
 
 #include "saa716x_ff.h"
 #include "saa716x_ff_cmd.h"
-#include "saa716x_ff_ir.h"
 #include "saa716x_ff_phi.h"
 
 #include "stv6110x.h"
@@ -50,9 +49,10 @@ static void saa716x_ff_spi_write(struct saa716x_dev *saa716x, const u8 *data, in
 	}
 }
 
-static int saa716x_ff_fpga_init(struct saa716x_dev *saa716x)
+static int saa716x_ff_fpga_init(struct saa716x_ff_dev *saa716x_ff)
 {
-	struct sti7109_dev *sti7109 = saa716x->priv;
+	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
+	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
 	int fpgaInit;
 	int fpgaDone;
 	int rounds;
@@ -118,9 +118,10 @@ static int saa716x_ff_fpga_init(struct saa716x_dev *saa716x)
 	return 0;
 }
 
-static int saa716x_ff_st7109_init(struct saa716x_dev *saa716x)
+static int saa716x_ff_st7109_init(struct saa716x_ff_dev *saa716x_ff)
 {
-	struct sti7109_dev *sti7109 = saa716x->priv;
+	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
+	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
 	int i;
 	int length;
 	u32 requestedBlock;
@@ -149,7 +150,7 @@ static int saa716x_ff_st7109_init(struct saa716x_dev *saa716x)
 	pci_info(saa716x->pdev, "loader version %X.%02X",
 		loaderVersion >> 8, loaderVersion & 0xFF);
 
-	saa716x_ff_phi_write(saa716x, 0, fw->data, fw->size);
+	saa716x_ff_phi_write(saa716x_ff, 0, fw->data, fw->size);
 	msleep(10);
 
 	release_firmware(fw);
@@ -194,10 +195,10 @@ static int saa716x_ff_st7109_init(struct saa716x_dev *saa716x)
 		writtenBlock++;
 		/* write one block (last may differ from blockSize) */
 		if (lastBlockSize && writtenBlock == (numBlocks + 1))
-			saa716x_ff_phi_write(saa716x, 0, &fw->data[i],
+			saa716x_ff_phi_write(saa716x_ff, 0, &fw->data[i],
 					     lastBlockSize);
 		else
-			saa716x_ff_phi_write(saa716x, 0, &fw->data[i],
+			saa716x_ff_phi_write(saa716x_ff, 0, &fw->data[i],
 					     blockSize);
 
 		SAA716x_EPWR(PHI_1, 0x3ff8, writtenBlock);
@@ -363,18 +364,19 @@ static const struct dvb_device dvbdev_osd = {
 	.kernel_ioctl	= NULL,
 };
 
-static int saa716x_ff_osd_exit(struct saa716x_dev *saa716x)
+static int saa716x_ff_osd_exit(struct saa716x_ff_dev *saa716x_ff)
 {
-	struct sti7109_dev *sti7109 = saa716x->priv;
+	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
 
 	dvb_unregister_device(sti7109->osd_dev);
 	return 0;
 }
 
-static int saa716x_ff_osd_init(struct saa716x_dev *saa716x)
+static int saa716x_ff_osd_init(struct saa716x_ff_dev *saa716x_ff)
 {
-	struct saa716x_adapter *saa716x_adap	= saa716x->saa716x_adap;
-	struct sti7109_dev *sti7109		= saa716x->priv;
+	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
+	struct saa716x_adapter *saa716x_adap = saa716x->saa716x_adap;
+	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
 
 	dvb_register_device(&saa716x_adap->dvb_adapter,
 			    &sti7109->osd_dev,
@@ -429,18 +431,19 @@ static const struct dvb_device dvbdev_audio = {
 	.kernel_ioctl	= NULL,
 };
 
-static int saa716x_ff_audio_exit(struct saa716x_dev *saa716x)
+static int saa716x_ff_audio_exit(struct saa716x_ff_dev *saa716x_ff)
 {
-	struct sti7109_dev *sti7109 = saa716x->priv;
+	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
 
 	dvb_unregister_device(sti7109->audio_dev);
 	return 0;
 }
 
-static int saa716x_ff_audio_init(struct saa716x_dev *saa716x)
+static int saa716x_ff_audio_init(struct saa716x_ff_dev *saa716x_ff)
 {
-	struct saa716x_adapter *saa716x_adap	= saa716x->saa716x_adap;
-	struct sti7109_dev *sti7109		= saa716x->priv;
+	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
+	struct saa716x_adapter *saa716x_adap = saa716x->saa716x_adap;
+	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
 
 	dvb_register_device(&saa716x_adap->dvb_adapter,
 			    &sti7109->audio_dev,
@@ -475,19 +478,19 @@ static ssize_t ringbuffer_write_user(struct dvb_ringbuffer *rbuf, const u8 __use
 }
 
 static void ringbuffer_read_tofifo(struct dvb_ringbuffer *rbuf,
-				   struct saa716x_dev *saa716x, int len)
+				   struct saa716x_ff_dev *saa716x_ff, int len)
 {
 	size_t todo = len;
 	size_t split;
 
 	split = (rbuf->pread + len > rbuf->size) ? rbuf->size - rbuf->pread : 0;
 	if (split > 0) {
-		saa716x_ff_phi_write_fifo(saa716x, rbuf->data + rbuf->pread,
+		saa716x_ff_phi_write_fifo(saa716x_ff, rbuf->data + rbuf->pread,
 					  split);
 		todo -= split;
 		rbuf->pread = 0;
 	}
-	saa716x_ff_phi_write_fifo(saa716x, rbuf->data + rbuf->pread, todo);
+	saa716x_ff_phi_write_fifo(saa716x_ff, rbuf->data + rbuf->pread, todo);
 
 	rbuf->pread = (rbuf->pread + todo) % rbuf->size;
 }
@@ -495,7 +498,8 @@ static void ringbuffer_read_tofifo(struct dvb_ringbuffer *rbuf,
 static void fifo_worker(struct work_struct *work)
 {
 	struct sti7109_dev *sti7109 = container_of(work, struct sti7109_dev, fifo_work);
-	struct saa716x_dev *saa716x = sti7109->dev;
+	struct saa716x_ff_dev *saa716x_ff = container_of(sti7109, struct saa716x_ff_dev, sti7109);
+	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	u32 fifoStat;
 	u16 fifoSize;
 	u16 fifoUsage;
@@ -515,7 +519,7 @@ static void fifo_worker(struct work_struct *work)
 	len = (ringbuffer_avail < fifoFree) ? ringbuffer_avail : fifoFree;
 	len = (len / 32) * 32;
 	if (len) {
-		ringbuffer_read_tofifo(&sti7109->tsout, saa716x, len);
+		ringbuffer_read_tofifo(&sti7109->tsout, saa716x_ff, len);
 		wake_up(&sti7109->tsout.queue);
 	}
 
@@ -630,7 +634,8 @@ static ssize_t video_vip_read(struct sti7109_dev *sti7109,
 			      struct vip_stream_params *stream_params,
 			      char __user *buf, size_t count)
 {
-	struct saa716x_dev *saa716x = sti7109->dev;
+	struct saa716x_ff_dev *saa716x_ff = container_of(sti7109, struct saa716x_ff_dev, sti7109);
+	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	struct v4l2_pix_format pix_format;
 	int one_shot = 0;
 	size_t num_bytes;
@@ -740,9 +745,10 @@ static ssize_t dvb_video_read(struct file *file, char __user *buf,
 static ssize_t dvb_video_write(struct file *file, const char __user *buf,
 			       size_t count, loff_t *ppos)
 {
-	struct dvb_device *dvbdev	= file->private_data;
-	struct sti7109_dev *sti7109	= dvbdev->priv;
-	struct saa716x_dev *saa716x	= sti7109->dev;
+	struct dvb_device *dvbdev = file->private_data;
+	struct sti7109_dev *sti7109 = dvbdev->priv;
+	struct saa716x_ff_dev *saa716x_ff = container_of(sti7109, struct saa716x_ff_dev, sti7109);
+	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	unsigned long todo = count;
 	int ringbuffer_avail;
 
@@ -803,8 +809,9 @@ static unsigned int dvb_video_poll(struct file *file, poll_table *wait)
 static int do_dvb_video_ioctl(struct dvb_device *dvbdev,
 			      unsigned int cmd, void *parg)
 {
-	struct sti7109_dev *sti7109	= dvbdev->priv;
-	struct saa716x_dev *saa716x	= sti7109->dev;
+	struct sti7109_dev *sti7109  = dvbdev->priv;
+	struct saa716x_ff_dev *saa716x_ff = container_of(sti7109, struct saa716x_ff_dev, sti7109);
+	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	int ret = 0;
 
 	switch (cmd) {
@@ -886,9 +893,10 @@ static const struct dvb_device dvbdev_video = {
 	.kernel_ioctl	= NULL,
 };
 
-static int saa716x_ff_video_exit(struct saa716x_dev *saa716x)
+static int saa716x_ff_video_exit(struct saa716x_ff_dev *saa716x_ff)
 {
-	struct sti7109_dev *sti7109 = saa716x->priv;
+	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
+	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
 
 	if (sti7109->video_capture != VIDEO_CAPTURE_OFF)
 		saa716x_vip_exit(saa716x, 0);
@@ -899,10 +907,11 @@ static int saa716x_ff_video_exit(struct saa716x_dev *saa716x)
 	return 0;
 }
 
-static int saa716x_ff_video_init(struct saa716x_dev *saa716x)
+static int saa716x_ff_video_init(struct saa716x_ff_dev *saa716x_ff)
 {
-	struct saa716x_adapter *saa716x_adap	= saa716x->saa716x_adap;
-	struct sti7109_dev *sti7109		= saa716x->priv;
+	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
+	struct saa716x_adapter *saa716x_adap = saa716x->saa716x_adap;
+	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
 
 	dvb_ringbuffer_init(&sti7109->tsout, sti7109->iobuf, TSOUT_LEN);
 
@@ -928,22 +937,26 @@ static int saa716x_ff_video_init(struct saa716x_dev *saa716x)
 
 static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
 {
+	struct saa716x_ff_dev *saa716x_ff;
 	struct saa716x_dev *saa716x;
 	struct sti7109_dev *sti7109;
 	int err = 0;
 	u32 value;
 	unsigned long timeout;
 
-	saa716x = kzalloc(sizeof(struct saa716x_dev), GFP_KERNEL);
-	if (saa716x == NULL) {
+	saa716x_ff = kzalloc(sizeof(struct saa716x_ff_dev), GFP_KERNEL);
+	if (saa716x_ff == NULL) {
 		err = -ENOMEM;
 		goto fail0;
 	}
 
-	saa716x->int_type	= int_type;
-	saa716x->pdev		= pdev;
-	saa716x->module		= THIS_MODULE;
-	saa716x->config		= (struct saa716x_config *) pci_id->driver_data;
+	saa716x = &saa716x_ff->saa716x;
+	sti7109 = &saa716x_ff->sti7109;
+
+	saa716x->int_type = int_type;
+	saa716x->pdev = pdev;
+	saa716x->module = THIS_MODULE;
+	saa716x->config = (struct saa716x_config *) pci_id->driver_data;
 
 	err = saa716x_pci_init(saa716x);
 	if (err) {
@@ -973,21 +986,11 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id
 
 	saa716x_gpio_init(saa716x);
 
-	/* prepare the sti7109 device struct */
-	sti7109 = kzalloc(sizeof(struct sti7109_dev), GFP_KERNEL);
-	if (!sti7109) {
-		pci_err(saa716x->pdev, "out of memory");
-		goto fail3;
-	}
-
-	sti7109->dev = saa716x;
-	saa716x->priv = sti7109;
-
 	sti7109->iobuf = vmalloc(TSOUT_LEN + MAX_DATA_LEN);
 	if (!sti7109->iobuf)
 		goto fail4;
 
-	err = saa716x_ff_phi_init(saa716x);
+	err = saa716x_ff_phi_init(saa716x_ff);
 	if (err)
 		goto fail4;
 
@@ -1015,14 +1018,14 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id
 	saa716x_gpio_write(saa716x, TT_PREMIUM_GPIO_POWER_ENABLE, 1);
 	msleep(100);
 
-	err = saa716x_ff_fpga_init(saa716x);
+	err = saa716x_ff_fpga_init(saa716x_ff);
 	if (err) {
 		pci_err(saa716x->pdev, "FPGA Initialization failed");
 		goto fail5;
 	}
 
 	/* reconfigure PHI based on FPGA version and phi_mode */
-	saa716x_ff_phi_config(saa716x);
+	saa716x_ff_phi_config(saa716x_ff);
 
 	/* configure TS muxer */
 	if (sti7109->fpga_version < 0x110) {
@@ -1048,7 +1051,7 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id
 	/* disable tuner reset */
 	SAA716x_EPWR(PHI_1, FPGA_ADDR_PIO_CTRL, 1);
 
-	err = saa716x_ff_st7109_init(saa716x);
+	err = saa716x_ff_st7109_init(saa716x_ff);
 	if (err) {
 		pci_err(saa716x->pdev, "STi7109 initialization failed");
 		goto fail5;
@@ -1077,19 +1080,19 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id
 	}
 	pci_dbg(saa716x->pdev, "STi7109 finished booting");
 
-	err = saa716x_ff_video_init(saa716x);
+	err = saa716x_ff_video_init(saa716x_ff);
 	if (err) {
 		pci_err(saa716x->pdev, "VIDEO initialization failed");
 		goto fail7;
 	}
 
-	err = saa716x_ff_audio_init(saa716x);
+	err = saa716x_ff_audio_init(saa716x_ff);
 	if (err) {
 		pci_err(saa716x->pdev, "AUDIO initialization failed");
 		goto fail8;
 	}
 
-	err = saa716x_ff_osd_init(saa716x);
+	err = saa716x_ff_osd_init(saa716x_ff);
 	if (err) {
 		pci_err(saa716x->pdev, "OSD initialization failed");
 		goto fail9;
@@ -1103,18 +1106,18 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id
 			sti7109->fw_version & 0xFF);
 	}
 
-	err = saa716x_ir_init(saa716x);
+	err = saa716x_ir_init(saa716x_ff);
 	if (err)
 		goto fail9;
 
 	return 0;
 
 fail9:
-	saa716x_ff_osd_exit(saa716x);
+	saa716x_ff_osd_exit(saa716x_ff);
 fail8:
-	saa716x_ff_audio_exit(saa716x);
+	saa716x_ff_audio_exit(saa716x_ff);
 fail7:
-	saa716x_ff_video_exit(saa716x);
+	saa716x_ff_video_exit(saa716x_ff);
 fail6:
 	saa716x_dvb_exit(saa716x);
 fail5:
@@ -1125,31 +1128,30 @@ fail5:
 
 	vfree(sti7109->iobuf);
 fail4:
-	saa716x_ff_phi_exit(saa716x);
-
-	kfree(sti7109);
+	saa716x_ff_phi_exit(saa716x_ff);
 fail3:
 	saa716x_i2c_exit(saa716x);
 fail2:
 	saa716x_pci_exit(saa716x);
 fail1:
-	kfree(saa716x);
+	kfree(saa716x_ff);
 fail0:
 	return err;
 }
 
 static void saa716x_ff_pci_remove(struct pci_dev *pdev)
 {
-	struct saa716x_dev *saa716x = pci_get_drvdata(pdev);
-	struct sti7109_dev *sti7109 = saa716x->priv;
+	struct saa716x_ff_dev *saa716x_ff = pci_get_drvdata(pdev);
+	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
+	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
 
-	saa716x_ir_exit(saa716x);
+	saa716x_ir_exit(saa716x_ff);
 
-	saa716x_ff_osd_exit(saa716x);
+	saa716x_ff_osd_exit(saa716x_ff);
 
-	saa716x_ff_audio_exit(saa716x);
+	saa716x_ff_audio_exit(saa716x_ff);
 
-	saa716x_ff_video_exit(saa716x);
+	saa716x_ff_video_exit(saa716x_ff);
 
 	saa716x_dvb_exit(saa716x);
 
@@ -1160,20 +1162,18 @@ static void saa716x_ff_pci_remove(struct pci_dev *pdev)
 
 	vfree(sti7109->iobuf);
 
-	saa716x_ff_phi_exit(saa716x);
-
-	saa716x->priv = NULL;
-	kfree(sti7109);
+	saa716x_ff_phi_exit(saa716x_ff);
 
 	saa716x_i2c_exit(saa716x);
 	saa716x_pci_exit(saa716x);
-	kfree(saa716x);
+	kfree(saa716x_ff);
 }
 
 static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 {
-	struct saa716x_dev *saa716x = (struct saa716x_dev *) dev_id;
-	struct sti7109_dev *sti7109 = saa716x->priv;
+	struct saa716x_ff_dev *saa716x_ff = (struct saa716x_ff_dev *) dev_id;
+	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
+	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
 	u32 msiStatusL;
 	u32 msiStatusH;
 	u32 phiISR;
@@ -1216,7 +1216,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 				length = MAX_RESULT_LEN;
 			}
 
-			saa716x_ff_phi_read(saa716x, ADDR_CMD_DATA, sti7109->result_data, length);
+			saa716x_ff_phi_read(saa716x_ff, ADDR_CMD_DATA, sti7109->result_data, length);
 			sti7109->result_len = length;
 			sti7109->result_avail = 1;
 			wake_up(&sti7109->result_avail_wq);
@@ -1246,7 +1246,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 				length = MAX_RESULT_LEN;
 			}
 
-			saa716x_ff_phi_read(saa716x, ADDR_OSD_CMD_DATA, sti7109->osd_result_data, length);
+			saa716x_ff_phi_read(saa716x_ff, ADDR_OSD_CMD_DATA, sti7109->osd_result_data, length);
 			sti7109->osd_result_len = length;
 			sti7109->osd_result_avail = 1;
 			wake_up(&sti7109->osd_result_avail_wq);
@@ -1286,7 +1286,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 		if (phiISR & ISR_AUDIO_PTS_MASK) {
 			u8 data[8];
 
-			saa716x_ff_phi_read(saa716x, ADDR_AUDIO_PTS, data, 8);
+			saa716x_ff_phi_read(saa716x_ff, ADDR_AUDIO_PTS, data, 8);
 			sti7109->audio_pts = (((u64) data[3] & 0x01) << 32)
 					    | ((u64) data[4] << 24)
 					    | ((u64) data[5] << 16)
@@ -1300,7 +1300,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 		if (phiISR & ISR_VIDEO_PTS_MASK) {
 			u8 data[8];
 
-			saa716x_ff_phi_read(saa716x, ADDR_VIDEO_PTS, data, 8);
+			saa716x_ff_phi_read(saa716x_ff, ADDR_VIDEO_PTS, data, 8);
 			sti7109->video_pts = (((u64) data[3] & 0x01) << 32)
 					    | ((u64) data[4] << 24)
 					    | ((u64) data[5] << 16)
@@ -1314,7 +1314,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 		if (phiISR & ISR_CURRENT_STC_MASK) {
 			u8 data[8];
 
-			saa716x_ff_phi_read(saa716x, ADDR_CURRENT_STC, data, 8);
+			saa716x_ff_phi_read(saa716x_ff, ADDR_CURRENT_STC, data, 8);
 			sti7109->current_stc = (((u64) data[3] & 0x01) << 32)
 					      | ((u64) data[4] << 24)
 					      | ((u64) data[5] << 16)
@@ -1329,13 +1329,13 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 			u8 data[4];
 			u32 remote_event;
 
-			saa716x_ff_phi_read(saa716x, ADDR_REMOTE_EVENT, data, 4);
+			saa716x_ff_phi_read(saa716x_ff, ADDR_REMOTE_EVENT, data, 4);
 			remote_event = (data[3] << 24)
 				     | (data[2] << 16)
 				     | (data[1] << 8)
 				     | (data[0]);
 			memset(data, 0, sizeof(data));
-			saa716x_ff_phi_write(saa716x, ADDR_REMOTE_EVENT, data, 4);
+			saa716x_ff_phi_write(saa716x_ff, ADDR_REMOTE_EVENT, data, 4);
 
 			phiISR &= ~ISR_REMOTE_EVENT_MASK;
 			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_REMOTE_EVENT_MASK);
@@ -1344,7 +1344,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 				pci_err(saa716x->pdev, "REMOTE EVENT: %X ignored", remote_event);
 			} else {
 				pci_dbg(saa716x->pdev, "REMOTE EVENT: %X", remote_event);
-				saa716x_ir_handler(saa716x, remote_event);
+				saa716x_ir_handler(saa716x_ff, remote_event);
 			}
 		}
 
@@ -1352,7 +1352,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 			u8 data[4];
 			u32 format;
 
-			saa716x_ff_phi_read(saa716x, ADDR_DVO_FORMAT, data, 4);
+			saa716x_ff_phi_read(saa716x_ff, ADDR_DVO_FORMAT, data, 4);
 			format = (data[0] << 24)
 			       | (data[1] << 16)
 			       | (data[2] << 8)
@@ -1368,7 +1368,7 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 		if (phiISR & ISR_LOG_MESSAGE_MASK) {
 			char message[SIZE_LOG_MESSAGE_DATA];
 
-			saa716x_ff_phi_read(saa716x, ADDR_LOG_MESSAGE, message,
+			saa716x_ff_phi_read(saa716x_ff, ADDR_LOG_MESSAGE, message,
 					 SIZE_LOG_MESSAGE_DATA);
 
 			phiISR &= ~ISR_LOG_MESSAGE_MASK;

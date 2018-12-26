@@ -100,11 +100,6 @@ struct saa716x_dev {
 
 	struct saa716x_fgpi_stream_port	fgpi[4];
 	struct saa716x_vip_stream_port	vip[2];
-
-	void				*priv;
-
-	/* remote control */
-	void				*ir_priv;
 };
 
 #endif /* __SAA716x_PRIV_H */
