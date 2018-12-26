@@ -27,10 +27,11 @@ MODULE_PARM_DESC(phi_mode, "phi access mode:"
 #define PHI_1_4 (sti7109->mmio_wc)
 #define PHI_1_5 (sti7109->mmio_wc + 0x10000)
 
-int saa716x_ff_phi_init(struct saa716x_dev *saa716x)
+int saa716x_ff_phi_init(struct saa716x_ff_dev *saa716x_ff)
 {
+	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
+	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
 	struct pci_dev *pdev = saa716x->pdev;
-	struct sti7109_dev *sti7109 = saa716x->priv;
 	resource_size_t phi1_start = pci_resource_start(pdev, 0) + PHI_1;
 	int err;
 
@@ -96,9 +97,9 @@ fail0:
 	return err;
 }
 
-void saa716x_ff_phi_exit(struct saa716x_dev *saa716x)
+void saa716x_ff_phi_exit(struct saa716x_ff_dev *saa716x_ff)
 {
-	struct sti7109_dev *sti7109 = saa716x->priv;
+	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
 
 	if (sti7109->mmio_wc)
 		iounmap(sti7109->mmio_wc);
@@ -106,9 +107,10 @@ void saa716x_ff_phi_exit(struct saa716x_dev *saa716x)
 		iounmap(sti7109->mmio_uc);
 }
 
-void saa716x_ff_phi_config(struct saa716x_dev *saa716x)
+void saa716x_ff_phi_config(struct saa716x_ff_dev *saa716x_ff)
 {
-	struct sti7109_dev *sti7109 = saa716x->priv;
+	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
+	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
 
 	if (sti7109->fpga_version < 0x110)
 		return;
@@ -153,10 +155,11 @@ void saa716x_ff_phi_config(struct saa716x_dev *saa716x)
 	sti7109->phi_mode = phi_mode;
 }
 
-void saa716x_ff_phi_write(struct saa716x_dev *saa716x,
+void saa716x_ff_phi_write(struct saa716x_ff_dev *saa716x_ff,
 			  u32 address, const u8 *data, int length)
 {
-	struct sti7109_dev *sti7109 = saa716x->priv;
+	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
+	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
 	int i;
 
 	switch (sti7109->phi_mode) {
@@ -175,10 +178,11 @@ void saa716x_ff_phi_write(struct saa716x_dev *saa716x,
 	}
 }
 
-void saa716x_ff_phi_read(struct saa716x_dev *saa716x,
+void saa716x_ff_phi_read(struct saa716x_ff_dev *saa716x_ff,
 			 u32 address, u8 *data, int length)
 {
-	struct sti7109_dev *sti7109 = saa716x->priv;
+	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
+	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
 	int i;
 
 	switch (sti7109->phi_mode) {
@@ -197,10 +201,11 @@ void saa716x_ff_phi_read(struct saa716x_dev *saa716x,
 	}
 }
 
-void saa716x_ff_phi_write_fifo(struct saa716x_dev *saa716x,
+void saa716x_ff_phi_write_fifo(struct saa716x_ff_dev *saa716x_ff,
 			       const u8 *data, int length)
 {
-	struct sti7109_dev *sti7109 = saa716x->priv;
+	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
+	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
 	int i;
 
 	switch (sti7109->phi_mode) {
