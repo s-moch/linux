@@ -26,22 +26,6 @@
 #include "saa716x_priv.h"
 #include "saa716x_ff.h"
 
-
-/* infrared remote control */
-struct infrared {
-	u16			key_map[128];
-	struct input_dev	*input_dev;
-	char			input_phys[32];
-	struct timer_list	keyup_timer;
-	struct tasklet_struct	tasklet;
-	u32			command;
-	u32			device_mask;
-	u8			protocol;
-	u16			last_key;
-	u16			last_toggle;
-	bool			key_pressed;
-};
-
 #define IR_RC5		0
 #define UP_TIMEOUT	(HZ*7/25)
 
@@ -63,8 +47,9 @@ static void ir_emit_keyup(struct timer_list *t)
 /* tasklet */
 static void ir_emit_key(unsigned long parm)
 {
-	struct saa716x_dev *saa716x = (struct saa716x_dev *) parm;
-	struct infrared *ir = saa716x->ir_priv;
+	struct saa716x_ff_dev *saa716x_ff = (struct saa716x_ff_dev *) parm;
+	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
+	struct infrared *ir = &saa716x_ff->ir;
 	u32 ircom = ir->command;
 	u8 data;
 	u8 addr;
@@ -157,31 +142,22 @@ static void ir_register_keys(struct infrared *ir)
 }
 
 /* interrupt handler */
-void saa716x_ir_handler(struct saa716x_dev *saa716x, u32 ir_cmd)
+void saa716x_ir_handler(struct saa716x_ff_dev *saa716x_ff, u32 ir_cmd)
 {
-	struct infrared *ir = saa716x->ir_priv;
-
-	if (!ir)
-		return;
+	struct infrared *ir = &saa716x_ff->ir;
 
 	ir->command = ir_cmd;
 	tasklet_schedule(&ir->tasklet);
 }
 
 
-int saa716x_ir_init(struct saa716x_dev *saa716x)
+int saa716x_ir_init(struct saa716x_ff_dev *saa716x_ff)
 {
+	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
+	struct infrared *ir = &saa716x_ff->ir;
 	struct input_dev *input_dev;
-	struct infrared *ir;
 	int rc;
 	int i;
-
-	if (!saa716x)
-		return -ENOMEM;
-
-	ir = kzalloc(sizeof(struct infrared), GFP_KERNEL);
-	if (!ir)
-		return -ENOMEM;
 
 	timer_setup(&ir->keyup_timer, ir_emit_keyup, 0);
 
@@ -211,27 +187,21 @@ int saa716x_ir_init(struct saa716x_dev *saa716x)
 	ir_register_keys(ir);
 
 	input_enable_softrepeat(input_dev, 800, 200);
-
-	tasklet_init(&ir->tasklet, ir_emit_key, (unsigned long) saa716x);
-	saa716x->ir_priv = ir;
-
+	tasklet_init(&ir->tasklet, ir_emit_key, (unsigned long) saa716x_ff);
 	return 0;
 
 err:
 	if (ir->input_dev)
 		input_free_device(ir->input_dev);
-	kfree(ir);
 	return -ENOMEM;
 }
 
 
-void saa716x_ir_exit(struct saa716x_dev *saa716x)
+void saa716x_ir_exit(struct saa716x_ff_dev *saa716x_ff)
 {
-	struct infrared *ir = saa716x->ir_priv;
+	struct infrared *ir = &saa716x_ff->ir;
 
-	saa716x->ir_priv = NULL;
 	tasklet_kill(&ir->tasklet);
 	del_timer_sync(&ir->keyup_timer);
 	input_unregister_device(ir->input_dev);
-	kfree(ir);
 }
