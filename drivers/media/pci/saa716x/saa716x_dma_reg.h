@@ -181,7 +181,8 @@
 
 #define MMU_PTA_OFFSET			0x40
 
-#define MMU_PTA_BASE(__ch)		(MMU_PTA_BASE0 + (MMU_PTA_OFFSET * __ch))
+#define MMU_PTA_BASE(__ch)		(MMU_PTA_BASE0 + \
+					 (MMU_PTA_OFFSET * __ch))
 
 #define MMU_PTA0_LSB(__ch)		(MMU_PTA_BASE(__ch) + 0x00)
 #define MMU_PTA0_MSB(__ch)		(MMU_PTA_BASE(__ch) + 0x04)
