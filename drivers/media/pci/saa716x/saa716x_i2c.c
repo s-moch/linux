@@ -218,9 +218,8 @@ static int saa716x_i2c_send(struct saa716x_i2c *i2c, u32 I2C_DEV, u32 data)
 	for (i = 0; i < 1000; i++) {
 		/* TODO! check for hotplug devices */
 		reg = SAA716x_EPRD(I2C_DEV, I2C_STATUS);
-		if (reg & I2C_TRANSMIT_CLEAR) {
+		if (reg & I2C_TRANSMIT_CLEAR)
 			break;
-		}
 	}
 
 	if (!(reg & I2C_TRANSMIT_CLEAR)) {
@@ -245,9 +244,8 @@ static int saa716x_i2c_recv(struct saa716x_i2c *i2c, u32 I2C_DEV, u32 *data)
 	/* Check FIFO status before RX */
 	for (i = 0; i < 1000; i++) {
 		reg = SAA716x_EPRD(I2C_DEV, I2C_STATUS);
-		if (!(reg & SAA716x_I2C_RXBUSY)) {
+		if (!(reg & SAA716x_I2C_RXBUSY))
 			break;
-		}
 	}
 	if (reg & SAA716x_I2C_RXBUSY) {
 		pci_err(saa716x->pdev, "FIFO empty");
@@ -344,9 +342,8 @@ static int saa716x_i2c_write_msg(struct saa716x_i2c *i2c, u32 I2C_DEV,
 		}
 
 		err = saa716x_i2c_irq_wait(i2c, I2C_DEV);
-		if (err < 0) {
+		if (err < 0)
 			goto exit;
-		}
 
 		len -= bytes;
 		buf += bytes;
@@ -404,9 +401,8 @@ static int saa716x_i2c_read_msg(struct saa716x_i2c *i2c, u32 I2C_DEV,
 		}
 
 		err = saa716x_i2c_irq_wait(i2c, I2C_DEV);
-		if (err < 0) {
+		if (err < 0)
 			goto exit;
-		}
 
 		for (i = 0; i < bytes; i++) {
 			err = saa716x_i2c_recv(i2c, I2C_DEV, &data);
