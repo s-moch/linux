@@ -5,11 +5,11 @@
 
 #define PLL_FREQ	2500
 
-#define SAA716x_CGU_CLKRUN(__reg)  do {						\
-	SAA716x_EPWR(CGU, CGU_PCR_##__reg, CGU_PCR_RUN); /* Run */		\
-	SAA716x_EPWR(CGU, CGU_SCR_##__reg, CGU_SCR_ENF1); /* Switch */		\
-	SAA716x_EPWR(CGU, CGU_FS1_##__reg, 0x00000000); /* PLL Clk */		\
-	SAA716x_EPWR(CGU, CGU_ESR_##__reg, CGU_ESR_FD_EN); /* Frac div */	\
+#define SAA716x_CGU_CLKRUN(__reg)  do {					   \
+	SAA716x_EPWR(CGU, CGU_PCR_##__reg, CGU_PCR_RUN); /* Run */	   \
+	SAA716x_EPWR(CGU, CGU_SCR_##__reg, CGU_SCR_ENF1); /* Switch */	   \
+	SAA716x_EPWR(CGU, CGU_FS1_##__reg, 0x00000000); /* PLL Clk */	   \
+	SAA716x_EPWR(CGU, CGU_ESR_##__reg, CGU_ESR_FD_EN); /* Frac div */  \
 } while (0)
 
 enum saa716x_clk_domain {
