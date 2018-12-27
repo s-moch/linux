@@ -33,8 +33,10 @@
 		.driver_data	= (unsigned long) (__configptr)		\
 }
 
-#define SAA716x_EPWR(__offst, __addr, __data)	writel((__data), (saa716x->mmio + (__offst + __addr)))
-#define SAA716x_EPRD(__offst, __addr)		readl((saa716x->mmio + (__offst + __addr)))
+#define SAA716x_EPWR(__offst, __addr, __data)	\
+	writel((__data), (saa716x->mmio + (__offst + __addr)))
+#define SAA716x_EPRD(__offst, __addr)		\
+	readl((saa716x->mmio + (__offst + __addr)))
 
 struct saa716x_dev;
 struct saa716x_adapter;
