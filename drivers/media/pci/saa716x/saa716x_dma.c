@@ -37,8 +37,6 @@ static int saa716x_allocate_ptable(struct saa716x_dmabuf *dmabuf)
 		return -ENOMEM;
 	}
 
-	BUG_ON(!(((unsigned long) dmabuf->mem_ptab_phys % SAA716x_PAGE_SIZE) == 0));
-
 	return 0;
 }
 
@@ -107,7 +105,8 @@ static int saa716x_dmabuf_sgalloc(struct saa716x_dmabuf *dmabuf, int size)
 		pages = size / SAA716x_PAGE_SIZE;
 
 	/* Allocate memory for SG list */
-	dmabuf->sg_list = kcalloc(pages, sizeof(struct scatterlist), GFP_KERNEL);
+	dmabuf->sg_list = kcalloc(pages, sizeof(struct scatterlist),
+				  GFP_KERNEL);
 	if (dmabuf->sg_list == NULL)
 		return -ENOMEM;
 
@@ -120,9 +119,8 @@ static int saa716x_dmabuf_sgalloc(struct saa716x_dmabuf *dmabuf, int size)
 		return -ENOMEM;
 
 	/* align memory to page */
-	dmabuf->mem_virt = (void *) PAGE_ALIGN(((unsigned long) dmabuf->mem_virt_noalign));
-
-	BUG_ON(!((((unsigned long) dmabuf->mem_virt) % SAA716x_PAGE_SIZE) == 0));
+	dmabuf->mem_virt =
+		(void *) PAGE_ALIGN(((unsigned long) dmabuf->mem_virt_noalign));
 
 	dmabuf->list_len = pages; /* scatterlist length */
 	list = dmabuf->sg_list;
@@ -139,7 +137,8 @@ static int saa716x_dmabuf_sgalloc(struct saa716x_dmabuf *dmabuf, int size)
 }
 
 /*  Fill the "page table" page with the pointers to the specified SG buffer */
-static void saa716x_dmabuf_sgpagefill(struct saa716x_dmabuf *dmabuf, struct scatterlist *sg_list, int pages, int offset)
+static void saa716x_dmabuf_sgpagefill(struct saa716x_dmabuf *dmabuf,
+			 struct scatterlist *sg_list, int pages, int offset)
 {
 	struct saa716x_dev *saa716x	= dmabuf->saa716x;
 	struct pci_dev *pdev		= saa716x->pdev;
@@ -155,16 +154,17 @@ static void saa716x_dmabuf_sgpagefill(struct saa716x_dmabuf *dmabuf, struct scat
 	pci_dbg(saa716x->pdev, "SG page fill");
 
 	/* make page writable for the PC */
-	dma_sync_single_for_cpu(&pdev->dev, dmabuf->mem_ptab_phys, SAA716x_PAGE_SIZE, DMA_TO_DEVICE);
+	dma_sync_single_for_cpu(&pdev->dev, dmabuf->mem_ptab_phys,
+				SAA716x_PAGE_SIZE, DMA_TO_DEVICE);
 	page = dmabuf->mem_ptab_virt;
 
 	/* create page table */
 	for (i = 0; i < pages; i++) {
 		sg_cur = &sg_list[i];
-		BUG_ON(!(((sg_cur->length + sg_cur->offset) % SAA716x_PAGE_SIZE) == 0));
 
 		if (i == 0)
-			dmabuf->offset = (sg_cur->length + sg_cur->offset) % SAA716x_PAGE_SIZE;
+			dmabuf->offset =
+			  (sg_cur->length + sg_cur->offset) % SAA716x_PAGE_SIZE;
 		else
 			BUG_ON(sg_cur->offset != 0);
 
@@ -175,7 +175,8 @@ static void saa716x_dmabuf_sgpagefill(struct saa716x_dmabuf *dmabuf, struct scat
 				continue;
 			}
 
-			addr = ((u64)sg_dma_address(sg_cur)) + (j * SAA716x_PAGE_SIZE) - sg_cur->offset;
+			addr = ((u64)sg_dma_address(sg_cur)) +
+			       (j * SAA716x_PAGE_SIZE) - sg_cur->offset;
 
 			BUG_ON(addr == 0);
 			page[k * 2] = (u32)addr; /* Low */
@@ -228,7 +229,8 @@ void saa716x_dmabufsync_cpu(struct saa716x_dmabuf *dmabuf)
 }
 
 /* Allocates a DMA buffer for the specified external linear buffer. */
-int saa716x_dmabuf_alloc(struct saa716x_dev *saa716x, struct saa716x_dmabuf *dmabuf, int size)
+int saa716x_dmabuf_alloc(struct saa716x_dev *saa716x,
+			 struct saa716x_dmabuf *dmabuf, int size)
 {
 	struct pci_dev *pdev		= saa716x->pdev;
 
@@ -262,7 +264,8 @@ int saa716x_dmabuf_alloc(struct saa716x_dev *saa716x, struct saa716x_dmabuf *dma
 		goto err2;
 	}
 
-	ret = dma_map_sg(&pdev->dev, dmabuf->sg_list, dmabuf->list_len, DMA_FROM_DEVICE);
+	ret = dma_map_sg(&pdev->dev, dmabuf->sg_list, dmabuf->list_len,
+			 DMA_FROM_DEVICE);
 	if (ret < 0) {
 		pci_err(saa716x->pdev, "SG map failed");
 		goto err3;
@@ -279,14 +282,16 @@ err1:
 	return ret;
 }
 
-void saa716x_dmabuf_free(struct saa716x_dev *saa716x, struct saa716x_dmabuf *dmabuf)
+void saa716x_dmabuf_free(struct saa716x_dev *saa716x,
+			 struct saa716x_dmabuf *dmabuf)
 {
 	struct pci_dev *pdev		= saa716x->pdev;
 
 	BUG_ON(saa716x == NULL);
 	BUG_ON(dmabuf == NULL);
 
-	dma_unmap_sg(&pdev->dev, dmabuf->sg_list, dmabuf->list_len, DMA_FROM_DEVICE);
+	dma_unmap_sg(&pdev->dev, dmabuf->sg_list, dmabuf->list_len,
+		     DMA_FROM_DEVICE);
 	saa716x_dmabuf_sgfree(dmabuf);
 	saa716x_free_ptable(dmabuf);
 }
