@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0
 
 #include <linux/types.h>
 
@@ -17,7 +17,7 @@ MODULE_PARM_DESC(phi_mode, "phi access mode:"
 		" 2 - fastest mode, use write-combining");
 
 
-/* phi config register values: chip_select mask, ready mask, strobe time, cycle time */
+/* phi config values: chip_select mask, ready mask, strobe time, cycle time */
 #define PHI_CONFIG(__cs, __ready, __strobe, __cycle) \
 	((__cs) + ((__ready) << 8) + ((__strobe) << 12) +  ((__cycle) << 20))
 
