@@ -75,7 +75,8 @@ int saa716x_getbootscript_setup(struct saa716x_dev *saa716x)
 			cgu->clk_freq[i] = 0;
 
 		pci_dbg(saa716x->pdev, "Domain %d: %s <0x%02x> Divider: 0x%x --> N=%d, M=%d, freq=%d",
-			i, clk_desc[i], cgu_clk[i], cgu->clk_boot_div[i], N, M, cgu->clk_freq[i]);
+			i, clk_desc[i], cgu_clk[i], cgu->clk_boot_div[i],
+			N, M, cgu->clk_freq[i]);
 	}
 	/* store clock settings */
 	cgu->clk_vi_0[0] = cgu->clk_freq[CLK_DOMAIN_VI0];
