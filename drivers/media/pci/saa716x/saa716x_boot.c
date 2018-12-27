@@ -86,7 +86,9 @@ int saa716x_jetpack_init(struct saa716x_dev *saa716x)
 
 	/* General setup for MMU */
 	SAA716x_EPWR(MMU, MMU_MODE, 0x14);
-	pci_dbg(saa716x->pdev, "SAA%02x Jetpack Successfully initialized", saa716x->pdev->device);
+	pci_dbg(saa716x->pdev,
+		"SAA%02x Jetpack Successfully initialized",
+		saa716x->pdev->device);
 
 	return 0;
 }
