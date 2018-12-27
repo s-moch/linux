@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0+
+
 #include <linux/kernel.h>
 
 #include "saa716x_mod.h"
