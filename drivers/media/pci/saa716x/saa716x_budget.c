@@ -114,24 +114,17 @@ static irqreturn_t saa716x_budget_pci_irq(int irq, void *dev_id)
 
 	if (stat_l)
 		SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_L, stat_l);
-
 	if (stat_h)
 		SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_H, stat_h);
 
-	if (stat_l) {
-		if (stat_l & MSI_INT_TAGACK_FGPI_0) {
-			tasklet_schedule(&saa716x->fgpi[0].tasklet);
-		}
-		if (stat_l & MSI_INT_TAGACK_FGPI_1) {
-			tasklet_schedule(&saa716x->fgpi[1].tasklet);
-		}
-		if (stat_l & MSI_INT_TAGACK_FGPI_2) {
-			tasklet_schedule(&saa716x->fgpi[2].tasklet);
-		}
-		if (stat_l & MSI_INT_TAGACK_FGPI_3) {
-			tasklet_schedule(&saa716x->fgpi[3].tasklet);
-		}
-	}
+	if (stat_l & MSI_INT_TAGACK_FGPI_0)
+		tasklet_schedule(&saa716x->fgpi[0].tasklet);
+	if (stat_l & MSI_INT_TAGACK_FGPI_1)
+		tasklet_schedule(&saa716x->fgpi[1].tasklet);
+	if (stat_l & MSI_INT_TAGACK_FGPI_2)
+		tasklet_schedule(&saa716x->fgpi[2].tasklet);
+	if (stat_l & MSI_INT_TAGACK_FGPI_3)
+		tasklet_schedule(&saa716x->fgpi[3].tasklet);
 
 	return IRQ_HANDLED;
 }
@@ -349,9 +342,8 @@ static int saa716x_tbs6281_frontend_attach(struct saa716x_adapter *adapter, int 
 	info.platform_data = &si2168_config;
 	request_module(info.type);
 	client = i2c_new_device(&dev->i2c[1 - count].i2c_adapter, &info);
-	if (client == NULL || client->dev.driver == NULL) {
+	if (client == NULL || client->dev.driver == NULL)
 		goto err;
-	}
 	if (!try_module_get(client->dev.driver->owner)) {
 		i2c_unregister_device(client);
 		goto err;
@@ -442,9 +434,8 @@ static int saa716x_tbs6285_frontend_attach(struct saa716x_adapter *adapter, int 
 	client = i2c_new_device(((count == 0) || (count == 1)) ?
 		&dev->i2c[1].i2c_adapter : &dev->i2c[0].i2c_adapter,
 		&info);
-	if (client == NULL || client->dev.driver == NULL) {
+	if (client == NULL || client->dev.driver == NULL)
 		goto err;
-	}
 
 	if (!try_module_get(client->dev.driver->owner)) {
 		i2c_unregister_device(client);
