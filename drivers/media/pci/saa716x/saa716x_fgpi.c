@@ -284,9 +284,8 @@ int saa716x_fgpi_start(struct saa716x_dev *saa716x, int port,
 	SAA716x_EPWR(fgpi_port, FGPI_INTERFACE, 0);
 	msleep(10);
 
-	if (saa716x_fgpi_setparams(saa716x->fgpi[port].dma_buf, stream_params, port) != 0) {
+	if (saa716x_fgpi_setparams(saa716x->fgpi[port].dma_buf, stream_params, port) != 0)
 		return -EIO;
-	}
 
 	saa716x->fgpi[port].read_index = 0;
 
@@ -356,9 +355,8 @@ int saa716x_fgpi_init(struct saa716x_dev *saa716x, int port, int dma_buf_size,
 		ret = saa716x_dmabuf_alloc(saa716x,
 					   &saa716x->fgpi[port].dma_buf[i],
 					   dma_buf_size);
-		if (ret < 0) {
+		if (ret < 0)
 			return ret;
-		}
 	}
 	saa716x->fgpi[port].saa716x = saa716x;
 	tasklet_init(&saa716x->fgpi[port].tasklet, worker,
