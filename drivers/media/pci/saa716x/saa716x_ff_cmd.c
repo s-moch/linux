@@ -44,7 +44,8 @@ int sti7109_cmd_init(struct sti7109_dev *sti7109)
 
 static int sti7109_do_raw_cmd(struct sti7109_dev *sti7109)
 {
-	struct saa716x_ff_dev *saa716x_ff = container_of(sti7109, struct saa716x_ff_dev, sti7109);
+	struct saa716x_ff_dev *saa716x_ff =
+			container_of(sti7109, struct saa716x_ff_dev, sti7109);
 	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	unsigned long timeout;
 
@@ -101,7 +102,8 @@ static int sti7109_do_raw_cmd(struct sti7109_dev *sti7109)
 
 int sti7109_raw_cmd(struct sti7109_dev *sti7109, osd_raw_cmd_t *cmd)
 {
-	struct saa716x_ff_dev *saa716x_ff = container_of(sti7109, struct saa716x_ff_dev, sti7109);
+	struct saa716x_ff_dev *saa716x_ff =
+			container_of(sti7109, struct saa716x_ff_dev, sti7109);
 	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	int err;
 
@@ -139,7 +141,8 @@ out:
 
 static int sti7109_do_raw_osd_cmd(struct sti7109_dev *sti7109)
 {
-	struct saa716x_ff_dev *saa716x_ff = container_of(sti7109, struct saa716x_ff_dev, sti7109);
+	struct saa716x_ff_dev *saa716x_ff =
+			container_of(sti7109, struct saa716x_ff_dev, sti7109);
 	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	unsigned long timeout;
 
@@ -161,8 +164,8 @@ static int sti7109_do_raw_osd_cmd(struct sti7109_dev *sti7109)
 	sti7109->osd_cmd_ready = 0;
 	sti7109->osd_result_len = 0;
 	sti7109->osd_result_avail = 0;
-	saa716x_ff_phi_write(saa716x_ff, ADDR_OSD_CMD_DATA, sti7109->osd_cmd_data,
-			     sti7109->osd_cmd_len);
+	saa716x_ff_phi_write(saa716x_ff, ADDR_OSD_CMD_DATA,
+			     sti7109->osd_cmd_data, sti7109->osd_cmd_len);
 	SAA716x_EPWR(PHI_1, FPGA_ADDR_PHI_ISET, ISR_OSD_CMD_MASK);
 
 	if (sti7109->osd_result_max_len > 0) {
@@ -197,7 +200,8 @@ static int sti7109_do_raw_osd_cmd(struct sti7109_dev *sti7109)
 
 int sti7109_raw_osd_cmd(struct sti7109_dev *sti7109, osd_raw_cmd_t *cmd)
 {
-	struct saa716x_ff_dev *saa716x_ff = container_of(sti7109, struct saa716x_ff_dev, sti7109);
+	struct saa716x_ff_dev *saa716x_ff =
+			container_of(sti7109, struct saa716x_ff_dev, sti7109);
 	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	int err;
 
@@ -233,9 +237,11 @@ out:
 	return err;
 }
 
-static int sti7109_do_raw_data(struct sti7109_dev *sti7109, osd_raw_data_t *data)
+static int sti7109_do_raw_data(struct sti7109_dev *sti7109,
+			       osd_raw_data_t *data)
 {
-	struct saa716x_ff_dev *saa716x_ff = container_of(sti7109, struct saa716x_ff_dev, sti7109);
+	struct saa716x_ff_dev *saa716x_ff =
+			container_of(sti7109, struct saa716x_ff_dev, sti7109);
 	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	unsigned long timeout;
 	u16 blockSize;
@@ -358,7 +364,8 @@ static int sti7109_do_raw_data(struct sti7109_dev *sti7109, osd_raw_data_t *data
 
 int sti7109_raw_data(struct sti7109_dev *sti7109, osd_raw_data_t *data)
 {
-	struct saa716x_ff_dev *saa716x_ff = container_of(sti7109, struct saa716x_ff_dev, sti7109);
+	struct saa716x_ff_dev *saa716x_ff =
+			container_of(sti7109, struct saa716x_ff_dev, sti7109);
 	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	int err;
 
