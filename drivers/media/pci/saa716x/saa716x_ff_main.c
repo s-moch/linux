@@ -61,7 +61,7 @@ static int saa716x_ff_fpga_init(struct saa716x_ff_dev *saa716x_ff)
 	int ret;
 	const struct firmware *fw;
 
-	/* request the FPGA firmware, this will block until someone uploads it */
+	/* request the FPGA firmware */
 	ret = request_firmware(&fw, "dvb-ttpremium-fpga-01.fw", &saa716x->pdev->dev);
 	if (ret) {
 		if (ret == -ENOENT)
@@ -139,7 +139,7 @@ static int saa716x_ff_st7109_init(struct saa716x_ff_dev *saa716x_ff)
 	u32 loaderVersion;
 	u32 options;
 
-	/* request the st7109 loader, this will block until someone uploads it */
+	/* request the st7109 loader */
 	ret = request_firmware(&fw, "dvb-ttpremium-loader-01.fw", &saa716x->pdev->dev);
 	if (ret) {
 		if (ret == -ENOENT)
@@ -177,7 +177,7 @@ static int saa716x_ff_st7109_init(struct saa716x_ff_dev *saa716x_ff)
 	}
 	pci_dbg(saa716x->pdev, "STi7109 ready after %llu ticks", waitTime);
 
-	/* request the st7109 firmware, this will block until someone uploads it */
+	/* request the st7109 firmware */
 	ret = request_firmware(&fw, "dvb-ttpremium-st7109-01.fw", &saa716x->pdev->dev);
 	if (ret) {
 		if (ret == -ENOENT)
@@ -664,8 +664,10 @@ static ssize_t video_vip_read(struct sti7109_dev *sti7109,
 	}
 
 	saa716x_vip_start(saa716x, 0, one_shot, stream_params);
-	/* Sleep long enough to be sure to capture at least one frame.
-	   TODO: Change this in a way that it just waits the required time. */
+	/*
+	 * Sleep long enough to be sure to capture at least one frame.
+	 * TODO: Change this in a way that it just waits the required time.
+	 */
 	msleep(100);
 	saa716x_vip_stop(saa716x, 0);
 
@@ -754,10 +756,7 @@ static ssize_t dvb_video_write(struct file *file, const char __user *buf,
 
 	if ((file->f_flags & O_ACCMODE) == O_RDONLY)
 		return -EPERM;
-/*
-	if (av7110->videostate.stream_source != VIDEO_SOURCE_MEMORY)
-		return -EPERM;
-*/
+
 	if (sti7109->tsout_stat == TSOUT_STAT_RESET)
 		return count;
 
@@ -842,7 +841,8 @@ static int do_dvb_video_ioctl(struct dvb_device *dvbdev,
 		/* start FIFO 1 */
 		spin_lock(&sti7109->tsout.lock);
 		SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, 0);
-		sti7109->tsout.pread = sti7109->tsout.pwrite = 0;//dvb_ringbuffer_reset(&sti7109->tsout);
+		/* TODO convert to dvb_ringbuffer_reset(&sti7109->tsout); */
+		sti7109->tsout.pread = sti7109->tsout.pwrite = 0;
 		sti7109->tsout_stat = TSOUT_STAT_FILL;
 		spin_unlock(&sti7109->tsout.lock);
 		wake_up(&sti7109->tsout.queue);
@@ -1481,11 +1481,12 @@ static int saa716x_s26400_frontend_attach(struct saa716x_adapter *adapter, int c
 			tt6400_stv090x_config.tuner_get_status	  = ctl->tuner_get_status;
 
 			if (count == 1) {
-				/* call the init function once to initialize
-				   tuner's clock output divider and demod's
-				   master clock */
-				/* The second tuner drives the STV0900 so
-				   call it only for adapter 1 */
+				/* Call the init function once to initialize
+				 * tuner's clock output divider and demod's
+				 * master clock.
+				 * The second tuner drives the STV0900, so
+				 * call it only for adapter 1
+				 */
 				if (adapter->fe->ops.init)
 					adapter->fe->ops.init(adapter->fe);
 			}
