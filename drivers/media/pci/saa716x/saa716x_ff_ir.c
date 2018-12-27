@@ -49,7 +49,8 @@ static void ir_emit_key(unsigned long parm)
 		toggle = 0;
 	} else {
 		switch (ir->protocol) {
-		case IR_RC5: /* extended RC5: 5 bits device address, 7 bits data */
+		case IR_RC5:
+			/* extended RC5: 5 bits device address, 7 bits data */
 			addr = (ircom >> 6) & 0x1f;
 			/* data bits 1..6 */
 			data = ircom & 0x3f;
