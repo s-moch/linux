@@ -211,7 +211,6 @@ int saa716x_dvb_init(struct saa716x_dev *saa716x)
 		}
 
 		dvb_net_init(&saa716x_adap->dvb_adapter, &saa716x_adap->dvb_net, &saa716x_adap->demux.dmx);
-//		tasklet_init(&saa716x_adap->tasklet, saa716x_dma_xfer, (unsigned long) saa716x);
 		pci_dbg(saa716x->pdev, "Frontend Init");
 		saa716x_adap->saa716x = saa716x;
 
@@ -301,7 +300,6 @@ void saa716x_dvb_exit(struct saa716x_dev *saa716x)
 			dvb_frontend_detach(saa716x_adap->fe);
 		}
 
-//		tasklet_kill(&saa716x->tasklet);
 		dvb_net_release(&saa716x_adap->dvb_net);
 		saa716x_adap->demux.dmx.remove_frontend(&saa716x_adap->demux.dmx, &saa716x_adap->fe_mem);
 		saa716x_adap->demux.dmx.remove_frontend(&saa716x_adap->demux.dmx, &saa716x_adap->fe_hw);
