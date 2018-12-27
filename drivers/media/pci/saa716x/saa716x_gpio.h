@@ -14,7 +14,8 @@ struct saa716x_dev;
 extern void saa716x_gpio_init(struct saa716x_dev *saa716x);
 extern void saa716x_gpio_set_output(struct saa716x_dev *saa716x, int gpio);
 extern void saa716x_gpio_set_input(struct saa716x_dev *saa716x, int gpio);
-extern void saa716x_gpio_set_mode(struct saa716x_dev *saa716x, int gpio, int mode);
+extern void saa716x_gpio_set_mode(struct saa716x_dev *saa716x, int gpio,
+				  int mode);
 extern void saa716x_gpio_write(struct saa716x_dev *saa716x, int gpio, int set);
 extern int saa716x_gpio_read(struct saa716x_dev *saa716x, int gpio);
 
