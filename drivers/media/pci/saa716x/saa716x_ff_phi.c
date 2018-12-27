@@ -220,9 +220,8 @@ void saa716x_ff_phi_write_fifo(struct saa716x_ff_dev *saa716x_ff,
 		iowrite32_rep(PHI_0_0, data, length/4);
 		break;
 	default:
-		for (i = 0; i < length; i += 4) {
+		for (i = 0; i < length; i += 4)
 			SAA716x_EPWR(PHI_0, PHI_0_0_RW_0, *((u32 *) &data[i]));
-		}
 		break;
 	}
 }
