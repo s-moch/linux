@@ -25,7 +25,8 @@ MODULE_PARM_DESC(int_type, "select Interrupt Handler type: 0=INT-A, 1=MSI. defau
 
 #define DRIVER_NAME	"SAA716x Budget"
 
-static int saa716x_budget_pci_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
+static int saa716x_budget_pci_probe(struct pci_dev *pdev,
+				    const struct pci_device_id *pci_id)
 {
 	struct saa716x_dev *saa716x;
 	int err = 0;
@@ -256,7 +257,8 @@ static int skystar2_express_hd_frontend_attach(struct saa716x_adapter *adapter,
 			goto exit;
 
 		adapter->fe->ops.set_voltage = skystar2_set_voltage;
-		adapter->fe->ops.enable_high_lnb_voltage = skystar2_voltage_boost;
+		adapter->fe->ops.enable_high_lnb_voltage =
+						 skystar2_voltage_boost;
 
 		ctl = dvb_attach(stv6110x_attach,
 				 adapter->fe,
@@ -314,7 +316,8 @@ static const struct saa716x_config skystar2_express_hd_config = {
 #define SAA716x_MODEL_TBS6281		"TurboSight TBS 6281"
 #define SAA716x_DEV_TBS6281		"DVB-T/T2/C"
 
-static int saa716x_tbs6281_frontend_attach(struct saa716x_adapter *adapter, int count)
+static int saa716x_tbs6281_frontend_attach(struct saa716x_adapter *adapter,
+					   int count)
 {
 	struct saa716x_dev *dev = adapter->saa716x;
 	struct i2c_adapter *i2cadapter;
@@ -411,7 +414,8 @@ static const struct saa716x_config saa716x_tbs6281_config = {
 #define SAA716x_MODEL_TBS6285		"TurboSight TBS 6285"
 #define SAA716x_DEV_TBS6285		"DVB-T/T2/C"
 
-static int saa716x_tbs6285_frontend_attach(struct saa716x_adapter *adapter, int count)
+static int saa716x_tbs6285_frontend_attach(struct saa716x_adapter *adapter,
+					   int count)
 {
 	struct saa716x_dev *dev = adapter->saa716x;
 	struct i2c_adapter *i2cadapter;
