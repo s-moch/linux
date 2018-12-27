@@ -39,7 +39,8 @@ MODULE_PARM_DESC(video_capture, "capture digital video coming from STi7109: 0=of
 
 #define DRIVER_NAME	"SAA716x FF"
 
-static void saa716x_ff_spi_write(struct saa716x_dev *saa716x, const u8 *data, int length)
+static void saa716x_ff_spi_write(struct saa716x_dev *saa716x, const u8 *data,
+				 int length)
 {
 	int i, rounds;
 
@@ -62,7 +63,8 @@ static int saa716x_ff_fpga_init(struct saa716x_ff_dev *saa716x_ff)
 	const struct firmware *fw;
 
 	/* request the FPGA firmware */
-	ret = request_firmware(&fw, "dvb-ttpremium-fpga-01.fw", &saa716x->pdev->dev);
+	ret = request_firmware(&fw, "dvb-ttpremium-fpga-01.fw",
+			       &saa716x->pdev->dev);
 	if (ret) {
 		if (ret == -ENOENT)
 			pci_err(saa716x->pdev, "dvb-ttpremium: could not find FPGA firmware: dvb-ttpremium-fpga-01.fw");
@@ -85,8 +87,8 @@ static int saa716x_ff_fpga_init(struct saa716x_ff_dev *saa716x_ff)
 	rounds = 0;
 	fpgaInit = saa716x_gpio_read(saa716x, TT_PREMIUM_GPIO_FPGA_INITN);
 	while (fpgaInit == 0 && rounds < 5000) {
-		//msleep(1);
-		fpgaInit = saa716x_gpio_read(saa716x, TT_PREMIUM_GPIO_FPGA_INITN);
+		fpgaInit = saa716x_gpio_read(saa716x,
+					     TT_PREMIUM_GPIO_FPGA_INITN);
 		rounds++;
 	}
 	pci_dbg(saa716x->pdev, "FPGA INITN=%d, rounds=%d", fpgaInit, rounds);
@@ -140,7 +142,8 @@ static int saa716x_ff_st7109_init(struct saa716x_ff_dev *saa716x_ff)
 	u32 options;
 
 	/* request the st7109 loader */
-	ret = request_firmware(&fw, "dvb-ttpremium-loader-01.fw", &saa716x->pdev->dev);
+	ret = request_firmware(&fw, "dvb-ttpremium-loader-01.fw",
+			       &saa716x->pdev->dev);
 	if (ret) {
 		if (ret == -ENOENT)
 			pci_err(saa716x->pdev, "dvb-ttpremium: could not find ST7109 loader: dvb-ttpremium-loader-01.fw");
@@ -178,7 +181,8 @@ static int saa716x_ff_st7109_init(struct saa716x_ff_dev *saa716x_ff)
 	pci_dbg(saa716x->pdev, "STi7109 ready after %llu ticks", waitTime);
 
 	/* request the st7109 firmware */
-	ret = request_firmware(&fw, "dvb-ttpremium-st7109-01.fw", &saa716x->pdev->dev);
+	ret = request_firmware(&fw, "dvb-ttpremium-st7109-01.fw",
+			       &saa716x->pdev->dev);
 	if (ret) {
 		if (ret == -ENOENT)
 			pci_err(saa716x->pdev, "dvb-ttpremium: could not find ST7109 firmware: dvb-ttpremium-st7109-01.fw");
@@ -301,7 +305,8 @@ out:
 	return err;
 }
 
-static long dvb_osd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+static long dvb_osd_ioctl(struct file *file, unsigned int cmd,
+			  unsigned long arg)
 {
 	struct dvb_device *dvbdev = file->private_data;
 	struct sti7109_dev *sti7109 = dvbdev->priv;
@@ -409,7 +414,8 @@ static int do_dvb_audio_ioctl(struct dvb_device *dvbdev,
 	return ret;
 }
 
-static long dvb_audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+static long dvb_audio_ioctl(struct file *file, unsigned int cmd,
+			    unsigned long arg)
 {
 	struct dvb_device *dvbdev = file->private_data;
 
@@ -456,12 +462,14 @@ static int saa716x_ff_audio_init(struct saa716x_ff_dev *saa716x_ff)
 	return 0;
 }
 
-static ssize_t ringbuffer_write_user(struct dvb_ringbuffer *rbuf, const u8 __user *buf, size_t len)
+static ssize_t ringbuffer_write_user(struct dvb_ringbuffer *rbuf,
+				     const u8 __user *buf, size_t len)
 {
 	size_t todo = len;
 	size_t split;
 
-	split = (rbuf->pwrite + len > rbuf->size) ? rbuf->size - rbuf->pwrite : 0;
+	split = (rbuf->pwrite + len > rbuf->size) ?
+		 rbuf->size - rbuf->pwrite : 0;
 
 	if (split > 0) {
 		if (copy_from_user(rbuf->data+rbuf->pwrite, buf, split))
@@ -497,8 +505,10 @@ static void ringbuffer_read_tofifo(struct dvb_ringbuffer *rbuf,
 
 static void fifo_worker(struct work_struct *work)
 {
-	struct sti7109_dev *sti7109 = container_of(work, struct sti7109_dev, fifo_work);
-	struct saa716x_ff_dev *saa716x_ff = container_of(sti7109, struct saa716x_ff_dev, sti7109);
+	struct sti7109_dev *sti7109 =
+			 container_of(work, struct sti7109_dev, fifo_work);
+	struct saa716x_ff_dev *saa716x_ff =
+			 container_of(sti7109, struct saa716x_ff_dev, sti7109);
 	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	u32 fifoStat;
 	u16 fifoSize;
@@ -536,14 +546,16 @@ static void fifo_worker(struct work_struct *work)
 	if (sti7109->tsout_stat != TSOUT_STAT_RESET) {
 		/* reenable fifo interrupt */
 		sti7109->tsout_stat = TSOUT_STAT_RUN;
-		SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, FPGA_FIFO_CTRL_IE | FPGA_FIFO_CTRL_RUN);
+		SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL,
+			     FPGA_FIFO_CTRL_IE | FPGA_FIFO_CTRL_RUN);
 	}
 	spin_unlock(&sti7109->tsout.lock);
 }
 
 static void video_vip_worker(unsigned long data)
 {
-	struct saa716x_vip_stream_port *vip_entry = (struct saa716x_vip_stream_port *)data;
+	struct saa716x_vip_stream_port *vip_entry =
+				 (struct saa716x_vip_stream_port *)data;
 	struct saa716x_dev *saa716x = vip_entry->saa716x;
 	u32 vip_index;
 	u32 write_index;
@@ -562,7 +574,8 @@ static void video_vip_worker(unsigned long data)
 	pci_dbg(saa716x->pdev, "dma buffer = %d", write_index);
 
 	if (write_index == vip_entry->read_index) {
-		pci_dbg(saa716x->pdev, "%s: called but nothing to do", __func__);
+		pci_dbg(saa716x->pdev,
+			"%s: called but nothing to do", __func__);
 		return;
 	}
 
@@ -573,9 +586,9 @@ static void video_vip_worker(unsigned long data)
 			PCI_DMA_FROMDEVICE);
 		if (vip_entry->dual_channel) {
 			pci_dma_sync_sg_for_cpu(saa716x->pdev,
-				vip_entry->dma_buf[1][vip_entry->read_index].sg_list,
-				vip_entry->dma_buf[1][vip_entry->read_index].list_len,
-				PCI_DMA_FROMDEVICE);
+			  vip_entry->dma_buf[1][vip_entry->read_index].sg_list,
+			  vip_entry->dma_buf[1][vip_entry->read_index].list_len,
+			  PCI_DMA_FROMDEVICE);
 		}
 
 		vip_entry->read_index = (vip_entry->read_index + 1) & 7;
@@ -634,7 +647,8 @@ static ssize_t video_vip_read(struct sti7109_dev *sti7109,
 			      struct vip_stream_params *stream_params,
 			      char __user *buf, size_t count)
 {
-	struct saa716x_ff_dev *saa716x_ff = container_of(sti7109, struct saa716x_ff_dev, sti7109);
+	struct saa716x_ff_dev *saa716x_ff =
+			 container_of(sti7109, struct saa716x_ff_dev, sti7109);
 	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	struct v4l2_pix_format pix_format;
 	int one_shot = 0;
@@ -749,7 +763,8 @@ static ssize_t dvb_video_write(struct file *file, const char __user *buf,
 {
 	struct dvb_device *dvbdev = file->private_data;
 	struct sti7109_dev *sti7109 = dvbdev->priv;
-	struct saa716x_ff_dev *saa716x_ff = container_of(sti7109, struct saa716x_ff_dev, sti7109);
+	struct saa716x_ff_dev *saa716x_ff =
+			 container_of(sti7109, struct saa716x_ff_dev, sti7109);
 	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	unsigned long todo = count;
 	int ringbuffer_avail;
@@ -767,7 +782,8 @@ static ssize_t dvb_video_write(struct file *file, const char __user *buf,
 		if (!FREE_COND_TS) {
 			if (file->f_flags & O_NONBLOCK)
 				break;
-			if (wait_event_interruptible(sti7109->tsout.queue, FREE_COND_TS))
+			if (wait_event_interruptible(sti7109->tsout.queue,
+						     FREE_COND_TS))
 				break;
 		}
 		ringbuffer_write_user(&sti7109->tsout, buf, TS_SIZE);
@@ -777,10 +793,13 @@ static ssize_t dvb_video_write(struct file *file, const char __user *buf,
 
 	ringbuffer_avail = dvb_ringbuffer_avail(&sti7109->tsout);
 	spin_lock(&sti7109->tsout.lock);
-	if ((sti7109->tsout_stat == TSOUT_STAT_FILL) && (ringbuffer_avail > TSOUT_LEVEL_FILL)) {
+	if ((sti7109->tsout_stat == TSOUT_STAT_FILL) &&
+	    (ringbuffer_avail > TSOUT_LEVEL_FILL)) {
 		sti7109->tsout_stat = TSOUT_STAT_RUN;
-		SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, FPGA_FIFO_CTRL_IE | FPGA_FIFO_CTRL_RUN);
-	} else if ((sti7109->tsout_stat == TSOUT_STAT_WAIT) && (ringbuffer_avail > TSOUT_LEVEL_HIGH)) {
+		SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL,
+			     FPGA_FIFO_CTRL_IE | FPGA_FIFO_CTRL_RUN);
+	} else if ((sti7109->tsout_stat == TSOUT_STAT_WAIT) &&
+		   (ringbuffer_avail > TSOUT_LEVEL_HIGH)) {
 		sti7109->tsout_stat = TSOUT_STAT_RUN;
 		queue_work(sti7109->fifo_workq, &sti7109->fifo_work);
 	}
@@ -809,7 +828,8 @@ static int do_dvb_video_ioctl(struct dvb_device *dvbdev,
 			      unsigned int cmd, void *parg)
 {
 	struct sti7109_dev *sti7109  = dvbdev->priv;
-	struct saa716x_ff_dev *saa716x_ff = container_of(sti7109, struct saa716x_ff_dev, sti7109);
+	struct saa716x_ff_dev *saa716x_ff =
+			 container_of(sti7109, struct saa716x_ff_dev, sti7109);
 	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	int ret = 0;
 
@@ -822,7 +842,8 @@ static int do_dvb_video_ioctl(struct dvb_device *dvbdev,
 		if (stream_source == VIDEO_SOURCE_DEMUX) {
 			/* stop and reset FIFO 1 */
 			spin_lock(&sti7109->tsout.lock);
-			SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, FPGA_FIFO_CTRL_RESET);
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL,
+				     FPGA_FIFO_CTRL_RESET);
 			sti7109->tsout_stat = TSOUT_STAT_RESET;
 			spin_unlock(&sti7109->tsout.lock);
 			break;
@@ -855,7 +876,8 @@ static int do_dvb_video_ioctl(struct dvb_device *dvbdev,
 	}
 	case VIDEO_GET_SIZE:
 	{
-		ret = sti7109_cmd_get_video_format(sti7109, (video_size_t *) parg);
+		ret = sti7109_cmd_get_video_format(sti7109,
+						   (video_size_t *) parg);
 		break;
 	}
 	default:
@@ -865,7 +887,8 @@ static int do_dvb_video_ioctl(struct dvb_device *dvbdev,
 	return ret;
 }
 
-static long dvb_video_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+static long dvb_video_ioctl(struct file *file, unsigned int cmd,
+			    unsigned long arg)
 {
 	struct dvb_device *dvbdev = file->private_data;
 
@@ -935,7 +958,8 @@ static int saa716x_ff_video_init(struct saa716x_ff_dev *saa716x_ff)
 	return 0;
 }
 
-static int saa716x_ff_pci_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
+static int saa716x_ff_pci_probe(struct pci_dev *pdev,
+				const struct pci_device_id *pci_id)
 {
 	struct saa716x_ff_dev *saa716x_ff;
 	struct saa716x_dev *saa716x;
@@ -1212,11 +1236,13 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 			length = (value >> 16) + 2;
 
 			if (length > MAX_RESULT_LEN) {
-				pci_err(saa716x->pdev, "CMD length %d > %d", length, MAX_RESULT_LEN);
+				pci_err(saa716x->pdev, "CMD length %d > %d",
+					length, MAX_RESULT_LEN);
 				length = MAX_RESULT_LEN;
 			}
 
-			saa716x_ff_phi_read(saa716x_ff, ADDR_CMD_DATA, sti7109->result_data, length);
+			saa716x_ff_phi_read(saa716x_ff, ADDR_CMD_DATA,
+					    sti7109->result_data, length);
 			sti7109->result_len = length;
 			sti7109->result_avail = 1;
 			wake_up(&sti7109->result_avail_wq);
@@ -1242,24 +1268,28 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 			length = (value >> 16) + 2;
 
 			if (length > MAX_RESULT_LEN) {
-				pci_err(saa716x->pdev, "OSD CMD length %d > %d", length, MAX_RESULT_LEN);
+				pci_err(saa716x->pdev, "OSD CMD length %d > %d",
+					length, MAX_RESULT_LEN);
 				length = MAX_RESULT_LEN;
 			}
 
-			saa716x_ff_phi_read(saa716x_ff, ADDR_OSD_CMD_DATA, sti7109->osd_result_data, length);
+			saa716x_ff_phi_read(saa716x_ff, ADDR_OSD_CMD_DATA,
+					    sti7109->osd_result_data, length);
 			sti7109->osd_result_len = length;
 			sti7109->osd_result_avail = 1;
 			wake_up(&sti7109->osd_result_avail_wq);
 
 			phiISR &= ~ISR_OSD_CMD_MASK;
-			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_OSD_CMD_MASK);
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR,
+				     ISR_OSD_CMD_MASK);
 		}
 
 		if (phiISR & ISR_OSD_READY_MASK) {
 			sti7109->osd_cmd_ready = 1;
 			wake_up(&sti7109->osd_cmd_ready_wq);
 			phiISR &= ~ISR_OSD_READY_MASK;
-			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_OSD_READY_MASK);
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR,
+				     ISR_OSD_READY_MASK);
 		}
 
 		if (phiISR & ISR_BLOCK_MASK) {
@@ -1280,13 +1310,15 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 			sti7109->boot_finished = 1;
 			wake_up(&sti7109->boot_finish_wq);
 			phiISR &= ~ISR_BOOT_FINISH_MASK;
-			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_BOOT_FINISH_MASK);
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR,
+				     ISR_BOOT_FINISH_MASK);
 		}
 
 		if (phiISR & ISR_AUDIO_PTS_MASK) {
 			u8 data[8];
 
-			saa716x_ff_phi_read(saa716x_ff, ADDR_AUDIO_PTS, data, 8);
+			saa716x_ff_phi_read(saa716x_ff, ADDR_AUDIO_PTS,
+					    data, 8);
 			sti7109->audio_pts = (((u64) data[3] & 0x01) << 32)
 					    | ((u64) data[4] << 24)
 					    | ((u64) data[5] << 16)
@@ -1294,13 +1326,15 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 					    | ((u64) data[7]);
 
 			phiISR &= ~ISR_AUDIO_PTS_MASK;
-			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_AUDIO_PTS_MASK);
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR,
+				     ISR_AUDIO_PTS_MASK);
 		}
 
 		if (phiISR & ISR_VIDEO_PTS_MASK) {
 			u8 data[8];
 
-			saa716x_ff_phi_read(saa716x_ff, ADDR_VIDEO_PTS, data, 8);
+			saa716x_ff_phi_read(saa716x_ff, ADDR_VIDEO_PTS,
+					    data, 8);
 			sti7109->video_pts = (((u64) data[3] & 0x01) << 32)
 					    | ((u64) data[4] << 24)
 					    | ((u64) data[5] << 16)
@@ -1308,13 +1342,15 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 					    | ((u64) data[7]);
 
 			phiISR &= ~ISR_VIDEO_PTS_MASK;
-			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_VIDEO_PTS_MASK);
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR,
+				     ISR_VIDEO_PTS_MASK);
 		}
 
 		if (phiISR & ISR_CURRENT_STC_MASK) {
 			u8 data[8];
 
-			saa716x_ff_phi_read(saa716x_ff, ADDR_CURRENT_STC, data, 8);
+			saa716x_ff_phi_read(saa716x_ff, ADDR_CURRENT_STC,
+					    data, 8);
 			sti7109->current_stc = (((u64) data[3] & 0x01) << 32)
 					      | ((u64) data[4] << 24)
 					      | ((u64) data[5] << 16)
@@ -1322,28 +1358,33 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 					      | ((u64) data[7]);
 
 			phiISR &= ~ISR_CURRENT_STC_MASK;
-			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_CURRENT_STC_MASK);
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR,
+				     ISR_CURRENT_STC_MASK);
 		}
 
 		if (phiISR & ISR_REMOTE_EVENT_MASK) {
 			u8 data[4];
 			u32 remote_event;
 
-			saa716x_ff_phi_read(saa716x_ff, ADDR_REMOTE_EVENT, data, 4);
+			saa716x_ff_phi_read(saa716x_ff, ADDR_REMOTE_EVENT,
+					    data, 4);
 			remote_event = (data[3] << 24)
 				     | (data[2] << 16)
 				     | (data[1] << 8)
 				     | (data[0]);
 			memset(data, 0, sizeof(data));
-			saa716x_ff_phi_write(saa716x_ff, ADDR_REMOTE_EVENT, data, 4);
+			saa716x_ff_phi_write(saa716x_ff, ADDR_REMOTE_EVENT,
+					     data, 4);
 
 			phiISR &= ~ISR_REMOTE_EVENT_MASK;
-			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_REMOTE_EVENT_MASK);
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR,
+				     ISR_REMOTE_EVENT_MASK);
 
 			if (remote_event == 0) {
-				pci_err(saa716x->pdev, "REMOTE EVENT: %X ignored", remote_event);
+				pci_err(saa716x->pdev, "REMOTE EVENT ignored");
 			} else {
-				pci_dbg(saa716x->pdev, "REMOTE EVENT: %X", remote_event);
+				pci_dbg(saa716x->pdev, "REMOTE EVENT: %X",
+					remote_event);
 				saa716x_ir_handler(saa716x_ff, remote_event);
 			}
 		}
@@ -1352,14 +1393,16 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 			u8 data[4];
 			u32 format;
 
-			saa716x_ff_phi_read(saa716x_ff, ADDR_DVO_FORMAT, data, 4);
+			saa716x_ff_phi_read(saa716x_ff, ADDR_DVO_FORMAT,
+					    data, 4);
 			format = (data[0] << 24)
 			       | (data[1] << 16)
 			       | (data[2] << 8)
 			       | (data[3]);
 
 			phiISR &= ~ISR_DVO_FORMAT_MASK;
-			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_DVO_FORMAT_MASK);
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR,
+				     ISR_DVO_FORMAT_MASK);
 
 			pci_dbg(saa716x->pdev, "DVO FORMAT CHANGE: %u", format);
 			sti7109->video_format = format;
@@ -1368,11 +1411,12 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 		if (phiISR & ISR_LOG_MESSAGE_MASK) {
 			char message[SIZE_LOG_MESSAGE_DATA];
 
-			saa716x_ff_phi_read(saa716x_ff, ADDR_LOG_MESSAGE, message,
-					 SIZE_LOG_MESSAGE_DATA);
+			saa716x_ff_phi_read(saa716x_ff, ADDR_LOG_MESSAGE,
+					    message, SIZE_LOG_MESSAGE_DATA);
 
 			phiISR &= ~ISR_LOG_MESSAGE_MASK;
-			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR, ISR_LOG_MESSAGE_MASK);
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_EMI_ICLR,
+				     ISR_LOG_MESSAGE_MASK);
 
 			pci_dbg(saa716x->pdev, "LOG MESSAGE: %.*s",
 				SIZE_LOG_MESSAGE_DATA, message);
@@ -1380,7 +1424,8 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 
 		if (phiISR & ISR_FIFO1_EMPTY_MASK) {
 			/* clear FPGA_FIFO_CTRL_IE */
-			SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL, FPGA_FIFO_CTRL_RUN);
+			SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_CTRL,
+				     FPGA_FIFO_CTRL_RUN);
 			queue_work(sti7109->fifo_workq, &sti7109->fifo_work);
 			phiISR &= ~ISR_FIFO1_EMPTY_MASK;
 		}
@@ -1446,14 +1491,16 @@ static const struct isl6423_config tt6400_isl6423_config[2] = {
 };
 
 
-static int saa716x_s26400_frontend_attach(struct saa716x_adapter *adapter, int count)
+static int saa716x_s26400_frontend_attach(struct saa716x_adapter *adapter,
+					  int count)
 {
 	struct saa716x_dev *saa716x	= adapter->saa716x;
 	struct saa716x_i2c *i2c		= saa716x->i2c;
 	struct i2c_adapter *i2c_adapter	= &i2c[SAA716x_I2C_BUS_A].i2c_adapter;
 
 	pci_dbg(saa716x->pdev, "Adapter (%d) SAA716x frontend Init", count);
-	pci_dbg(saa716x->pdev, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
+	pci_dbg(saa716x->pdev, "Adapter (%d) Device ID=%02x", count,
+		saa716x->pdev->subsystem_device);
 
 	if (count == 0 || count == 1) {
 		adapter->fe = dvb_attach(stv090x_attach,
@@ -1528,9 +1575,8 @@ static const struct saa716x_config saa716x_s26400_config = {
 
 
 static const struct pci_device_id saa716x_ff_pci_table[] = {
-
-	MAKE_ENTRY(TECHNOTREND, S2_6400_DUAL_S2_PREMIUM_DEVEL, SAA7160, &saa716x_s26400_config),  /* S2 6400 Dual development version */
-	MAKE_ENTRY(TECHNOTREND, S2_6400_DUAL_S2_PREMIUM_PROD, SAA7160, &saa716x_s26400_config), /* S2 6400 Dual production version */
+	MAKE_ENTRY(TECHNOTREND, S2_6400_DUAL_S2_PREMIUM_DEVEL, SAA7160, &saa716x_s26400_config),
+	MAKE_ENTRY(TECHNOTREND, S2_6400_DUAL_S2_PREMIUM_PROD, SAA7160, &saa716x_s26400_config),
 	{ }
 };
 MODULE_DEVICE_TABLE(pci, saa716x_ff_pci_table);
