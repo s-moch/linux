@@ -11,8 +11,8 @@
 #include "saa716x_priv.h"
 
 #define TECHNOTREND			0x13c2
-#define S2_6400_DUAL_S2_PREMIUM_DEVEL	0x3009
-#define S2_6400_DUAL_S2_PREMIUM_PROD	0x300A
+#define S2_6400_DUAL_S2_PREMIUM_DEVEL	0x3009 /* development version */
+#define S2_6400_DUAL_S2_PREMIUM_PROD	0x300A /* production version */
 
 #define TT_PREMIUM_GPIO_POWER_ENABLE	27
 #define TT_PREMIUM_GPIO_RESET_BACKEND	26
