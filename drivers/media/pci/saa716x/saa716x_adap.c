@@ -35,14 +35,17 @@ void saa716x_dma_start(struct saa716x_dev *saa716x, u8 adapter)
 	params.stream_type	= FGPI_TRANSPORT_STREAM;
 	params.stream_flags	= 0;
 
-	saa716x_fgpi_start(saa716x, saa716x->config->adap_config[adapter].ts_fgpi, &params);
+	saa716x_fgpi_start(saa716x,
+			   saa716x->config->adap_config[adapter].ts_fgpi,
+			   &params);
 }
 
 void saa716x_dma_stop(struct saa716x_dev *saa716x, u8 adapter)
 {
 	pci_dbg(saa716x->pdev, "Stop DMA engine for Adapter:%d", adapter);
 
-	saa716x_fgpi_stop(saa716x, saa716x->config->adap_config[adapter].ts_fgpi);
+	saa716x_fgpi_stop(saa716x,
+			  saa716x->config->adap_config[adapter].ts_fgpi);
 }
 
 static int saa716x_dvb_start_feed(struct dvb_demux_feed *dvbdmxfeed)
@@ -90,7 +93,8 @@ static int saa716x_dvb_stop_feed(struct dvb_demux_feed *dvbdmxfeed)
 
 static void saa716x_demux_worker(unsigned long data)
 {
-	struct saa716x_fgpi_stream_port *fgpi_entry = (struct saa716x_fgpi_stream_port *)data;
+	struct saa716x_fgpi_stream_port *fgpi_entry =
+				 (struct saa716x_fgpi_stream_port *)data;
 	struct saa716x_dev *saa716x = fgpi_entry->saa716x;
 	struct dvb_demux *demux;
 	u32 fgpi_index;
@@ -118,12 +122,14 @@ static void saa716x_demux_worker(unsigned long data)
 	pci_dbg(saa716x->pdev, "dma buffer = %d", write_index);
 
 	if (write_index == fgpi_entry->read_index) {
-		pci_dbg(saa716x->pdev, "%s: called but nothing to do", __func__);
+		pci_dbg(saa716x->pdev,
+			"%s: called but nothing to do", __func__);
 		return;
 	}
 
 	do {
-		u8 *data = (u8 *)fgpi_entry->dma_buf[fgpi_entry->read_index].mem_virt;
+		u8 *data =
+		 (u8 *)fgpi_entry->dma_buf[fgpi_entry->read_index].mem_virt;
 
 		pci_dma_sync_sg_for_cpu(saa716x->pdev,
 			fgpi_entry->dma_buf[fgpi_entry->read_index].sg_list,
@@ -159,58 +165,67 @@ int saa716x_dvb_init(struct saa716x_dev *saa716x)
 			return -ENODEV;
 		}
 
-		saa716x_adap->count			= i;
+		saa716x_adap->count = i;
 
-		saa716x_adap->dvb_adapter.priv		= saa716x_adap;
-		saa716x_adap->demux.dmx.capabilities	= DMX_TS_FILTERING	|
-							  DMX_SECTION_FILTERING	|
-							  DMX_MEMORY_BASED_FILTERING;
+		saa716x_adap->dvb_adapter.priv = saa716x_adap;
+		saa716x_adap->demux.dmx.capabilities = DMX_TS_FILTERING	|
+			  DMX_SECTION_FILTERING | DMX_MEMORY_BASED_FILTERING;
 
-		saa716x_adap->demux.priv		= saa716x_adap;
-		saa716x_adap->demux.filternum		= 256;
-		saa716x_adap->demux.feednum		= 256;
-		saa716x_adap->demux.start_feed		= saa716x_dvb_start_feed;
-		saa716x_adap->demux.stop_feed		= saa716x_dvb_stop_feed;
-		saa716x_adap->demux.write_to_decoder	= NULL;
+		saa716x_adap->demux.priv = saa716x_adap;
+		saa716x_adap->demux.filternum = 256;
+		saa716x_adap->demux.feednum = 256;
+		saa716x_adap->demux.start_feed = saa716x_dvb_start_feed;
+		saa716x_adap->demux.stop_feed = saa716x_dvb_stop_feed;
+		saa716x_adap->demux.write_to_decoder = NULL;
 
 		pci_dbg(saa716x->pdev, "dvb_dmx_init");
 		result = dvb_dmx_init(&saa716x_adap->demux);
 		if (result < 0) {
-			pci_dbg(saa716x->pdev, "dvb_dmx_init failed, ERROR=%d", result);
+			pci_dbg(saa716x->pdev,
+				"dvb_dmx_init failed, ERROR=%d", result);
 			goto err0;
 		}
 
-		saa716x_adap->dmxdev.filternum		= 256;
-		saa716x_adap->dmxdev.demux		= &saa716x_adap->demux.dmx;
-		saa716x_adap->dmxdev.capabilities	= 0;
+		saa716x_adap->dmxdev.filternum = 256;
+		saa716x_adap->dmxdev.demux = &saa716x_adap->demux.dmx;
+		saa716x_adap->dmxdev.capabilities = 0;
 
 		pci_dbg(saa716x->pdev, "dvb_dmxdev_init");
-		result = dvb_dmxdev_init(&saa716x_adap->dmxdev, &saa716x_adap->dvb_adapter);
+		result = dvb_dmxdev_init(&saa716x_adap->dmxdev,
+					 &saa716x_adap->dvb_adapter);
 		if (result < 0) {
-			pci_err(saa716x->pdev, "dvb_dmxdev_init failed, ERROR=%d", result);
+			pci_err(saa716x->pdev,
+				"dvb_dmxdev_init failed, ERROR=%d", result);
 			goto err1;
 		}
 
 		saa716x_adap->fe_hw.source = DMX_FRONTEND_0;
-		result = saa716x_adap->demux.dmx.add_frontend(&saa716x_adap->demux.dmx, &saa716x_adap->fe_hw);
+		result = saa716x_adap->demux.dmx.add_frontend(
+				&saa716x_adap->demux.dmx, &saa716x_adap->fe_hw);
 		if (result < 0) {
-			pci_err(saa716x->pdev, "dvb_dmx_init failed, ERROR=%d", result);
+			pci_err(saa716x->pdev,
+				"dvb_dmx_init failed, ERROR=%d", result);
 			goto err2;
 		}
 
 		saa716x_adap->fe_mem.source = DMX_MEMORY_FE;
-		result = saa716x_adap->demux.dmx.add_frontend(&saa716x_adap->demux.dmx, &saa716x_adap->fe_mem);
+		result = saa716x_adap->demux.dmx.add_frontend(
+			      &saa716x_adap->demux.dmx, &saa716x_adap->fe_mem);
 		if (result < 0) {
-			pci_err(saa716x->pdev, "dvb_dmx_init failed, ERROR=%d", result);
+			pci_err(saa716x->pdev,
+				"dvb_dmx_init failed, ERROR=%d", result);
 			goto err3;
 		}
-		result = saa716x_adap->demux.dmx.connect_frontend(&saa716x_adap->demux.dmx, &saa716x_adap->fe_hw);
+		result = saa716x_adap->demux.dmx.connect_frontend(
+			      &saa716x_adap->demux.dmx, &saa716x_adap->fe_hw);
 		if (result < 0) {
-			pci_err(saa716x->pdev, "dvb_dmx_init failed, ERROR=%d", result);
+			pci_err(saa716x->pdev,
+				"dvb_dmx_init failed, ERROR=%d", result);
 			goto err4;
 		}
 
-		dvb_net_init(&saa716x_adap->dvb_adapter, &saa716x_adap->dvb_net, &saa716x_adap->demux.dmx);
+		dvb_net_init(&saa716x_adap->dvb_adapter, &saa716x_adap->dvb_net,
+			     &saa716x_adap->demux.dmx);
 		pci_dbg(saa716x->pdev, "Frontend Init");
 		saa716x_adap->saa716x = saa716x;
 
@@ -226,7 +241,8 @@ int saa716x_dvb_init(struct saa716x_dev *saa716x)
 					saa716x->pdev->subsystem_vendor,
 					saa716x->pdev->subsystem_device);
 			} else {
-				result = dvb_register_frontend(&saa716x_adap->dvb_adapter, saa716x_adap->fe);
+				result = dvb_register_frontend(
+				  &saa716x_adap->dvb_adapter, saa716x_adap->fe);
 				if (result < 0) {
 					pci_err(saa716x->pdev, "register frontend failed");
 					goto err6;
@@ -239,9 +255,9 @@ int saa716x_dvb_init(struct saa716x_dev *saa716x)
 
 		/* assign video port to fgpi */
 		SAA716x_EPWR(GREG, GREG_FGPI_CTRL,
-				 SAA716x_EPRD(GREG, GREG_FGPI_CTRL) |
-				 (GREG_FGPI_CTRL_SEL(config->adap_config[i].ts_vp) <<
-				  (config->adap_config[i].ts_fgpi * 3)));
+			SAA716x_EPRD(GREG, GREG_FGPI_CTRL) |
+			(GREG_FGPI_CTRL_SEL(config->adap_config[i].ts_vp) <<
+			 (config->adap_config[i].ts_fgpi * 3)));
 
 		saa716x_fgpi_init(saa716x, config->adap_config[i].ts_fgpi,
 				  SAA716X_TS_DMA_BUF_SIZE,
@@ -257,9 +273,11 @@ int saa716x_dvb_init(struct saa716x_dev *saa716x)
 err6:
 	dvb_frontend_detach(saa716x_adap->fe);
 err4:
-	saa716x_adap->demux.dmx.remove_frontend(&saa716x_adap->demux.dmx, &saa716x_adap->fe_mem);
+	saa716x_adap->demux.dmx.remove_frontend(
+			&saa716x_adap->demux.dmx, &saa716x_adap->fe_mem);
 err3:
-	saa716x_adap->demux.dmx.remove_frontend(&saa716x_adap->demux.dmx, &saa716x_adap->fe_hw);
+	saa716x_adap->demux.dmx.remove_frontend(
+			&saa716x_adap->demux.dmx, &saa716x_adap->fe_hw);
 err2:
 	dvb_dmxdev_release(&saa716x_adap->dmxdev);
 err1:
@@ -279,7 +297,8 @@ void saa716x_dvb_exit(struct saa716x_dev *saa716x)
 
 	for (i = 0; i < saa716x->config->adapters; i++) {
 
-		saa716x_fgpi_exit(saa716x, saa716x->config->adap_config[i].ts_fgpi);
+		saa716x_fgpi_exit(saa716x,
+				  saa716x->config->adap_config[i].ts_fgpi);
 
 		/* remove I2C tuner */
 		client = saa716x_adap->i2c_client_tuner;
@@ -301,8 +320,10 @@ void saa716x_dvb_exit(struct saa716x_dev *saa716x)
 		}
 
 		dvb_net_release(&saa716x_adap->dvb_net);
-		saa716x_adap->demux.dmx.remove_frontend(&saa716x_adap->demux.dmx, &saa716x_adap->fe_mem);
-		saa716x_adap->demux.dmx.remove_frontend(&saa716x_adap->demux.dmx, &saa716x_adap->fe_hw);
+		saa716x_adap->demux.dmx.remove_frontend(
+			&saa716x_adap->demux.dmx, &saa716x_adap->fe_mem);
+		saa716x_adap->demux.dmx.remove_frontend(
+			&saa716x_adap->demux.dmx, &saa716x_adap->fe_hw);
 		dvb_dmxdev_release(&saa716x_adap->dmxdev);
 		dvb_dmx_release(&saa716x_adap->demux);
 

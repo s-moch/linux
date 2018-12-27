@@ -54,7 +54,8 @@ int saa716x_pci_init(struct saa716x_dev *saa716x)
 	u32 msi_cap;
 	u8 revision;
 
-	pci_info(saa716x->pdev, "found a %s PCIe card", saa716x->config->model_name);
+	pci_info(saa716x->pdev, "found a %s PCIe card",
+		 saa716x->config->model_name);
 
 	err = pci_enable_device(pdev);
 	if (err != 0) {
