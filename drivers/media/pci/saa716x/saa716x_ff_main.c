@@ -62,9 +62,9 @@ static int saa716x_ff_fpga_init(struct saa716x_ff_dev *saa716x_ff)
 	/* request the FPGA firmware, this will block until someone uploads it */
 	ret = request_firmware(&fw, "dvb-ttpremium-fpga-01.fw", &saa716x->pdev->dev);
 	if (ret) {
-		if (ret == -ENOENT) {
+		if (ret == -ENOENT)
 			pci_err(saa716x->pdev, "dvb-ttpremium: could not find FPGA firmware: dvb-ttpremium-fpga-01.fw");
-		} else
+		else
 			pci_err(saa716x->pdev, "dvb-ttpremium: FPGA firmware request failed (error %i)", ret);
 		return -EINVAL;
 	}
@@ -140,9 +140,9 @@ static int saa716x_ff_st7109_init(struct saa716x_ff_dev *saa716x_ff)
 	/* request the st7109 loader, this will block until someone uploads it */
 	ret = request_firmware(&fw, "dvb-ttpremium-loader-01.fw", &saa716x->pdev->dev);
 	if (ret) {
-		if (ret == -ENOENT) {
+		if (ret == -ENOENT)
 			pci_err(saa716x->pdev, "dvb-ttpremium: could not find ST7109 loader: dvb-ttpremium-loader-01.fw");
-		} else
+		else
 			pci_err(saa716x->pdev, "dvb-ttpremium: loader firmware request failed (error %i)", ret);
 		return -EINVAL;
 	}
@@ -178,9 +178,9 @@ static int saa716x_ff_st7109_init(struct saa716x_ff_dev *saa716x_ff)
 	/* request the st7109 firmware, this will block until someone uploads it */
 	ret = request_firmware(&fw, "dvb-ttpremium-st7109-01.fw", &saa716x->pdev->dev);
 	if (ret) {
-		if (ret == -ENOENT) {
+		if (ret == -ENOENT)
 			pci_err(saa716x->pdev, "dvb-ttpremium: could not find ST7109 firmware: dvb-ttpremium-st7109-01.fw");
-		} else
+		else
 			pci_err(saa716x->pdev, "dvb-ttpremium: ST7109 firmware request failed (error %i)", ret);
 		return -EINVAL;
 	}
@@ -462,16 +462,14 @@ static ssize_t ringbuffer_write_user(struct dvb_ringbuffer *rbuf, const u8 __use
 	split = (rbuf->pwrite + len > rbuf->size) ? rbuf->size - rbuf->pwrite : 0;
 
 	if (split > 0) {
-		if (copy_from_user(rbuf->data+rbuf->pwrite, buf, split)) {
+		if (copy_from_user(rbuf->data+rbuf->pwrite, buf, split))
 			return -EFAULT;
-		}
 		buf += split;
 		todo -= split;
 		rbuf->pwrite = 0;
 	}
-	if (copy_from_user(rbuf->data+rbuf->pwrite, buf, todo)) {
+	if (copy_from_user(rbuf->data+rbuf->pwrite, buf, todo))
 		return -EFAULT;
-	}
 	rbuf->pwrite = (rbuf->pwrite + todo) % rbuf->size;
 
 	return len;
