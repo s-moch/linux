@@ -23,7 +23,8 @@ MODULE_PARM_DESC(int_type, "select Interrupt Handler type: 0=INT-A, 1=MSI. defau
 
 #define DRIVER_NAME	"SAA716x Hybrid"
 
-static int saa716x_hybrid_pci_probe(struct pci_dev *pdev, const struct pci_device_id *pci_id)
+static int saa716x_hybrid_pci_probe(struct pci_dev *pdev,
+				    const struct pci_device_id *pci_id)
 {
 	struct saa716x_dev *saa716x;
 	int err = 0;
@@ -170,13 +171,15 @@ static const struct tda1004x_config tda1004x_vp6090_config = {
 	.request_firmware	= tda1004x_vp6090_request_firmware,
 };
 
-static int saa716x_vp6090_frontend_attach(struct saa716x_adapter *adapter, int count)
+static int saa716x_vp6090_frontend_attach(struct saa716x_adapter *adapter,
+					  int count)
 {
 	struct saa716x_dev *saa716x = adapter->saa716x;
 	struct saa716x_i2c *i2c = &saa716x->i2c[count];
 
 	pci_dbg(saa716x->pdev, "Adapter (%d) SAA716x frontend Init", count);
-	pci_dbg(saa716x->pdev, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
+	pci_dbg(saa716x->pdev, "Adapter (%d) Device ID=%02x", count,
+		saa716x->pdev->subsystem_device);
 	pci_dbg(saa716x->pdev, "Adapter (%d) Power ON", count);
 
 	saa716x_gpio_set_output(saa716x, 11);
@@ -185,7 +188,8 @@ static int saa716x_vp6090_frontend_attach(struct saa716x_adapter *adapter, int c
 	saa716x_gpio_write(saa716x, 10, 1);
 	msleep(100);
 
-	adapter->fe = tda10046_attach(&tda1004x_vp6090_config, &i2c->i2c_adapter);
+	adapter->fe = tda10046_attach(&tda1004x_vp6090_config,
+				      &i2c->i2c_adapter);
 	if (adapter->fe == NULL) {
 		pci_err(saa716x->pdev, "Frontend attach failed");
 		return -ENODEV;
@@ -365,7 +369,8 @@ static struct tda827x_config tda827x_nemo_config = {
 	.agcf		= NULL,
 };
 
-static int saa716x_nemo_frontend_attach(struct saa716x_adapter *adapter, int count)
+static int saa716x_nemo_frontend_attach(struct saa716x_adapter *adapter,
+					int count)
 {
 	struct saa716x_dev *saa716x = adapter->saa716x;
 	struct saa716x_i2c *demod_i2c = &saa716x->i2c[SAA716x_I2C_BUS_B];
@@ -373,8 +378,10 @@ static int saa716x_nemo_frontend_attach(struct saa716x_adapter *adapter, int cou
 
 
 	if (count  == 0) {
-		pci_dbg(saa716x->pdev, "Adapter (%d) SAA716x frontend Init", count);
-		pci_dbg(saa716x->pdev, "Adapter (%d) Device ID=%02x", count, saa716x->pdev->subsystem_device);
+		pci_dbg(saa716x->pdev, "Adapter (%d) SAA716x frontend Init",
+			count);
+		pci_dbg(saa716x->pdev, "Adapter (%d) Device ID=%02x", count,
+			saa716x->pdev->subsystem_device);
 		pci_dbg(saa716x->pdev, "Adapter (%d) Power ON", count);
 
 		/* GPIO 26 controls a +15dB gain */
@@ -394,7 +401,8 @@ static int saa716x_nemo_frontend_attach(struct saa716x_adapter *adapter, int cou
 		adapter->fe = tda10046_attach(&tda1004x_nemo_config,
 					      &demod_i2c->i2c_adapter);
 		if (adapter->fe) {
-			pci_dbg(saa716x->pdev, "found TDA10046 DVB-T frontend @0x%02x",
+			pci_dbg(saa716x->pdev,
+				"found TDA10046 DVB-T frontend @0x%02x",
 				tda1004x_nemo_config.demod_address);
 
 		} else {
@@ -435,7 +443,6 @@ static const struct saa716x_config saa716x_nemo_config = {
 };
 
 static const struct pci_device_id saa716x_hybrid_pci_table[] = {
-
 	MAKE_ENTRY(TWINHAN_TECHNOLOGIES, TWINHAN_VP_6090, SAA7162, &saa716x_vp6090_config),
 	MAKE_ENTRY(KWORLD, KWORLD_DVB_T_PE310, SAA7162, &saa716x_atlantis_config),
 	MAKE_ENTRY(NXP_REFERENCE_BOARD, PCI_ANY_ID, SAA7162, &saa716x_atlantis_config),
