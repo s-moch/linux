@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0+
+
 #include "saa716x_mod.h"
 
 #include "saa716x_gpio_reg.h"
