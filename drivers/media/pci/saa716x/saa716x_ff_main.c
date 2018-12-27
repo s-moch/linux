@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: GPL-2.0+
+
 #include <linux/firmware.h>
 #include <linux/videodev2.h>
 #include <linux/dvb/video.h>
