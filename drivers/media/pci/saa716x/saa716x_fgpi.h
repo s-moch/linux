@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: GPL-2.0+ */
+
 #ifndef __SAA716x_FGPI_H
 #define __SAA716x_FGPI_H
 
