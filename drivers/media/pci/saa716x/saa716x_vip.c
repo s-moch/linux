@@ -174,9 +174,8 @@ static int saa716x_vip_setparams(struct saa716x_dev *saa716x, int port,
 			vin_format |= 0x01000200;
 		}
 	}
-	if (stream_params->stream_flags & VIP_NO_SCALER) {
+	if (stream_params->stream_flags & VIP_NO_SCALER)
 		vin_format |= 0x00000400;
-	}
 
 	end_line = stream_params->offset_y + num_lines;
 
@@ -274,9 +273,8 @@ int saa716x_vip_start(struct saa716x_dev *saa716x, int port, int one_shot,
 	config1 = MMU_DMA_CONFIG(saa716x->vip[port].dma_channel[0]);
 	config2 = MMU_DMA_CONFIG(saa716x->vip[port].dma_channel[1]);
 
-	if (saa716x_vip_setparams(saa716x, port, stream_params) != 0) {
+	if (saa716x_vip_setparams(saa716x, port, stream_params) != 0)
 		return -EIO;
-	}
 
 	val = SAA716x_EPRD(MMU, config1);
 	SAA716x_EPWR(MMU, config1, val & ~0x40);
@@ -365,9 +363,8 @@ int saa716x_vip_init(struct saa716x_dev *saa716x, int port,
 					saa716x,
 					&saa716x->vip[port].dma_buf[n][i],
 					512 * SAA716x_PAGE_SIZE);
-			if (ret < 0) {
+			if (ret < 0)
 				return ret;
-			}
 		}
 	}
 	saa716x->vip[port].saa716x = saa716x;
