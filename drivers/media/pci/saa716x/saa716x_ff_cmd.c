@@ -325,7 +325,8 @@ static int sti7109_do_raw_data(struct sti7109_dev *sti7109, osd_raw_data_t *data
 				pci_err(saa716x->pdev,
 					"timed out waiting for block done");
 				/* send a data interrupt to cancel the transfer
-				   and reset the data handling */
+				 * and reset the data handling
+				 */
 				SAA716x_EPWR(PHI_1, FPGA_ADDR_PHI_ISET,
 						ISR_DATA_MASK);
 				return -EIO;
@@ -343,7 +344,8 @@ static int sti7109_do_raw_data(struct sti7109_dev *sti7109, osd_raw_data_t *data
 	if (sti7109->block_done == 0) {
 		pci_err(saa716x->pdev, "timed out waiting for block done");
 		/* send a data interrupt to cancel the transfer and reset the
-		   data handling */
+		 * data handling
+		 */
 		SAA716x_EPWR(PHI_1, FPGA_ADDR_PHI_ISET, ISR_DATA_MASK);
 		return -EIO;
 	}
