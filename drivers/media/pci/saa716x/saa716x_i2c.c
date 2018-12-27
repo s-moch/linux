@@ -99,21 +99,21 @@ static int saa716x_i2c_hwinit(struct saa716x_i2c *i2c, u32 I2C_DEV)
 		goto exit;
 	}
 
-	/* I2C Rate Setup */
+	/* I2C Rate Setup, set clock divisor to 0.5 * 27MHz/i2c_rate */
 	switch (i2c->i2c_rate) {
 	case SAA716x_I2C_RATE_400:
 
 		pci_dbg(saa716x->pdev, "Initializing Adapter %s @ 400k", adapter->name);
-		SAA716x_EPWR(I2C_DEV, I2C_CLOCK_DIVISOR_HIGH, 0x1a); /* 0.5 * 27MHz/400kHz */
-		SAA716x_EPWR(I2C_DEV, I2C_CLOCK_DIVISOR_LOW,  0x21); /* 0.5 * 27MHz/400kHz */
+		SAA716x_EPWR(I2C_DEV, I2C_CLOCK_DIVISOR_HIGH, 0x1a);
+		SAA716x_EPWR(I2C_DEV, I2C_CLOCK_DIVISOR_LOW,  0x21);
 		SAA716x_EPWR(I2C_DEV, I2C_SDA_HOLD, 0x10);
 		break;
 
 	case SAA716x_I2C_RATE_100:
 
 		pci_dbg(saa716x->pdev, "Initializing Adapter %s @ 100k", adapter->name);
-		SAA716x_EPWR(I2C_DEV, I2C_CLOCK_DIVISOR_HIGH, 0x68); /* 0.5 * 27MHz/100kHz */
-		SAA716x_EPWR(I2C_DEV, I2C_CLOCK_DIVISOR_LOW,  0x87); /* 0.5 * 27MHz/100kHz */
+		SAA716x_EPWR(I2C_DEV, I2C_CLOCK_DIVISOR_HIGH, 0x68);
+		SAA716x_EPWR(I2C_DEV, I2C_CLOCK_DIVISOR_LOW,  0x87);
 		SAA716x_EPWR(I2C_DEV, I2C_SDA_HOLD, 0x60);
 		break;
 
@@ -131,11 +131,12 @@ static int saa716x_i2c_hwinit(struct saa716x_i2c *i2c, u32 I2C_DEV)
 	SAA716x_EPWR(I2C_DEV, INT_CLR_STATUS, 0x1fff);
 
 	if (i2c->i2c_mode >= SAA716x_I2C_MODE_IRQ) {
-		/* Enabled interrupts:
-		* Master Transaction Done,
-		* Master Transaction Data Request
-		* (0x81)
-		*/
+		/*
+		 * Enabled interrupts:
+		 * Master Transaction Done,
+		 * Master Transaction Data Request
+		 * (0x81)
+		 */
 		msleep(5);
 
 		SAA716x_EPWR(I2C_DEV, INT_SET_ENABLE,
