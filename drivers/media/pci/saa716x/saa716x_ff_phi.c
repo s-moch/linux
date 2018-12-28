@@ -68,25 +68,23 @@ int saa716x_ff_phi_init(struct saa716x_ff_dev *saa716x_ff)
 	SAA716x_EPWR(PHI_0, PHI_POLARITY, PHI_ALE_POL);
 	SAA716x_EPWR(PHI_0, PHI_TIMEOUT, 0x2a);
 
-	/* start with PHI settings that should work on all versions of the FPGA
-	   firmware */
-	if (phi_mode) {
-		/* fast PHI clock */
-		saa716x_set_clk(saa716x, CLK_DOMAIN_PHI, PLL_FREQ);
+	/* fast PHI clock */
+	saa716x_set_clk(saa716x, CLK_DOMAIN_PHI, PLL_FREQ);
 
-		SAA716x_EPWR(PHI_0, PHI_0_0_CONFIG, PHI_CONFIG(0x02, 0, 6, 12));
-		SAA716x_EPWR(PHI_0, PHI_1_0_CONFIG, PHI_CONFIG(0x01, 0, 6, 10));
-	} else {
-		/* slow PHI clock */
-		saa716x_set_clk(saa716x, CLK_DOMAIN_PHI, PLL_FREQ / 2);
-
-		SAA716x_EPWR(PHI_0, PHI_0_0_CONFIG, PHI_CONFIG(0x02, 0, 3, 6));
-		SAA716x_EPWR(PHI_0, PHI_1_0_CONFIG, PHI_CONFIG(0x01, 0, 3, 5));
-	}
-
-	/* for the actual access use PHI mode 0 until saa716x_ff_phi_config
-	   gets called */
-	sti7109->phi_mode = 0;
+	/* 8k fifo window */
+	SAA716x_EPWR(PHI_0, PHI_0_0_CONFIG, PHI_CONFIG(0x02, 0, 6, 12));
+	/* noncached slow read/write window, for single-word accesses */
+	SAA716x_EPWR(PHI_0, PHI_1_0_CONFIG, PHI_CONFIG(0x01, 0, 6, 10));
+	/* slower noncached read window */
+	SAA716x_EPWR(PHI_0, PHI_1_1_CONFIG, PHI_CONFIG(0x05, 0, 3, 8));
+	/* fast noncached read window */
+	SAA716x_EPWR(PHI_0, PHI_1_2_CONFIG, PHI_CONFIG(0x05, 0, 4, 6));
+	/* noncached write window */
+	SAA716x_EPWR(PHI_0, PHI_1_3_CONFIG, PHI_CONFIG(0x05, 0, 3, 5));
+	/* write-combining dpram window */
+	SAA716x_EPWR(PHI_0, PHI_1_4_CONFIG, PHI_CONFIG(0x05, 0, 3, 5));
+	/* write-combining fifo window */
+	SAA716x_EPWR(PHI_0, PHI_1_5_CONFIG, PHI_CONFIG(0x06, 0, 3, 5));
 
 	return 0;
 
@@ -109,62 +107,15 @@ void saa716x_ff_phi_exit(struct saa716x_ff_dev *saa716x_ff)
 		iounmap(sti7109->mmio_uc);
 }
 
-void saa716x_ff_phi_config(struct saa716x_ff_dev *saa716x_ff)
-{
-	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
-	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
-
-	if (sti7109->fpga_version < 0x110)
-		return;
-
-	if (phi_mode) {
-		/* 8k fifo window */
-		SAA716x_EPWR(PHI_0, PHI_0_0_CONFIG, PHI_CONFIG(0x02, 0, 3, 5));
-		SAA716x_EPWR(PHI_0, PHI_0_1_CONFIG, PHI_CONFIG(0x02, 0, 3, 5));
-		SAA716x_EPWR(PHI_0, PHI_0_2_CONFIG, PHI_CONFIG(0x02, 0, 3, 5));
-		SAA716x_EPWR(PHI_0, PHI_0_3_CONFIG, PHI_CONFIG(0x02, 0, 3, 5));
-
-		/* noncached slow read/write window, for single-word accesses */
-		SAA716x_EPWR(PHI_0, PHI_1_0_CONFIG, PHI_CONFIG(0x01, 0, 6, 10));
-		/* slower noncached read window */
-		SAA716x_EPWR(PHI_0, PHI_1_1_CONFIG, PHI_CONFIG(0x05, 0, 3, 8));
-		/* fast noncached read window */
-		SAA716x_EPWR(PHI_0, PHI_1_2_CONFIG, PHI_CONFIG(0x05, 0, 4, 6));
-		/* noncached write window */
-		SAA716x_EPWR(PHI_0, PHI_1_3_CONFIG, PHI_CONFIG(0x05, 0, 3, 5));
-		/* write-combining dpram window */
-		SAA716x_EPWR(PHI_0, PHI_1_4_CONFIG, PHI_CONFIG(0x05, 0, 3, 5));
-		/* write-combining fifo window */
-		SAA716x_EPWR(PHI_0, PHI_1_5_CONFIG, PHI_CONFIG(0x06, 0, 3, 5));
-	} else {
-		/* 8k fifo window */
-		SAA716x_EPWR(PHI_0, PHI_0_0_CONFIG, PHI_CONFIG(0x02, 0, 3, 6));
-		SAA716x_EPWR(PHI_0, PHI_0_1_CONFIG, PHI_CONFIG(0x02, 0, 3, 6));
-		SAA716x_EPWR(PHI_0, PHI_0_2_CONFIG, PHI_CONFIG(0x02, 0, 3, 6));
-		SAA716x_EPWR(PHI_0, PHI_0_3_CONFIG, PHI_CONFIG(0x02, 0, 3, 6));
-
-		/* noncached read/write windows */
-		SAA716x_EPWR(PHI_0, PHI_1_0_CONFIG, PHI_CONFIG(0x01, 0, 3, 5));
-		SAA716x_EPWR(PHI_0, PHI_1_1_CONFIG, PHI_CONFIG(0x01, 0, 3, 5));
-		SAA716x_EPWR(PHI_0, PHI_1_2_CONFIG, PHI_CONFIG(0x01, 0, 3, 5));
-		SAA716x_EPWR(PHI_0, PHI_1_3_CONFIG, PHI_CONFIG(0x05, 0, 3, 4));
-		/* write-combining dpram window */
-		SAA716x_EPWR(PHI_0, PHI_1_4_CONFIG, PHI_CONFIG(0x05, 0, 3, 4));
-		/* write-combining fifo window */
-		SAA716x_EPWR(PHI_0, PHI_1_5_CONFIG, PHI_CONFIG(0x06, 0, 3, 4));
-	}
-
-	sti7109->phi_mode = phi_mode;
-}
-
 void saa716x_ff_phi_write(struct saa716x_ff_dev *saa716x_ff,
 			  u32 address, const u8 *data, int length)
 {
 	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
+	unsigned int mode = (sti7109->fpga_version < 0x110) ? 0 : phi_mode;
 	int i;
 
-	switch (sti7109->phi_mode) {
+	switch (mode) {
 	case 2:
 		memcpy(PHI_1_4 + address, data, (length+3) & ~3);
 		break;
@@ -185,9 +136,10 @@ void saa716x_ff_phi_read(struct saa716x_ff_dev *saa716x_ff,
 {
 	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
+	unsigned int mode = (sti7109->fpga_version < 0x110) ? 0 : phi_mode;
 	int i;
 
-	switch (sti7109->phi_mode) {
+	switch (mode) {
 	case 2:
 		memcpy(data, PHI_1_2 + address, (length+3) & ~3);
 		break;
@@ -208,9 +160,10 @@ void saa716x_ff_phi_write_fifo(struct saa716x_ff_dev *saa716x_ff,
 {
 	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
+	unsigned int mode = (sti7109->fpga_version < 0x110) ? 0 : phi_mode;
 	int i;
 
-	switch (sti7109->phi_mode) {
+	switch (mode) {
 	case 2:
 		/* special fifo access                                        */
 		/* first write data in arbitrary order, then commit fifo data */
