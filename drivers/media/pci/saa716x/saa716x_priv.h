@@ -88,10 +88,6 @@ struct saa716x_dev {
 	/* PCI */
 	void __iomem			*mmio;
 
-#define MODE_INTA	0
-#define MODE_MSI	1
-	u8				int_type;
-
 	/* I2C */
 	struct saa716x_i2c		i2c[2];
 	u32				I2C_DEV[2];
