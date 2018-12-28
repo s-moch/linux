@@ -1048,9 +1048,6 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev,
 		goto fail5;
 	}
 
-	/* reconfigure PHI based on FPGA version and phi_mode */
-	saa716x_ff_phi_config(saa716x_ff);
-
 	/* configure TS muxer */
 	if (sti7109->fpga_version < 0x110) {
 		/* select FIFO 1 for TS mux 3 */
