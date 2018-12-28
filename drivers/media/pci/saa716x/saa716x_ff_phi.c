@@ -8,26 +8,15 @@
 
 #include "saa716x_ff.h"
 
-
-unsigned int phi_mode;
-module_param(phi_mode, int, 0644);
-MODULE_PARM_DESC(phi_mode, "phi access mode:"
-		" 0 - default, slow single word accesses;"
-		" 1 - faster phi clock;"
-		" 2 - fastest mode, use write-combining");
-
-
 /* phi config values: chip_select mask, ready mask, strobe time, cycle time */
 #define PHI_CONFIG(__cs, __ready, __strobe, __cycle) \
 	((__cs) + ((__ready) << 8) + ((__strobe) << 12) +  ((__cycle) << 20))
 
 #define PHI_0_0 (saa716x->mmio + PHI_0 + PHI_0_0_RW_0)
 #define PHI_1_0 (saa716x->mmio + PHI_1 + PHI_1_0_RW_0)
-#define PHI_1_1 (sti7109->mmio_uc)
-#define PHI_1_2 (sti7109->mmio_uc + 0x10000)
-#define PHI_1_3 (sti7109->mmio_uc + 0x20000)
-#define PHI_1_4 (sti7109->mmio_wc)
-#define PHI_1_5 (sti7109->mmio_wc + 0x10000)
+#define PHI_1_1 (sti7109->mmio)
+#define PHI_1_2 (sti7109->mmio + 0x10000)
+#define PHI_1_3 (sti7109->mmio + 0x20000)
 
 int saa716x_ff_phi_init(struct saa716x_ff_dev *saa716x_ff)
 {
@@ -35,27 +24,17 @@ int saa716x_ff_phi_init(struct saa716x_ff_dev *saa716x_ff)
 	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
 	struct pci_dev *pdev = saa716x->pdev;
 	resource_size_t phi1_start = pci_resource_start(pdev, 0) + PHI_1;
-	int err;
 
 	if (pci_resource_len(pdev, 0) < 0x80000) {
 		pci_err(saa716x->pdev, "wrong BAR0 length");
-		err = -ENODEV;
-		goto fail0;
+		return -ENODEV;
 	}
 
 	/* skip first PHI window as it is already mapped */
-	sti7109->mmio_uc = ioremap_nocache(phi1_start + 0x10000, 0x30000);
-	if (!sti7109->mmio_uc) {
+	sti7109->mmio = ioremap_nocache(phi1_start + 0x10000, 0x30000);
+	if (!sti7109->mmio) {
 		pci_err(saa716x->pdev, "Mem PHI1 remap failed");
-		err = -ENODEV;
-		goto fail0;
-	}
-
-	sti7109->mmio_wc = ioremap_wc(phi1_start + 0x40000, 0x20000);
-	if (!sti7109->mmio_wc) {
-		pci_err(saa716x->pdev, "Mem PHI1 WC remap failed");
-		err = -ENODEV;
-		goto fail1;
+		return -ENODEV;
 	}
 
 	/* init PHI 0 to FIFO mode */
@@ -81,30 +60,16 @@ int saa716x_ff_phi_init(struct saa716x_ff_dev *saa716x_ff)
 	SAA716x_EPWR(PHI_0, PHI_1_2_CONFIG, PHI_CONFIG(0x05, 0, 4, 6));
 	/* noncached write window */
 	SAA716x_EPWR(PHI_0, PHI_1_3_CONFIG, PHI_CONFIG(0x05, 0, 3, 5));
-	/* write-combining dpram window */
-	SAA716x_EPWR(PHI_0, PHI_1_4_CONFIG, PHI_CONFIG(0x05, 0, 3, 5));
-	/* write-combining fifo window */
-	SAA716x_EPWR(PHI_0, PHI_1_5_CONFIG, PHI_CONFIG(0x06, 0, 3, 5));
 
 	return 0;
-
-fail1:
-	if (sti7109->mmio_wc)
-		iounmap(sti7109->mmio_wc);
-	if (sti7109->mmio_uc)
-		iounmap(sti7109->mmio_uc);
-fail0:
-	return err;
 }
 
 void saa716x_ff_phi_exit(struct saa716x_ff_dev *saa716x_ff)
 {
 	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
 
-	if (sti7109->mmio_wc)
-		iounmap(sti7109->mmio_wc);
-	if (sti7109->mmio_uc)
-		iounmap(sti7109->mmio_uc);
+	if (sti7109->mmio)
+		iounmap(sti7109->mmio);
 }
 
 void saa716x_ff_phi_write(struct saa716x_ff_dev *saa716x_ff,
@@ -112,23 +77,10 @@ void saa716x_ff_phi_write(struct saa716x_ff_dev *saa716x_ff,
 {
 	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
-	unsigned int mode = (sti7109->fpga_version < 0x110) ? 0 : phi_mode;
-	int i;
+	void __iomem *iobase;
 
-	switch (mode) {
-	case 2:
-		memcpy(PHI_1_4 + address, data, (length+3) & ~3);
-		break;
-	case 1:
-		memcpy_toio(PHI_1_3 + address, data, (length+3) & ~3);
-		break;
-	default:
-		for (i = 0; i < length; i += 4) {
-			SAA716x_EPWR(PHI_1, address, *((u32 *) &data[i]));
-			address += 4;
-		}
-		break;
-	}
+	iobase = (sti7109->fpga_version < 0x110) ? PHI_1_0 : PHI_1_3;
+	memcpy_toio(iobase + address, data, (length+3) & ~3);
 }
 
 void saa716x_ff_phi_read(struct saa716x_ff_dev *saa716x_ff,
@@ -136,47 +88,16 @@ void saa716x_ff_phi_read(struct saa716x_ff_dev *saa716x_ff,
 {
 	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
-	unsigned int mode = (sti7109->fpga_version < 0x110) ? 0 : phi_mode;
-	int i;
+	void __iomem *iobase;
 
-	switch (mode) {
-	case 2:
-		memcpy(data, PHI_1_2 + address, (length+3) & ~3);
-		break;
-	case 1:
-		memcpy_fromio(data, PHI_1_1 + address, (length+3) & ~3);
-		break;
-	default:
-		for (i = 0; i < length; i += 4) {
-			*((u32 *) &data[i]) = SAA716x_EPRD(PHI_1, address);
-			address += 4;
-		}
-		break;
-	}
+	iobase = (sti7109->fpga_version < 0x110) ? PHI_1_0 : PHI_1_2;
+	memcpy_fromio(data, iobase + address, (length+3) & ~3);
 }
 
 void saa716x_ff_phi_write_fifo(struct saa716x_ff_dev *saa716x_ff,
 			       const u8 *data, int length)
 {
 	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
-	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
-	unsigned int mode = (sti7109->fpga_version < 0x110) ? 0 : phi_mode;
-	int i;
 
-	switch (mode) {
-	case 2:
-		/* special fifo access                                        */
-		/* first write data in arbitrary order, then commit fifo data */
-		memcpy(PHI_1_5, data, length);
-		wmb();
-		SAA716x_EPWR(PHI_1, FPGA_ADDR_FIFO_STAT, 0);
-		break;
-	case 1:
-		iowrite32_rep(PHI_0_0, data, length/4);
-		break;
-	default:
-		for (i = 0; i < length; i += 4)
-			SAA716x_EPWR(PHI_0, PHI_0_0_RW_0, *((u32 *) &data[i]));
-		break;
-	}
+	iowrite32_rep(PHI_0_0, data, length/4);
 }
