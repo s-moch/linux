@@ -29,10 +29,6 @@
 #include "stv090x.h"
 #include "isl6423.h"
 
-unsigned int int_type = 1;
-module_param(int_type, int, 0644);
-MODULE_PARM_DESC(int_type, "select Interrupt Handler type: 0=INT-A, 1=MSI. default: MSI mode");
-
 unsigned int video_capture;
 module_param(video_capture, int, 0644);
 MODULE_PARM_DESC(video_capture, "capture digital video coming from STi7109: 0=off, 1=one-shot. default off");
@@ -977,7 +973,6 @@ static int saa716x_ff_pci_probe(struct pci_dev *pdev,
 	saa716x = &saa716x_ff->saa716x;
 	sti7109 = &saa716x_ff->sti7109;
 
-	saa716x->int_type = int_type;
 	saa716x->pdev = pdev;
 	saa716x->module = THIS_MODULE;
 	saa716x->config = (struct saa716x_config *) pci_id->driver_data;
