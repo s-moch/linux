@@ -19,10 +19,6 @@
 #include "si2168.h"
 #include "si2157.h"
 
-unsigned int int_type = 1;
-module_param(int_type, int, 0644);
-MODULE_PARM_DESC(int_type, "select Interrupt Handler type: 0=INT-A, 1=MSI. default: MSI mode");
-
 #define DRIVER_NAME	"SAA716x Budget"
 
 static int saa716x_budget_pci_probe(struct pci_dev *pdev,
@@ -37,7 +33,6 @@ static int saa716x_budget_pci_probe(struct pci_dev *pdev,
 		goto fail0;
 	}
 
-	saa716x->int_type	= int_type;
 	saa716x->pdev		= pdev;
 	saa716x->module		= THIS_MODULE;
 	saa716x->config		= (struct saa716x_config *) pci_id->driver_data;
