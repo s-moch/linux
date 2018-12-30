@@ -296,7 +296,7 @@ static int saa716x_i2c_irq_wait(struct saa716x_i2c *i2c, u32 I2C_DEV)
 			/* a signal arrived */
 			err = -ERESTARTSYS;
 		} else {
-			pci_err(saa716x->pdev, "timed out waiting for end of xfer!");
+			pci_dbg(saa716x->pdev, "timed out waiting for end of xfer!");
 			err = -EIO;
 		}
 	}
@@ -359,7 +359,7 @@ static int saa716x_i2c_write_msg(struct saa716x_i2c *i2c, u32 I2C_DEV,
 	return 0;
 
 exit:
-	pci_err(saa716x->pdev, "Error writing data, err=%d", err);
+	pci_dbg(saa716x->pdev, "Error writing data, err=%d", err);
 	return err;
 }
 
@@ -428,7 +428,7 @@ static int saa716x_i2c_read_msg(struct saa716x_i2c *i2c, u32 I2C_DEV,
 	return 0;
 
 exit:
-	pci_err(saa716x->pdev, "Error reading data, err=%d", err);
+	pci_dbg(saa716x->pdev, "Error reading data, err=%d", err);
 	return err;
 }
 
@@ -439,8 +439,7 @@ static int saa716x_i2c_xfer(struct i2c_adapter *adapter,
 	struct saa716x_dev *saa716x	= i2c->saa716x;
 
 	u32 DEV = SAA716x_I2C_BUS(i2c->i2c_dev);
-	int i, j, err = 0;
-	int t;
+	int i, t, err;
 
 	pci_dbg(saa716x->pdev, "Bus(%02x) I2C transfer", DEV);
 	mutex_lock(&i2c->i2c_lock);
@@ -455,42 +454,25 @@ static int saa716x_i2c_xfer(struct i2c_adapter *adapter,
 				err = saa716x_i2c_write_msg(i2c, DEV,
 					msgs[i].addr, msgs[i].buf, msgs[i].len,
 					i == (num - 1));
-			if (err < 0) {
-				err = -EIO;
+			if (err < 0)
 				goto retry;
-			}
 		}
 		break;
 retry:
-		pci_err(saa716x->pdev, "Error in Transfer, try %d", t);
-		for (i = 0; i < num; i++) {
-			pci_err(saa716x->pdev, "msg %d, addr = 0x%02x, len=%d, flags=0x%x",
-				i, msgs[i].addr, msgs[i].len, msgs[i].flags);
-			if (!(msgs[i].flags & I2C_M_RD)) {
-				for (j = 0; j < msgs[i].len; j++) {
-					pci_err(saa716x->pdev, "    <W %04x> 0x%02x",
-						j, msgs[i].buf[j]);
-				}
-			}
-		}
 		err = saa716x_i2c_hwinit(i2c, DEV);
-		if (err < 0) {
-			pci_err(saa716x->pdev, "Error Reinit");
-			err = -EIO;
-			goto bail_out;
-		}
+		if (err < 0)
+			break;
 	}
 
 	mutex_unlock(&i2c->i2c_lock);
-	if (t < 3)
-		return num;
-	else
-		return -EIO;
 
-bail_out:
-	pci_err(saa716x->pdev, "ERROR: Bailing out <%d>", err);
-	mutex_unlock(&i2c->i2c_lock);
-	return err;
+	if ((t < 3) && (err >= 0))
+		return num;
+
+	pci_err(saa716x->pdev,
+		"I2C transfer error, msg %d, addr = 0x%02x, len=%d, flags=0x%x",
+		i, msgs[i].addr, msgs[i].len, msgs[i].flags);
+	return -EIO;
 }
 
 static u32 saa716x_i2c_func(struct i2c_adapter *adapter)
