@@ -315,11 +315,9 @@ static int saa716x_tbs6281_frontend_attach(struct saa716x_adapter *adapter,
 					   int count)
 {
 	struct saa716x_dev *dev = adapter->saa716x;
-	struct i2c_adapter *i2cadapter;
-	struct i2c_client *client;
-	struct i2c_board_info info;
-	struct si2168_config si2168_config;
-	struct si2157_config si2157_config;
+	struct i2c_adapter *i2c_adapter;
+	struct si2168_config si2168_config = {};
+	struct si2157_config si2157_config = {};
 
 	if (count > 1)
 		goto err;
@@ -332,47 +330,27 @@ static int saa716x_tbs6281_frontend_attach(struct saa716x_adapter *adapter,
 	msleep(100);
 
 	/* attach demod */
-	memset(&si2168_config, 0, sizeof(si2168_config));
-	si2168_config.i2c_adapter = &i2cadapter;
+	si2168_config.i2c_adapter = &i2c_adapter;
 	si2168_config.fe = &adapter->fe;
 	si2168_config.ts_mode = SI2168_TS_PARALLEL;
 	si2168_config.ts_clock_gapped = true;
-	memset(&info, 0, sizeof(struct i2c_board_info));
-	strlcpy(info.type, "si2168", I2C_NAME_SIZE);
-	info.addr = 0x64;
-	info.platform_data = &si2168_config;
-	request_module(info.type);
-	client = i2c_new_device(&dev->i2c[1 - count].i2c_adapter, &info);
-	if (client == NULL || client->dev.driver == NULL)
+	adapter->i2c_client_demod =
+			dvb_module_probe("si2168", NULL,
+					 &dev->i2c[1 - count].i2c_adapter,
+					 0x64, &si2168_config);
+	if (!adapter->i2c_client_demod)
 		goto err;
-	if (!try_module_get(client->dev.driver->owner)) {
-		i2c_unregister_device(client);
-		goto err;
-	}
-	adapter->i2c_client_demod = client;
 
 	/* attach tuner */
-	memset(&si2157_config, 0, sizeof(si2157_config));
 	si2157_config.fe = adapter->fe;
 	si2157_config.if_port = 1;
-	memset(&info, 0, sizeof(struct i2c_board_info));
-	strlcpy(info.type, "si2157", I2C_NAME_SIZE);
-	info.addr = 0x60;
-	info.platform_data = &si2157_config;
-	request_module(info.type);
-	client = i2c_new_device(i2cadapter, &info);
-	if (client == NULL || client->dev.driver == NULL) {
-		module_put(adapter->i2c_client_demod->dev.driver->owner);
-		i2c_unregister_device(adapter->i2c_client_demod);
+	adapter->i2c_client_tuner = dvb_module_probe("si2157", NULL,
+						     i2c_adapter,
+						     0x60, &si2157_config);
+	if (!adapter->i2c_client_tuner) {
+		dvb_module_release(adapter->i2c_client_demod);
 		goto err;
 	}
-	if (!try_module_get(client->dev.driver->owner)) {
-		i2c_unregister_device(client);
-		module_put(adapter->i2c_client_demod->dev.driver->owner);
-		i2c_unregister_device(adapter->i2c_client_demod);
-		goto err;
-	}
-	adapter->i2c_client_tuner = client;
 
 	pci_dbg(dev->pdev, "%s frontend %d attached",
 		dev->config->model_name, count);
@@ -413,60 +391,41 @@ static int saa716x_tbs6285_frontend_attach(struct saa716x_adapter *adapter,
 					   int count)
 {
 	struct saa716x_dev *dev = adapter->saa716x;
-	struct i2c_adapter *i2cadapter;
-	struct i2c_client *client;
-	struct i2c_board_info info;
-	struct si2168_config si2168_config;
-	struct si2157_config si2157_config;
+	struct i2c_adapter *i2c_adapter;
+	struct si2168_config si2168_config = {};
+	struct si2157_config si2157_config = {};
 
 	if (count > 3)
 		goto err;
 
 	/* attach demod */
-	memset(&si2168_config, 0, sizeof(si2168_config));
-	si2168_config.i2c_adapter = &i2cadapter;
+	si2168_config.i2c_adapter = &i2c_adapter;
 	si2168_config.fe = &adapter->fe;
 	si2168_config.ts_mode = SI2168_TS_SERIAL;
 	si2168_config.ts_clock_gapped = true;
-	memset(&info, 0, sizeof(struct i2c_board_info));
-	strlcpy(info.type, "si2168", I2C_NAME_SIZE);
-	info.addr = ((count == 0) || (count == 2)) ? 0x64 : 0x66;
-	info.platform_data = &si2168_config;
-	request_module(info.type);
-	client = i2c_new_device(((count == 0) || (count == 1)) ?
-		&dev->i2c[1].i2c_adapter : &dev->i2c[0].i2c_adapter,
-		&info);
-	if (client == NULL || client->dev.driver == NULL)
+	adapter->i2c_client_demod =
+			dvb_module_probe("si2168", NULL,
+					 ((count == 0) || (count == 1)) ?
+					  &dev->i2c[1].i2c_adapter :
+					  &dev->i2c[0].i2c_adapter,
+					 ((count == 0) || (count == 2)) ?
+					  0x64 : 0x66,
+					 &si2168_config);
+	if (!adapter->i2c_client_demod)
 		goto err;
-
-	if (!try_module_get(client->dev.driver->owner)) {
-		i2c_unregister_device(client);
-		goto err;
-	}
-	adapter->i2c_client_demod = client;
 
 	/* attach tuner */
-	memset(&si2157_config, 0, sizeof(si2157_config));
 	si2157_config.fe = adapter->fe;
 	si2157_config.if_port = 1;
-	memset(&info, 0, sizeof(struct i2c_board_info));
-	strlcpy(info.type, "si2157", I2C_NAME_SIZE);
-	info.addr = ((count == 0) || (count == 2)) ? 0x62 : 0x60;
-	info.platform_data = &si2157_config;
-	request_module(info.type);
-	client = i2c_new_device(i2cadapter, &info);
-	if (client == NULL || client->dev.driver == NULL) {
-		module_put(adapter->i2c_client_demod->dev.driver->owner);
-		i2c_unregister_device(adapter->i2c_client_demod);
+	adapter->i2c_client_tuner =
+			dvb_module_probe("si2157", NULL, i2c_adapter,
+					 ((count == 0) || (count == 2)) ?
+					  0x62 : 0x60,
+					 &si2157_config);
+	if (!adapter->i2c_client_tuner) {
+		dvb_module_release(adapter->i2c_client_demod);
 		goto err;
 	}
-	if (!try_module_get(client->dev.driver->owner)) {
-		i2c_unregister_device(client);
-		module_put(adapter->i2c_client_demod->dev.driver->owner);
-		i2c_unregister_device(adapter->i2c_client_demod);
-		goto err;
-	}
-	adapter->i2c_client_tuner = client;
 
 	pci_dbg(dev->pdev, "%s frontend %d attached",
 		dev->config->model_name, count);
