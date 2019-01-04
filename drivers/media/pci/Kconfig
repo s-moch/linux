@@ -40,6 +40,7 @@ source "drivers/media/pci/cx23885/Kconfig"
 source "drivers/media/pci/cx25821/Kconfig"
 source "drivers/media/pci/cx88/Kconfig"
 source "drivers/media/pci/saa7134/Kconfig"
+source "drivers/media/pci/saa716x/Kconfig"
 source "drivers/media/pci/saa7164/Kconfig"
 
 endif

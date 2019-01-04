@@ -20,6 +20,7 @@ obj-y        +=	b2c2/		\
 # Please keep it alphabetically sorted by Kconfig name
 # (e. g. LC_ALL=C sort Makefile)
 
+obj-$(CONFIG_SAA716X_SUPPORT) += saa716x/
 obj-$(CONFIG_STA2X11_VIP) += sta2x11/
 
 obj-$(CONFIG_VIDEO_BT848) += bt8xx/
