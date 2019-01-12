@@ -173,7 +173,7 @@ int saa716x_ir_init(struct saa716x_ff_dev *saa716x_ff)
 		ir->key_map[i] = i+1;
 	ir_register_keys(ir);
 
-	input_enable_softrepeat(input_dev, 800, 200);
+	input_enable_softrepeat(input_dev, 400, 125);
 	tasklet_init(&ir->tasklet, ir_emit_key, (unsigned long) saa716x_ff);
 	return 0;
 
