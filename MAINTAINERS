@@ -13551,6 +13551,12 @@ F:	drivers/media/common/saa7146/
 F:	drivers/media/pci/saa7146/
 F:	include/media/drv-intf/saa7146*
 
+SAA716X DVB DRIVER
+M:	Soeren Moch <smoch@web.de>
+L:	linux-media@vger.kernel.org
+S:	Maintained
+F:	drivers/media/pci/saa716x/
+
 SAMSUNG AUDIO (ASoC) DRIVERS
 M:	Krzysztof Kozlowski <krzk@kernel.org>
 M:	Sangbeom Kim <sbkim73@samsung.com>
