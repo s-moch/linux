@@ -31,7 +31,7 @@ int saa716x_ff_phi_init(struct saa716x_ff_dev *saa716x_ff)
 	}
 
 	/* skip first PHI window as it is already mapped */
-	sti7109->mmio = ioremap_nocache(phi1_start + 0x10000, 0x30000);
+	sti7109->mmio = ioremap(phi1_start + 0x10000, 0x30000);
 	if (!sti7109->mmio) {
 		pci_err(saa716x->pdev, "Mem PHI1 remap failed");
 		return -ENODEV;
