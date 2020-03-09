@@ -97,7 +97,7 @@ int saa716x_pci_init(struct saa716x_dev *saa716x)
 		goto fail2;
 	}
 
-	saa716x->mmio = ioremap_nocache(pci_resource_start(pdev, 0), 0x30000);
+	saa716x->mmio = ioremap(pci_resource_start(pdev, 0), 0x30000);
 	if (!saa716x->mmio) {
 		pci_err(saa716x->pdev, "Mem 0 remap failed");
 		ret = -ENODEV;
