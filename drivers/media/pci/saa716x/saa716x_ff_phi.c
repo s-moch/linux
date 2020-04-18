@@ -77,10 +77,15 @@ void saa716x_ff_phi_write(struct saa716x_ff_dev *saa716x_ff,
 {
 	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
-	void __iomem *iobase;
 
-	iobase = (sti7109->fpga_version < 0x110) ? PHI_1_0 : PHI_1_3;
-	memcpy_toio(iobase + address, data, (length+3) & ~3);
+	void __iomem *iobase = (sti7109->fpga_version < 0x110) ?
+				PHI_1_0 : PHI_1_3;
+	const u32 *src = (u32 *)data;
+	u32 __iomem *dst = iobase + address;
+	int len = (length + 3) / 4;
+
+	while (len--)
+		writel(*src++, dst++);
 }
 
 void saa716x_ff_phi_read(struct saa716x_ff_dev *saa716x_ff,
@@ -88,10 +93,15 @@ void saa716x_ff_phi_read(struct saa716x_ff_dev *saa716x_ff,
 {
 	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 	struct sti7109_dev *sti7109 = &saa716x_ff->sti7109;
-	void __iomem *iobase;
 
-	iobase = (sti7109->fpga_version < 0x110) ? PHI_1_0 : PHI_1_2;
-	memcpy_fromio(data, iobase + address, (length+3) & ~3);
+	void __iomem *iobase = (sti7109->fpga_version < 0x110) ?
+				PHI_1_0 : PHI_1_2;
+	const u32 __iomem *src = iobase + address;
+	u32 *dst = (u32 *)data;
+	int len = (length + 3) / 4;
+
+	while (len--)
+		*dst++ = readl(src++);
 }
 
 void saa716x_ff_phi_write_fifo(struct saa716x_ff_dev *saa716x_ff,
@@ -99,5 +109,10 @@ void saa716x_ff_phi_write_fifo(struct saa716x_ff_dev *saa716x_ff,
 {
 	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
 
-	iowrite32_rep(PHI_0_0, data, length/4);
+	const u32 *src = (u32 *)data;
+	u32 __iomem *dst = PHI_0_0;
+	int len = length / 4;
+
+	while (len--)
+		writel(*src++, dst);
 }
