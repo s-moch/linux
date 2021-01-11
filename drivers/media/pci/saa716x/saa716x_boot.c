@@ -20,9 +20,6 @@ static void saa716x_core_reset(struct saa716x_dev *saa716x)
 {
 	pci_dbg(saa716x->pdev, "RESET Modules");
 
-	/* GREG */
-	SAA716x_EPWR(GREG, GREG_SW_RST, GREG_SW_RESET);
-
 	/* VIP */
 	SAA716x_EPWR(VI0, VI_MODE, SOFT_RESET);
 	SAA716x_EPWR(VI1, VI_MODE, SOFT_RESET);
