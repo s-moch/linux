@@ -27,21 +27,6 @@
 #define SAA716x_I2C_RXBUSY	(I2C_RECEIVE		| \
 				 I2C_RECEIVE_CLEAR)
 
-static void saa716x_term_xfer(struct saa716x_i2c *i2c, u32 I2C_DEV)
-{
-	struct saa716x_dev *saa716x = i2c->saa716x;
-
-	SAA716x_EPWR(I2C_DEV, I2C_CONTROL, 0xc0); /* Start: SCL/SDA High */
-	msleep(10);
-	SAA716x_EPWR(I2C_DEV, I2C_CONTROL, 0x80);
-	msleep(10);
-	SAA716x_EPWR(I2C_DEV, I2C_CONTROL, 0x00);
-	msleep(10);
-	SAA716x_EPWR(I2C_DEV, I2C_CONTROL, 0x80);
-	msleep(10);
-	SAA716x_EPWR(I2C_DEV, I2C_CONTROL, 0xc0);
-}
-
 static void saa716x_i2c_hwdeinit(struct saa716x_i2c *i2c, u32 I2C_DEV)
 {
 	struct saa716x_dev *saa716x = i2c->saa716x;
@@ -56,47 +41,26 @@ static int saa716x_i2c_hwinit(struct saa716x_i2c *i2c, u32 I2C_DEV)
 	struct saa716x_dev *saa716x = i2c->saa716x;
 	struct i2c_adapter *adapter = &i2c->i2c_adapter;
 
-	int i, err = 0;
+	int i, max;
 	u32 reg;
 
-	reg = SAA716x_EPRD(I2C_DEV, I2C_STATUS);
-	if (!(reg & 0xd)) {
-		pci_err(saa716x->pdev, "Adapter (%02x) %s RESET failed, Exiting !",
-			I2C_DEV, adapter->name);
-		err = -EIO;
-		goto exit;
-	}
-
-	/* Flush queue */
-	SAA716x_EPWR(I2C_DEV, I2C_CONTROL, 0xcc);
-
-	/* Disable all interrupts and clear status */
-	SAA716x_EPWR(I2C_DEV, INT_CLR_ENABLE, 0x1fff);
-	SAA716x_EPWR(I2C_DEV, INT_CLR_STATUS, 0x1fff);
-
-	/* Reset I2C Core and generate a delay */
+	/* Reset I2C Core */
 	SAA716x_EPWR(I2C_DEV, I2C_CONTROL, 0xc1);
 
-	for (i = 0; i < 100; i++) {
+	max = 100;
+	for (i = 0; i < max; i++) {
 		reg = SAA716x_EPRD(I2C_DEV, I2C_CONTROL);
 		if (reg == 0xc0) {
 			pci_dbg(saa716x->pdev, "Adapter (%02x) %s RESET",
 				I2C_DEV, adapter->name);
 			break;
 		}
-		msleep(1);
-
-		if (i == 99)
-			err = -EIO;
+		usleep_range(1000, 2000);
 	}
-
-	if (err) {
+	if (i == max) {
 		pci_err(saa716x->pdev, "Adapter (%02x) %s RESET failed",
 			I2C_DEV, adapter->name);
-
-		saa716x_term_xfer(i2c, I2C_DEV);
-		err = -EIO;
-		goto exit;
+		return -EIO;
 	}
 
 	/* I2C Rate Setup, set clock divisor to 0.5 * 27MHz/i2c_rate */
@@ -137,48 +101,31 @@ static int saa716x_i2c_hwinit(struct saa716x_i2c *i2c, u32 I2C_DEV)
 		 * Enabled interrupts:
 		 * Master Transaction Done,
 		 * Master Transaction Data Request
-		 * (0x81)
 		 */
-		msleep(5);
-
 		SAA716x_EPWR(I2C_DEV, INT_SET_ENABLE,
 			I2C_SET_ENABLE_MTDR | I2C_SET_ENABLE_MTD);
-
-		/* Check interrupt enable status */
-		reg = SAA716x_EPRD(I2C_DEV, INT_ENABLE);
-		if (reg != 0x81) {
-
-			pci_err(saa716x->pdev,
-				"Adapter (%d) %s Interrupt enable failed, Exiting !",
-				i,
-				adapter->name);
-
-			err = -EIO;
-			goto exit;
-		}
 	}
 
-	/* Check status */
-	reg = SAA716x_EPRD(I2C_DEV, I2C_STATUS);
-	if (!(reg & 0xd)) {
-
-		pci_err(saa716x->pdev,
-			"Adapter (%02x) %s has bad state, Exiting !",
-			I2C_DEV,
-			adapter->name);
-
-		err = -EIO;
-		goto exit;
+	/* Some slave may be in read state, force bus release */
+	SAA716x_EPWR(I2C_DEV, I2C_CONTROL, 0xc0); /* SCL/SDA high */
+	usleep_range(50, 200);
+	for (i = 0; i < 9; i++) {                 /* Issue 9 SCL pulses w/o ACK */
+		SAA716x_EPWR(I2C_DEV, I2C_CONTROL, 0x40);
+		usleep_range(50, 200);
+		SAA716x_EPWR(I2C_DEV, I2C_CONTROL, 0xc0);
+		usleep_range(50, 200);
 	}
-	reg = SAA716x_EPRD(CGU, CGU_SCR_3);
-	pci_dbg(saa716x->pdev, "Adapter (%02x) Autowake <%d> Active <%d>",
-		I2C_DEV,
-		(reg >> 1) & 0x01,
-		reg & 0x01);
+	/* Create STOP condition */
+	SAA716x_EPWR(I2C_DEV, I2C_CONTROL, 0x40); /* SCL low */
+	usleep_range(50, 200);
+	SAA716x_EPWR(I2C_DEV, I2C_CONTROL, 0x00); /* SCL/SDA low */
+	usleep_range(50, 200);
+	SAA716x_EPWR(I2C_DEV, I2C_CONTROL, 0x80); /* SDA low */
+	usleep_range(50, 200);
+	SAA716x_EPWR(I2C_DEV, I2C_CONTROL, 0xc0); /* SCL/SDA high */
+	usleep_range(50, 200);
 
 	return 0;
-exit:
-	return err;
 }
 
 static int saa716x_i2c_send(struct saa716x_i2c *i2c, u32 I2C_DEV, u32 data)
