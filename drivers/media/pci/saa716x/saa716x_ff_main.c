@@ -844,7 +844,8 @@ static int do_dvb_video_ioctl(struct dvb_device *dvbdev,
 			spin_unlock(&sti7109->tsout.lock);
 			break;
 		}
-	}	/* fall through */
+	}
+		fallthrough;
 	case VIDEO_CLEAR_BUFFER:
 	{
 		/* reset FIFO 1 */
