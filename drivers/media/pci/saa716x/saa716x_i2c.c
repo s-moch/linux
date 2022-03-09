@@ -69,18 +69,18 @@ static int saa716x_i2c_hwinit(struct saa716x_i2c *i2c, u32 I2C_DEV)
 
 		pci_dbg(saa716x->pdev, "Initializing Adapter %s @ 400k",
 			adapter->name);
-		SAA716x_EPWR(I2C_DEV, I2C_CLOCK_DIVISOR_HIGH, 0x1a);
-		SAA716x_EPWR(I2C_DEV, I2C_CLOCK_DIVISOR_LOW,  0x21);
-		SAA716x_EPWR(I2C_DEV, I2C_SDA_HOLD, 0x10);
+		SAA716x_EPWR(I2C_DEV, I2C_CLOCK_DIVISOR_HIGH, 34);
+		SAA716x_EPWR(I2C_DEV, I2C_CLOCK_DIVISOR_LOW,  34);
+		SAA716x_EPWR(I2C_DEV, I2C_SDA_HOLD,            2);
 		break;
 
 	case SAA716x_I2C_RATE_100:
 
 		pci_dbg(saa716x->pdev, "Initializing Adapter %s @ 100k",
 			adapter->name);
-		SAA716x_EPWR(I2C_DEV, I2C_CLOCK_DIVISOR_HIGH, 0x68);
-		SAA716x_EPWR(I2C_DEV, I2C_CLOCK_DIVISOR_LOW,  0x87);
-		SAA716x_EPWR(I2C_DEV, I2C_SDA_HOLD, 0x60);
+		SAA716x_EPWR(I2C_DEV, I2C_CLOCK_DIVISOR_HIGH, 135);
+		SAA716x_EPWR(I2C_DEV, I2C_CLOCK_DIVISOR_LOW,  135);
+		SAA716x_EPWR(I2C_DEV, I2C_SDA_HOLD,             7);
 		break;
 
 	default:
