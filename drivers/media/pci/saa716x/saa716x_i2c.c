@@ -221,22 +221,26 @@ static int saa716x_i2c_xfer(struct i2c_adapter *adapter,
 		err = saa716x_i2c_xfer_msg(i2c, DEV,
 			msgs[i].addr, msgs[i].buf, msgs[i].len,
 			msgs[i].flags & I2C_M_RD, i == (num - 1));
-		if (err < 0)
+		if (err < 0) {
+			if (err != -ENXIO ||
+			   (msgs[i].flags == 0 && msgs[i].len != 0)) {
+				pci_err(saa716x->pdev,
+					"I2C transfer error, msg %d, "
+					"addr = 0x%02x, len=%d, "
+					"flags=0x%x, %pe",
+					i, msgs[i].addr, msgs[i].len,
+					msgs[i].flags, ERR_PTR(err));
+				saa716x_i2c_hwinit(i2c, DEV);
+			}
 			break;
+		}
 	}
 
 	mutex_unlock(&i2c->i2c_lock);
 
-	if (err >= 0)
-		return num;
-
-	if (err != -ENXIO) {
-		pci_err(saa716x->pdev,
-			"I2C transfer error, msg %d, addr = 0x%02x, len=%d, flags=0x%x, %pe",
-			i, msgs[i].addr, msgs[i].len, msgs[i].flags, ERR_PTR(err));
-		saa716x_i2c_hwinit(i2c, DEV);
-	}
-	return err;
+	if (err < 0)
+		return err;
+	return num;
 }
 
 static u32 saa716x_i2c_func(struct i2c_adapter *adapter)
