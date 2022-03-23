@@ -1206,15 +1206,6 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 	if (msiStatusL & MSI_INT_TAGACK_FGPI_3)
 		tasklet_schedule(&saa716x->fgpi[3].tasklet);
 
-	if (msiStatusH & MSI_INT_I2CINT_0) {
-		saa716x->i2c[0].i2c_op = 0;
-		wake_up(&saa716x->i2c[0].i2c_wq);
-	}
-	if (msiStatusH & MSI_INT_I2CINT_1) {
-		saa716x->i2c[1].i2c_op = 0;
-		wake_up(&saa716x->i2c[1].i2c_wq);
-	}
-
 	if (msiStatusH & MSI_INT_EXTINT_0) {
 
 		phiISR = SAA716x_EPRD(PHI_1, FPGA_ADDR_EMI_ISR);
@@ -1549,7 +1540,6 @@ static const struct saa716x_config saa716x_s26400_config = {
 	.frontend_attach	= saa716x_s26400_frontend_attach,
 	.irq_handler		= saa716x_ff_pci_irq,
 	.i2c_rate		= SAA716x_I2C_RATE_100,
-	.i2c_mode		= SAA716x_I2C_MODE_IRQ_BUFFERED,
 
 	.adap_config		= {
 		{
