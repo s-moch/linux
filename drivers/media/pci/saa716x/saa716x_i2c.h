@@ -24,26 +24,12 @@ enum saa716x_i2c_rate {
 	SAA716x_I2C_RATE_100,
 };
 
-enum saa716x_i2c_mode {
-	SAA716x_I2C_MODE_POLLING = 0,
-	SAA716x_I2C_MODE_IRQ,
-	SAA716x_I2C_MODE_IRQ_BUFFERED
-};
-
 struct saa716x_i2c {
 	struct i2c_adapter		i2c_adapter;
 	struct mutex			i2c_lock;
 	struct saa716x_dev		*saa716x;
 	u8				i2c_dev;
-
 	enum saa716x_i2c_rate		i2c_rate;
-	enum saa716x_i2c_mode		i2c_mode;
-
-	/* block size for buffered mode, 1 otherwise */
-	u32				block_size;
-
-	wait_queue_head_t		i2c_wq;
-	int				i2c_op;
 };
 
 extern int saa716x_i2c_init(struct saa716x_dev *saa716x);
