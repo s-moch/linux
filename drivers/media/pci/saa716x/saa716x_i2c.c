@@ -174,6 +174,18 @@ static int saa716x_i2c_xfer_msg(struct saa716x_i2c *i2c, u16 addr,
 	pci_dbg(saa716x->pdev, "I2C %d %s transfer, addr=0x%02x length=%d",
 		i2c->i2c_dev, (read) ? "read" : "write", addr, len);
 
+	/* Special quirks to improve read reliability */
+	if (read) {
+		/* Avoid returning of uninitialized data on read errors */
+		for (i = 0; i < len; i++)
+			buf[i] = 0;
+		/* Some time between setting read address and read access */
+		tx_bytes = SAA716x_EPRD(I2C_DEV, I2C_TX_LEVEL);
+		tx_bytes &= I2C_TRANSMIT_RANGE;
+		usleep_range((tx_bytes + 1) * bytetime_us + 100,
+				(tx_bytes + 1) * bytetime_us + 120);
+	}
+
 	/* Write address and data */
 	for (i = 0; i <= len; i++) {
 		data = (i == 0) ?
