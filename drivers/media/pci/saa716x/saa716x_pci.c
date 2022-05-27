@@ -44,7 +44,7 @@ static void saa716x_free_irq(struct saa716x_dev *saa716x)
 int saa716x_pci_init(struct saa716x_dev *saa716x)
 {
 	struct pci_dev *pdev = saa716x->pdev;
-	int err = 0, ret = -ENODEV, use_dac, pm_cap;
+	int err, ret, pm_cap;
 	u32 msi_cap;
 	u8 revision;
 
@@ -58,19 +58,12 @@ int saa716x_pci_init(struct saa716x_dev *saa716x)
 		goto fail0;
 	}
 
-	if (!pci_set_dma_mask(pdev, DMA_BIT_MASK(64))) {
-		use_dac = 1;
-		err = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(64));
-		if (err) {
-			pci_err(saa716x->pdev, "Unable to obtain 64bit DMA");
-			goto fail1;
-		}
-	} else {
-		err = pci_set_consistent_dma_mask(pdev, DMA_BIT_MASK(32));
-		if (err) {
-			pci_err(saa716x->pdev, "Unable to obtain 32bit DMA");
-			goto fail1;
-		}
+	ret = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64));
+	if (ret)
+		ret = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
+	if (ret) {
+		pci_err(saa716x->pdev, "No suitable DMA support available.");
+		goto fail1;
 	}
 
 	pci_set_master(pdev);
@@ -78,7 +71,7 @@ int saa716x_pci_init(struct saa716x_dev *saa716x)
 	pm_cap = pci_find_capability(pdev, PCI_CAP_ID_PM);
 	if (pm_cap == 0) {
 		pci_err(saa716x->pdev, "Cannot find Power Management Capability");
-		err = -EIO;
+		ret = -EIO;
 		goto fail1;
 	}
 
