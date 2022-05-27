@@ -576,15 +576,15 @@ static void video_vip_worker(unsigned long data)
 	}
 
 	do {
-		pci_dma_sync_sg_for_cpu(saa716x->pdev,
+		dma_sync_sg_for_cpu(&saa716x->pdev->dev,
 			vip_entry->dma_buf[0][vip_entry->read_index].sg_list,
 			vip_entry->dma_buf[0][vip_entry->read_index].list_len,
-			PCI_DMA_FROMDEVICE);
+			DMA_FROM_DEVICE);
 		if (vip_entry->dual_channel) {
-			pci_dma_sync_sg_for_cpu(saa716x->pdev,
+			dma_sync_sg_for_cpu(&saa716x->pdev->dev,
 			  vip_entry->dma_buf[1][vip_entry->read_index].sg_list,
 			  vip_entry->dma_buf[1][vip_entry->read_index].list_len,
-			  PCI_DMA_FROMDEVICE);
+			  DMA_FROM_DEVICE);
 		}
 
 		vip_entry->read_index = (vip_entry->read_index + 1) & 7;
