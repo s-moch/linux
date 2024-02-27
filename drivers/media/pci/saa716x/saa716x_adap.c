@@ -20,7 +20,7 @@
 DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nr);
 
 
-void saa716x_dma_start(struct saa716x_dev *saa716x, u8 adapter)
+static void saa716x_dma_start(struct saa716x_dev *saa716x, u8 adapter)
 {
 	struct fgpi_stream_params params;
 
@@ -40,7 +40,7 @@ void saa716x_dma_start(struct saa716x_dev *saa716x, u8 adapter)
 			   &params);
 }
 
-void saa716x_dma_stop(struct saa716x_dev *saa716x, u8 adapter)
+static void saa716x_dma_stop(struct saa716x_dev *saa716x, u8 adapter)
 {
 	pci_dbg(saa716x->pdev, "Stop DMA engine for Adapter:%d", adapter);
 
