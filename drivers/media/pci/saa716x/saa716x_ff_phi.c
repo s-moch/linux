@@ -7,6 +7,7 @@
 #include "saa716x_priv.h"
 
 #include "saa716x_ff.h"
+#include "saa716x_ff_phi.h"
 
 /* phi config values: chip_select mask, ready mask, strobe time, cycle time */
 #define PHI_CONFIG(__cs, __ready, __strobe, __cycle) \
