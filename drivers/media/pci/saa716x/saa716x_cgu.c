@@ -41,7 +41,7 @@ char *clk_desc[14] = {
 	"Clk Phy"
 };
 
-int saa716x_getbootscript_setup(struct saa716x_dev *saa716x)
+static int saa716x_getbootscript_setup(struct saa716x_dev *saa716x)
 {
 	struct saa716x_cgu *cgu = &saa716x->cgu;
 
