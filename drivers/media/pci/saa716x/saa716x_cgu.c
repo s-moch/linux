@@ -315,45 +315,6 @@ int saa716x_set_clk_external(struct saa716x_dev *saa716x, u32 port)
 	return 0;
 }
 
-int saa716x_get_clk(struct saa716x_dev *saa716x,
-		    enum saa716x_clk_domain domain,
-		    u32 *frequency)
-{
-	struct saa716x_cgu *cgu = &saa716x->cgu;
-
-	switch (domain) {
-	case CLK_DOMAIN_PSS:
-	case CLK_DOMAIN_DCS:
-	case CLK_DOMAIN_SPI:
-	case CLK_DOMAIN_I2C:
-	case CLK_DOMAIN_PHI:
-	case CLK_DOMAIN_VI0:
-	case CLK_DOMAIN_VI1:
-	case CLK_DOMAIN_FGPI0:
-	case CLK_DOMAIN_FGPI1:
-	case CLK_DOMAIN_FGPI2:
-	case CLK_DOMAIN_FGPI3:
-	case CLK_DOMAIN_AI0:
-	case CLK_DOMAIN_AI1:
-	case CLK_DOMAIN_PHY:
-		*frequency = cgu->clk_freq[domain];
-		break;
-
-	case CLK_DOMAIN_VI0VBI:
-		*frequency = cgu->clk_freq[CLK_DOMAIN_VI0];
-		break;
-
-	case CLK_DOMAIN_VI1VBI:
-		*frequency = cgu->clk_freq[CLK_DOMAIN_VI1];
-		break;
-	default:
-		pci_err(saa716x->pdev, "Error Clock domain <%02x>", domain);
-		break;
-	}
-
-	return 0;
-}
-
 int saa716x_set_clk(struct saa716x_dev *saa716x,
 		    enum saa716x_clk_domain domain,
 		    u32 frequency)
