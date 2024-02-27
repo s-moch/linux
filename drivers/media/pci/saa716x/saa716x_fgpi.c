@@ -162,9 +162,9 @@ static u32 saa716x_init_ptables(struct saa716x_dmabuf *dmabuf, int channel,
 	return 0;
 }
 
-int saa716x_fgpi_setparams(struct saa716x_dmabuf *dmabuf,
-			   struct fgpi_stream_params *stream_params,
-			   int port)
+static int saa716x_fgpi_setparams(struct saa716x_dmabuf *dmabuf,
+				  struct fgpi_stream_params *stream_params,
+				  int port)
 {
 	struct saa716x_dev *saa716x = dmabuf->saa716x;
 
