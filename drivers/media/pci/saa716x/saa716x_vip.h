@@ -43,7 +43,7 @@ struct saa716x_vip_stream_port {
 	u8			dma_channel[2];
 	struct saa716x_dmabuf	dma_buf[2][VIP_BUFFERS];
 	struct saa716x_dev	*saa716x;
-	struct tasklet_struct	tasklet;
+	struct work_struct	bh_work;
 };
 
 extern void saa716x_vipint_disable(struct saa716x_dev *saa716x);
@@ -54,7 +54,7 @@ extern int saa716x_vip_start(struct saa716x_dev *saa716x, int port,
 			     struct vip_stream_params *stream_params);
 extern int saa716x_vip_stop(struct saa716x_dev *saa716x, int port);
 extern int saa716x_vip_init(struct saa716x_dev *saa716x, int port,
-			    void (*worker)(unsigned long));
+			    void (*worker)(struct work_struct *));
 extern int saa716x_vip_exit(struct saa716x_dev *saa716x, int port);
 
 #endif /* __SAA716x_VIP_H */

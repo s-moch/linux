@@ -91,10 +91,10 @@ static int saa716x_dvb_stop_feed(struct dvb_demux_feed *dvbdmxfeed)
 	return 0;
 }
 
-static void saa716x_demux_worker(unsigned long data)
+static void saa716x_demux_worker(struct work_struct *w)
 {
 	struct saa716x_fgpi_stream_port *fgpi_entry =
-				 (struct saa716x_fgpi_stream_port *)data;
+				 from_work(fgpi_entry, w, bh_work);
 	struct saa716x_dev *saa716x = fgpi_entry->saa716x;
 	struct dvb_demux *demux;
 	u32 fgpi_index;
