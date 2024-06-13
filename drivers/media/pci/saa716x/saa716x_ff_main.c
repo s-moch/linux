@@ -548,10 +548,10 @@ static void fifo_worker(struct work_struct *work)
 	spin_unlock(&sti7109->tsout.lock);
 }
 
-static void video_vip_worker(unsigned long data)
+static void video_vip_worker(struct work_struct *w)
 {
 	struct saa716x_vip_stream_port *vip_entry =
-				 (struct saa716x_vip_stream_port *)data;
+				 from_work(vip_entry, w, bh_work);
 	struct saa716x_dev *saa716x = vip_entry->saa716x;
 	u32 vip_index;
 	u32 write_index;
@@ -1200,11 +1200,11 @@ static irqreturn_t saa716x_ff_pci_irq(int irq, void *dev_id)
 	SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_H, msiStatusH);
 
 	if (msiStatusL & MSI_INT_TAGACK_VI0_0)
-		tasklet_schedule(&saa716x->vip[0].tasklet);
+		queue_work(system_bh_wq, &saa716x->vip[0].bh_work);
 	if (msiStatusL & MSI_INT_TAGACK_FGPI_2)
-		tasklet_schedule(&saa716x->fgpi[2].tasklet);
+		queue_work(system_bh_wq, &saa716x->fgpi[2].bh_work);
 	if (msiStatusL & MSI_INT_TAGACK_FGPI_3)
-		tasklet_schedule(&saa716x->fgpi[3].tasklet);
+		queue_work(system_bh_wq, &saa716x->fgpi[3].bh_work);
 
 	if (msiStatusH & MSI_INT_EXTINT_0) {
 
