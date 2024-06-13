@@ -128,13 +128,13 @@ static irqreturn_t saa716x_hybrid_pci_irq(int irq, void *dev_id)
 		SAA716x_EPWR(MSI, MSI_INT_STATUS_CLR_H, stat_h);
 
 	if (stat_l & MSI_INT_TAGACK_FGPI_0)
-		tasklet_schedule(&saa716x->fgpi[0].tasklet);
+		queue_work(system_bh_wq, &saa716x->fgpi[0].bh_work);
 	if (stat_l & MSI_INT_TAGACK_FGPI_1)
-		tasklet_schedule(&saa716x->fgpi[1].tasklet);
+		queue_work(system_bh_wq, &saa716x->fgpi[1].bh_work);
 	if (stat_l & MSI_INT_TAGACK_FGPI_2)
-		tasklet_schedule(&saa716x->fgpi[2].tasklet);
+		queue_work(system_bh_wq, &saa716x->fgpi[2].bh_work);
 	if (stat_l & MSI_INT_TAGACK_FGPI_3)
-		tasklet_schedule(&saa716x->fgpi[3].tasklet);
+		queue_work(system_bh_wq, &saa716x->fgpi[3].bh_work);
 
 	return IRQ_HANDLED;
 }
