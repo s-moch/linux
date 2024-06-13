@@ -362,7 +362,7 @@ int saa716x_fgpi_stop(struct saa716x_dev *saa716x, int port)
 EXPORT_SYMBOL_GPL(saa716x_fgpi_stop);
 
 int saa716x_fgpi_init(struct saa716x_dev *saa716x, int port, int dma_buf_size,
-		      void (*worker)(unsigned long))
+		      void (*worker)(struct work_struct *))
 {
 	int i;
 	int ret;
@@ -376,8 +376,7 @@ int saa716x_fgpi_init(struct saa716x_dev *saa716x, int port, int dma_buf_size,
 			return ret;
 	}
 	saa716x->fgpi[port].saa716x = saa716x;
-	tasklet_init(&saa716x->fgpi[port].tasklet, worker,
-		     (unsigned long)&saa716x->fgpi[port]);
+	INIT_WORK(&saa716x->fgpi[port].bh_work, worker);
 	saa716x->fgpi[port].read_index = 0;
 
 	return 0;
@@ -388,7 +387,7 @@ int saa716x_fgpi_exit(struct saa716x_dev *saa716x, int port)
 {
 	int i;
 
-	tasklet_kill(&saa716x->fgpi[port].tasklet);
+	cancel_work_sync(&saa716x->fgpi[port].bh_work);
 	for (i = 0; i < FGPI_BUFFERS; i++)
 		saa716x_dmabuf_free(saa716x, &saa716x->fgpi[port].dma_buf[i]);
 

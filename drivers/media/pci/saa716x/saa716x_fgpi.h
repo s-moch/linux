@@ -75,7 +75,7 @@ struct saa716x_fgpi_stream_port {
 	u8			dma_channel;
 	struct saa716x_dmabuf	dma_buf[FGPI_BUFFERS];
 	struct saa716x_dev	*saa716x;
-	struct tasklet_struct	tasklet;
+	struct work_struct	bh_work;
 	u8			read_index;
 };
 
@@ -88,7 +88,7 @@ extern int saa716x_fgpi_stop(struct saa716x_dev *saa716x, int port);
 
 extern int saa716x_fgpi_init(struct saa716x_dev *saa716x, int port,
 			      int dma_buf_size,
-			      void (*worker)(unsigned long));
+			      void (*worker)(struct work_struct *));
 extern int saa716x_fgpi_exit(struct saa716x_dev *saa716x, int port);
 
 #endif /* __SAA716x_FGPI_H */

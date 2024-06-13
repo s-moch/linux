@@ -351,7 +351,7 @@ int saa716x_vip_stop(struct saa716x_dev *saa716x, int port)
 EXPORT_SYMBOL_GPL(saa716x_vip_stop);
 
 int saa716x_vip_init(struct saa716x_dev *saa716x, int port,
-		     void (*worker)(unsigned long))
+		     void (*worker)(struct work_struct *))
 {
 	int n;
 	int i;
@@ -372,8 +372,7 @@ int saa716x_vip_init(struct saa716x_dev *saa716x, int port,
 		}
 	}
 	saa716x->vip[port].saa716x = saa716x;
-	tasklet_init(&saa716x->vip[port].tasklet, worker,
-		     (unsigned long)&saa716x->vip[port]);
+	INIT_WORK(&saa716x->vip[port].bh_work, worker);
 	saa716x->vip[port].read_index = 0;
 
 	return 0;
@@ -385,7 +384,7 @@ int saa716x_vip_exit(struct saa716x_dev *saa716x, int port)
 	int n;
 	int i;
 
-	tasklet_kill(&saa716x->vip[port].tasklet);
+	cancel_work_sync(&saa716x->vip[port].bh_work);
 	for (n = 0; n < 2; n++)
 		for (i = 0; i < VIP_BUFFERS; i++)
 			saa716x_dmabuf_free(
