@@ -6,9 +6,7 @@
  * Copyright (C) 2010 Oliver Endriss <o.endriss@gmx.de>
  */
 
-#include <linux/types.h>
 #include <linux/input.h>
-
 #include "saa716x_priv.h"
 #include "saa716x_ff.h"
 
@@ -30,12 +28,12 @@ static void ir_emit_keyup(struct timer_list *t)
 }
 
 
-/* tasklet */
-static void ir_emit_key(unsigned long parm)
+/* bh worker */
+static void ir_emit_key(struct work_struct *w)
 {
-	struct saa716x_ff_dev *saa716x_ff = (struct saa716x_ff_dev *) parm;
+	struct infrared *ir = from_work(ir, w, bh_work);
+	struct saa716x_ff_dev *saa716x_ff = container_of(ir, struct saa716x_ff_dev, ir);
 	struct saa716x_dev *saa716x = &saa716x_ff->saa716x;
-	struct infrared *ir = &saa716x_ff->ir;
 	u32 ircom = ir->command;
 	u8 data;
 	u8 addr;
@@ -134,7 +132,7 @@ void saa716x_ir_handler(struct saa716x_ff_dev *saa716x_ff, u32 ir_cmd)
 	struct infrared *ir = &saa716x_ff->ir;
 
 	ir->command = ir_cmd;
-	tasklet_schedule(&ir->tasklet);
+	queue_work(system_bh_wq, &ir->bh_work);
 }
 
 
@@ -174,7 +172,7 @@ int saa716x_ir_init(struct saa716x_ff_dev *saa716x_ff)
 	ir_register_keys(ir);
 
 	input_enable_softrepeat(input_dev, 400, 125);
-	tasklet_init(&ir->tasklet, ir_emit_key, (unsigned long) saa716x_ff);
+	INIT_WORK(&ir->bh_work, ir_emit_key);
 	return 0;
 
 err:
@@ -188,7 +186,7 @@ void saa716x_ir_exit(struct saa716x_ff_dev *saa716x_ff)
 {
 	struct infrared *ir = &saa716x_ff->ir;
 
-	tasklet_kill(&ir->tasklet);
+	cancel_work_sync(&ir->bh_work);
 	del_timer_sync(&ir->keyup_timer);
 	input_unregister_device(ir->input_dev);
 }
