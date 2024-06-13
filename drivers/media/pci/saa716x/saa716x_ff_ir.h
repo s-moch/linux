@@ -9,7 +9,7 @@ struct infrared {
 	struct input_dev	*input_dev;
 	char			input_phys[32];
 	struct timer_list	keyup_timer;
-	struct tasklet_struct	tasklet;
+	struct work_struct	bh_work;
 	u32			command;
 	u32			device_mask;
 	u8			protocol;
