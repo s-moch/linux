@@ -21,7 +21,7 @@ static int saa716x_request_irq(struct saa716x_dev *saa716x)
 	struct saa716x_config *config = saa716x->config;
 	int ret;
 
-	ret = pci_alloc_irq_vectors(pdev, 1, 1, PCI_IRQ_LEGACY | PCI_IRQ_MSI);
+	ret = pci_alloc_irq_vectors(pdev, 1, 1, PCI_IRQ_INTX | PCI_IRQ_MSI);
 	if (ret < 0) {
 		pci_err(saa716x->pdev, "IRQ vector registration failed");
 		return ret;
