@@ -2,6 +2,7 @@
 
 #include <linux/firmware.h>
 #include <linux/videodev2.h>
+#include <linux/vmalloc.h>
 #include <linux/dvb/video.h>
 #include <linux/dvb/audio.h>
 #include <linux/dvb/osd.h>
